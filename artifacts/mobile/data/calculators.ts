@@ -311,6 +311,94 @@ export const calculators: Calculator[] = [
     },
     reference: "Virginia Apgar, 1952",
   },
+  {
+    id: "drug-dose",
+    name: "Pediatric Drug Dose Calculator",
+    abbreviation: "Drug Dose",
+    description: "Calculates weight-based drug doses for common pediatric and adult drugs using mg/kg guidelines.",
+    fields: [
+      {
+        id: "drug",
+        label: "Select Drug",
+        type: "select",
+        options: [
+          { label: "Paracetamol (15 mg/kg)", value: 0 },
+          { label: "Ibuprofen (10 mg/kg)", value: 1 },
+          { label: "Amoxicillin (25 mg/kg)", value: 2 },
+          { label: "Amoxicillin-Clavulanate (25 mg/kg amox)", value: 3 },
+          { label: "Cetirizine (0.25 mg/kg)", value: 4 },
+          { label: "Salbutamol nebule (0.15 mg/kg, min 2.5 mg)", value: 5 },
+          { label: "Prednisolone (1 mg/kg)", value: 6 },
+          { label: "Dexamethasone croup (0.15 mg/kg)", value: 7 },
+          { label: "Epinephrine IM anaphylaxis (0.01 mg/kg)", value: 8 },
+          { label: "Diazepam rectal/IV (0.3 mg/kg)", value: 9 },
+          { label: "Midazolam buccal (0.3 mg/kg)", value: 10 },
+          { label: "Ceftriaxone IV (50 mg/kg)", value: 11 },
+          { label: "Metronidazole (7.5 mg/kg)", value: 12 },
+          { label: "Gentamicin (7.5 mg/kg)", value: 13 },
+          { label: "Morphine IV (0.1 mg/kg)", value: 14 },
+          { label: "Atropine IV (0.02 mg/kg)", value: 15 },
+          { label: "Adenosine IV (0.1 mg/kg first dose)", value: 16 },
+          { label: "Magnesium Sulfate IV (0.2 mL/kg of 50%)", value: 17 },
+          { label: "Ondansetron (0.15 mg/kg)", value: 18 },
+          { label: "Domperidone (0.25 mg/kg)", value: 19 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "weight",
+        label: "Patient Weight",
+        type: "number",
+        unit: "kg",
+        min: 1,
+        max: 150,
+        placeholder: "e.g. 20",
+      },
+    ],
+    calculate: (values) => {
+      const weight = values.weight ?? 10;
+      const drug = values.drug ?? 0;
+
+      const drugs = [
+        { name: "Paracetamol", dose: 15, unit: "mg", maxSingle: 1000, maxDaily: 4000, freq: "every 4–6h", route: "PO/IV/PR", info: "Max 1g per dose, 4g/day adults. Max 3g/day in liver disease." },
+        { name: "Ibuprofen", dose: 10, unit: "mg", maxSingle: 400, maxDaily: 2400, freq: "every 6–8h", route: "PO", info: "Give with food. Avoid if < 3 months or renal impairment." },
+        { name: "Amoxicillin", dose: 25, unit: "mg", maxSingle: 500, maxDaily: 1500, freq: "every 8h", route: "PO", info: "Standard dose. Double for severe/resistant infections (50 mg/kg/day)." },
+        { name: "Amoxicillin-Clavulanate", dose: 25, unit: "mg", maxSingle: 875, maxDaily: 2625, freq: "every 8–12h", route: "PO", info: "Dose based on amoxicillin component. Use 7:1 or 14:1 ratio formulation." },
+        { name: "Cetirizine", dose: 0.25, unit: "mg", maxSingle: 10, maxDaily: 10, freq: "OD", route: "PO", info: "For children 2–6: max 5mg/day. Over 6 years: max 10mg/day." },
+        { name: "Salbutamol (nebulized)", dose: 0.15, unit: "mg", maxSingle: 5, maxDaily: 20, freq: "every 20 min x3 in acute attack", route: "Nebulized", info: "Minimum dose 2.5 mg. Max 5 mg per nebule. Dilute to 3–4 mL with NS." },
+        { name: "Prednisolone", dose: 1, unit: "mg", maxSingle: 60, maxDaily: 60, freq: "OD in the morning", route: "PO", info: "Asthma: 1–2 mg/kg (max 40–60 mg). Nephrotic syndrome: 2 mg/kg/day for 4 weeks." },
+        { name: "Dexamethasone (croup)", dose: 0.15, unit: "mg", maxSingle: 10, maxDaily: 10, freq: "Single dose", route: "PO/IM/IV", info: "Single dose for croup. Oral and IV equally effective." },
+        { name: "Epinephrine IM (anaphylaxis)", dose: 0.01, unit: "mg", maxSingle: 0.5, maxDaily: 2, freq: "every 5–15 min PRN", route: "IM anterolateral thigh", info: "Use 1:1000 solution (1 mg/mL). Max dose 0.5 mg. Repeat every 5–15 min if needed." },
+        { name: "Diazepam (seizure)", dose: 0.3, unit: "mg", maxSingle: 10, maxDaily: 30, freq: "Once; can repeat once", route: "IV/rectal", info: "IV: give slowly. Rectal: use 0.5 mg/kg. Monitor respiratory rate." },
+        { name: "Midazolam (buccal)", dose: 0.3, unit: "mg", maxSingle: 10, maxDaily: 10, freq: "Once; can repeat once", route: "Buccal", info: "First-line for prolonged seizures. Place between cheek and gum. Onset 5–10 min." },
+        { name: "Ceftriaxone IV", dose: 50, unit: "mg", maxSingle: 2000, maxDaily: 4000, freq: "OD (BD for meningitis)", route: "IV/IM", info: "Meningitis: 100 mg/kg/day divided BD (max 4g/day). Do NOT mix with calcium-containing fluids." },
+        { name: "Metronidazole IV", dose: 7.5, unit: "mg", maxSingle: 500, maxDaily: 1500, freq: "every 8h", route: "IV/PO", info: "Anaerobic and protozoal infections. Max 500 mg per dose." },
+        { name: "Gentamicin IV", dose: 7.5, unit: "mg", maxSingle: 480, maxDaily: 480, freq: "OD (extended interval)", route: "IV", info: "Once-daily dosing. Therapeutic drug monitoring required. Monitor renal function and levels." },
+        { name: "Morphine IV", dose: 0.1, unit: "mg", maxSingle: 10, maxDaily: 40, freq: "every 2–4h PRN", route: "IV slow push", info: "Titrate to pain. Have naloxone ready. Monitor respiratory rate. Start lower in opioid-naive." },
+        { name: "Atropine IV (bradycardia)", dose: 0.02, unit: "mg", maxSingle: 0.5, maxDaily: 3, freq: "every 3–5 min (ACLS)", route: "IV", info: "Minimum dose 0.1 mg (avoid paradoxical bradycardia). Max single dose: child 0.5 mg, adult 1 mg." },
+        { name: "Adenosine IV", dose: 0.1, unit: "mg", maxSingle: 6, maxDaily: 30, freq: "Rapid IV bolus; may repeat 0.2 mg/kg", route: "Rapid IV + flush", info: "Give as rapid IV bolus in antecubital vein with 20 mL NS flush. Half-life < 10 seconds." },
+        { name: "Magnesium Sulfate 50%", dose: 0.2, unit: "mL", maxSingle: 20, maxDaily: 60, freq: "As needed (eclampsia/status)", route: "IV over 20 min (diluted)", info: "0.2 mL/kg of 50% MgSO4 = ~0.1 mmol/kg. Dilute before giving. Monitor DTRs and RR." },
+        { name: "Ondansetron IV", dose: 0.15, unit: "mg", maxSingle: 8, maxDaily: 32, freq: "every 8h", route: "IV/PO", info: "For CINV and post-op nausea. Monitor QTc interval." },
+        { name: "Domperidone PO", dose: 0.25, unit: "mg", maxSingle: 10, maxDaily: 30, freq: "every 8h before meals", route: "PO", info: "Preferred prokinetic in Parkinson's patients. Avoid IV form. Max 80 mg/day in adults." },
+      ];
+
+      const d = drugs[drug];
+      const rawDose = weight * d.dose;
+      const calculatedDose = Math.round(Math.min(rawDose, d.maxSingle) * 100) / 100;
+      const score = calculatedDose;
+
+      let color = "#009DB5";
+      let label = `${d.name}: ${calculatedDose} ${d.unit}`;
+      let interpretation = `Dose: ${d.dose} ${d.unit}/kg × ${weight} kg = ${calculatedDose} ${d.unit} (capped at max ${d.maxSingle} ${d.unit}).\n\nFrequency: ${d.freq}\nRoute: ${d.route}\nMax daily: ${d.maxDaily} ${d.unit}`;
+      let action = d.info;
+
+      if (weight < 3) { color = "#EF4444"; label = "Weight too low — verify"; }
+      else if (weight > 100) { color = "#F59E0B"; label = `${d.name}: ${calculatedDose} ${d.unit} (adult max applied)`; }
+
+      return { score, label, interpretation, action, color };
+    },
+    reference: "BNF for Children, Harriet Lane Handbook, UpToDate Pediatric Dosing",
+  },
 ];
 
 export function getCalculatorById(id: string): Calculator | undefined {

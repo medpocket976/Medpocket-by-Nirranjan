@@ -41,6 +41,7 @@ export default function ClinicalExamDetailScreen() {
 
   const bookmarked = isBookmarked(system.id);
   function toggleBookmark() {
+    if (!system) return;
     if (bookmarked) removeBookmark(system.id);
     else addBookmark({ type: "exam", itemId: system.id, name: system.name });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

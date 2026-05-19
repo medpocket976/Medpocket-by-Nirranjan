@@ -42,6 +42,7 @@ export default function DrugDetailScreen() {
   const bookmarked = isBookmarked(drug.id);
 
   function toggleBookmark() {
+    if (!drug) return;
     if (bookmarked) {
       removeBookmark(drug.id);
     } else {
