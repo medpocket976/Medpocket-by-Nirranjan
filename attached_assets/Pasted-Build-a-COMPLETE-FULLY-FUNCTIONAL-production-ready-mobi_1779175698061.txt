@@ -1,0 +1,537 @@
+Build a COMPLETE FULLY FUNCTIONAL production-ready mobile application called:
+
+“MedPocket by Nirranjan”
+
+A premium medical pocket guide app for MBBS students, interns, residents, and healthcare learners.
+
+IMPORTANT:
+This must NOT be a UI prototype.
+Generate REAL WORKING FUNCTIONALITY with backend, authentication, database integration, offline support, API architecture, state management, and production-ready code.
+
+The final result should be deployable to:
+- Android Play Store
+- Apple App Store
+
+==================================================
+TECH STACK (MANDATORY)
+==================================================
+
+Frontend:
+- Flutter (latest stable version)
+
+Backend:
+- Supabase
+
+State Management:
+- Riverpod
+
+Local Database:
+- Hive or Isar
+
+Architecture:
+- Clean Architecture
+- Feature-first modular structure
+
+Code Quality:
+- Production-grade
+- Scalable
+- Maintainable
+- Null-safe
+- Fully typed
+
+==================================================
+PROJECT STRUCTURE
+==================================================
+
+Use this exact scalable architecture:
+
+lib/
+├── core/
+├── data/
+├── domain/
+├── models/
+├── repositories/
+├── services/
+├── providers/
+├── utils/
+├── routes/
+├── theme/
+├── presentation/
+│   ├── auth/
+│   ├── home/
+│   ├── drugs/
+│   ├── emergency/
+│   ├── calculators/
+│   ├── notes/
+│   ├── quizzes/
+│   ├── lab_values/
+│   ├── profile/
+│   └── onboarding/
+└── main.dart
+
+==================================================
+DESIGN REQUIREMENTS
+==================================================
+
+Create a premium modern medical UI inspired by:
+- Apple Health
+- Notion
+- Amboss
+- Osmosis
+
+Theme:
+- White + teal primary colors
+- Dark mode support
+- Glassmorphism accents
+- Rounded cards
+- Soft shadows
+- Smooth animations
+- Premium typography
+
+UX:
+- Mobile-first
+- One-hand usability
+- Fast navigation
+- Minimal taps
+- Smooth transitions
+- Responsive layouts
+- Tablet support
+
+==================================================
+ONBOARDING & AUTH
+==================================================
+
+Create a beautiful onboarding flow:
+1. Welcome
+2. Choose study year
+3. Select interests
+4. Enable notifications
+5. Login/signup
+
+Authentication:
+- Email/password
+- Google Sign-In
+- Apple Sign-In
+- Persistent sessions
+- Forgot password
+- Email verification
+
+==================================================
+BOTTOM NAVIGATION
+==================================================
+
+Tabs:
+1. Home
+2. Explore
+3. Quiz
+4. Notes
+5. Profile
+
+==================================================
+HOME SCREEN
+==================================================
+
+FULLY FUNCTIONAL home dashboard with:
+- Personalized greeting
+- Daily clinical pearl
+- Continue studying
+- Study streak
+- Bookmarks
+- Recent activity
+- Revision reminders
+
+Quick Access Modules:
+- Drug Guide
+- Clinical Examination
+- Differential Diagnosis
+- Emergency Protocols
+- Lab Values
+- Medical Calculators
+
+==================================================
+DRUG GUIDE MODULE
+==================================================
+
+Create a FULLY FUNCTIONAL searchable drug database.
+
+Each drug page must include:
+- Generic name
+- Brand names
+- Drug class
+- Mechanism of action
+- Indications
+- Contraindications
+- Side effects
+- Dosage
+- Pregnancy category
+- Interactions
+- Monitoring parameters
+- Mnemonics
+- Clinical pearls
+
+Features:
+- Real-time search
+- Category filters
+- Bookmarking
+- Offline caching
+- Favorites
+- Recent searches
+
+Drug Categories:
+- Antibiotics
+- Antihypertensives
+- Antidiabetics
+- Analgesics
+- CNS drugs
+- Emergency drugs
+- Respiratory drugs
+- GI drugs
+
+==================================================
+CLINICAL EXAMINATION MODULE
+==================================================
+
+Create detailed step-by-step examination guides.
+
+Systems:
+- CVS
+- Respiratory
+- Abdomen
+- Neurology
+- Orthopedics
+- Pediatrics
+- ENT
+- Ophthalmology
+
+Each page includes:
+- Inspection
+- Palpation
+- Percussion
+- Auscultation
+- Important findings
+- Differential diagnoses
+- OSCE tips
+- Viva questions
+- Clinical notes
+
+Features:
+- Checklist mode
+- Progress tracking
+- Quick revision mode
+- Bookmarking
+
+==================================================
+DIFFERENTIAL DIAGNOSIS MODULE
+==================================================
+
+Interactive symptom explorer.
+
+Examples:
+- Chest pain
+- Fever
+- Dyspnea
+- Jaundice
+- Syncope
+- Headache
+- Hematuria
+
+Features:
+- Expandable diagnosis trees
+- Red flags
+- Emergency indicators
+- Categorized causes
+- High-yield exam points
+
+==================================================
+EMERGENCY PROTOCOLS MODULE
+==================================================
+
+Build fast-access emergency reference pages.
+
+Protocols:
+- ACLS
+- BLS
+- Anaphylaxis
+- Stroke
+- MI
+- DKA
+- Shock
+- Sepsis
+- Asthma exacerbation
+- Status epilepticus
+
+Features:
+- Large buttons
+- Minimal scrolling
+- Step-by-step algorithms
+- Drug doses
+- Color-coded urgency
+
+==================================================
+LAB VALUES MODULE
+==================================================
+
+FULLY FUNCTIONAL searchable lab value database.
+
+Include:
+- CBC
+- Electrolytes
+- LFT
+- RFT
+- ABG basics
+- Coagulation profile
+
+Features:
+- Normal ranges
+- Critical values
+- Unit conversion
+- Adult/pediatric ranges
+- Search
+- Bookmarking
+
+==================================================
+MEDICAL CALCULATORS MODULE
+==================================================
+
+Build REAL WORKING calculators:
+- BMI
+- GCS
+- CURB-65
+- APGAR
+- Wells Score
+- CHADS2-VASc
+- Child-Pugh
+- qSOFA
+- MAP calculator
+
+Requirements:
+- Instant calculations
+- Result interpretation
+- Save history
+- Responsive forms
+
+==================================================
+QUIZ MODULE
+==================================================
+
+Build a FULLY FUNCTIONAL MCQ system.
+
+Features:
+- Topic-wise quizzes
+- Timed tests
+- Daily challenge
+- Bookmark questions
+- Detailed explanations
+- Progress tracking
+- Weak subject analysis
+- Quiz history
+
+Subjects:
+- Anatomy
+- Physiology
+- Pathology
+- Pharmacology
+- Medicine
+- Surgery
+- Pediatrics
+- OBGYN
+
+==================================================
+NOTES MODULE
+==================================================
+
+Create a REAL note-taking system.
+
+Features:
+- Create/edit/delete notes
+- Markdown support
+- Organize by subject
+- Tags
+- Pin important notes
+- Offline storage
+- Search notes
+- Sync to Supabase
+
+==================================================
+PROFILE MODULE
+==================================================
+
+Include:
+- User profile
+- Study stats
+- Streak tracking
+- Saved bookmarks
+- Downloaded content
+- Notification settings
+- Theme settings
+- Logout
+
+==================================================
+GLOBAL SEARCH
+==================================================
+
+Implement FULL APP SEARCH across:
+- Drugs
+- Protocols
+- Notes
+- Quizzes
+- Lab values
+
+Features:
+- Instant search
+- Debounced search
+- Recent searches
+- Trending topics
+
+==================================================
+STATE MANAGEMENT
+==================================================
+
+Use Riverpod correctly:
+- AsyncValue
+- StateNotifier
+- Providers
+- Repository pattern
+- Dependency injection
+
+==================================================
+DATABASE (SUPABASE)
+==================================================
+
+Generate:
+- Full SQL schema
+- Authentication tables
+- User tables
+- Notes tables
+- Quiz tables
+- Bookmark tables
+- Drug tables
+
+Implement:
+- CRUD operations
+- Secure RLS policies
+- Offline sync
+- Error handling
+
+==================================================
+OFFLINE SUPPORT
+==================================================
+
+App MUST work offline.
+
+Implement:
+- Hive/Isar caching
+- Sync when online
+- Local bookmarks
+- Offline notes
+- Cached medical content
+
+==================================================
+NOTIFICATIONS
+==================================================
+
+Implement:
+- Daily reminders
+- Study streak reminders
+- Quiz reminders
+- Push notifications
+
+==================================================
+ADMIN PANEL
+==================================================
+
+Create admin dashboard for Nirranjan.
+
+Features:
+- Upload medical content
+- Manage quizzes
+- Manage users
+- Edit protocols
+- Push notifications
+- Analytics overview
+
+==================================================
+SECURITY
+==================================================
+
+Implement:
+- Secure auth
+- Encrypted local storage
+- Protected routes
+- Input validation
+- API error handling
+
+==================================================
+PERFORMANCE
+==================================================
+
+Optimize:
+- Lazy loading
+- Cached images
+- Debounced search
+- Pagination
+- Fast startup
+- Smooth scrolling
+
+==================================================
+GENERATE THESE FILES
+==================================================
+
+Generate:
+- Complete Flutter frontend
+- Complete backend integration
+- Riverpod providers
+- Supabase services
+- SQL schema
+- API architecture
+- Models
+- Repositories
+- Reusable widgets
+- Routing system
+- Theme system
+- Dark mode
+- Splash screen
+- App icon
+- Logo concepts
+- Animations
+- Production-ready code
+
+==================================================
+IMPORTANT
+==================================================
+
+Do NOT generate placeholder pseudo-code.
+
+Generate REAL WORKING CODE with:
+- actual Flutter widgets
+- actual Riverpod providers
+- actual Supabase integration
+- actual SQL schema
+- actual navigation
+- actual API services
+- actual CRUD operations
+
+==================================================
+DISCLAIMER
+==================================================
+
+Add this disclaimer inside the app:
+
+“This application is intended for educational purposes only and should not replace professional medical judgment, diagnosis, or treatment.”
+
+==================================================
+FINAL GOAL
+==================================================
+
+The generated app should be:
+- fully functional
+- scalable
+- maintainable
+- deployable
+- production-ready
+- visually premium
+- app-store quality
+
+Brand everything professionally as:
+
+“MedPocket by Nirranjan”

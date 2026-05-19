@@ -1,0 +1,328 @@
+export interface ExamStep {
+  phase: string;
+  findings: string[];
+  technique?: string;
+}
+
+export interface ClinicalSystem {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  inspectionFindings: string[];
+  palpationFindings: string[];
+  percussionFindings?: string[];
+  auscultationFindings?: string[];
+  importantSigns: { sign: string; significance: string }[];
+  differentialDiagnoses: string[];
+  osceTips: string[];
+  vivaQuestions: string[];
+}
+
+export const clinicalSystems: ClinicalSystem[] = [
+  {
+    id: "cvs",
+    name: "Cardiovascular System",
+    icon: "heart",
+    color: "#EF4444",
+    description: "Systematic examination of the heart and major blood vessels.",
+    inspectionFindings: [
+      "General: pallor, cyanosis (central vs peripheral), jaundice, dyspnea at rest",
+      "Hands: clubbing (grade I–V), splinter hemorrhages, Janeway lesions, Osler nodes, peripheral cyanosis",
+      "Eyes: corneal arcus, xanthelasma, pale conjunctiva (anemia)",
+      "JVP: Normal <3 cm above sternal angle. Raised in: heart failure, cardiac tamponade, SVC obstruction",
+      "JVP waveform: a (atrial contraction), c (tricuspid closure), v (venous filling). Giant a wave: tricuspid stenosis. Cannon a wave: complete heart block",
+      "Precordium: scars (median sternotomy, thoracotomy), deformities, visible pulsations",
+    ],
+    palpationFindings: [
+      "Radial pulse: rate, rhythm, volume, character (bounding, collapsing, plateau, bisferiens)",
+      "Radio-radial delay: coarctation of aorta",
+      "Radio-femoral delay: coarctation of aorta",
+      "Apex beat: normally 5th ICS, MCL. Displaced: cardiomegaly, effusion, pneumothorax. Character: heaving (pressure overload), thrusting (volume overload), tapping (mitral stenosis)",
+      "Left parasternal heave: RV enlargement",
+      "Thrills: palpable murmurs (systolic/diastolic, site)",
+      "Peripheral pulses: all four limbs, carotid, femoral",
+    ],
+    percussionFindings: [
+      "Cardiac dullness boundaries (limited use in practice)",
+      "Liver span (to assess cardiac hepatomegaly in right heart failure)",
+      "Lung bases: dullness suggests pleural effusion (heart failure)",
+    ],
+    auscultationFindings: [
+      "Heart sounds: S1 (mitral+tricuspid closure), S2 (aortic+pulmonary closure)",
+      "S3 gallop: heart failure, dilated cardiomyopathy (always pathological in adults >40)",
+      "S4 gallop: hypertensive heart disease, HOCM (stiff ventricle)",
+      "Opening snap: mitral stenosis — high-pitched, follows S2. Short OS-S2 interval = severe MS",
+      "Murmur analysis: Timing (systolic/diastolic), Character, Location, Radiation, Grading (1–6 for systolic; 1–4 for diastolic), Maneuvers",
+      "Pericardial friction rub: scratchy, positional, heard best leaning forward",
+    ],
+    importantSigns: [
+      { sign: "Corrigan's pulse (water-hammer)", significance: "Aortic regurgitation — wide pulse pressure" },
+      { sign: "De Musset's sign (head nodding)", significance: "Aortic regurgitation" },
+      { sign: "Quincke's sign (nail pulsation)", significance: "Aortic regurgitation" },
+      { sign: "Carey Coombs murmur", significance: "Acute rheumatic carditis — soft mid-diastolic murmur" },
+      { sign: "Austin Flint murmur", significance: "Aortic regurgitation causing functional mitral stenosis murmur" },
+      { sign: "Graham Steell murmur", significance: "Pulmonary regurgitation due to pulmonary hypertension" },
+      { sign: "Kussmaul's sign", significance: "JVP rises on inspiration — constrictive pericarditis, cardiac tamponade, RV infarct" },
+      { sign: "Pulsus paradoxus", significance: "SBP drops >10 mmHg on inspiration — cardiac tamponade, severe asthma" },
+    ],
+    differentialDiagnoses: [
+      "Systolic murmur at apex: Mitral regurgitation, HOCM, VSD, MVP",
+      "Diastolic murmur at apex: Mitral stenosis, Austin Flint",
+      "Systolic murmur at base: Aortic stenosis, pulmonary stenosis, flow murmur",
+      "Early diastolic murmur: Aortic regurgitation, Graham Steell",
+      "Heart failure: Dilated cardiomyopathy, ischemic cardiomyopathy, valvular disease, hypertension",
+    ],
+    osceTips: [
+      "Always state: 'I would like to take BP in both arms, check peripheral pulses, perform fundoscopy, and request ECG and CXR'",
+      "Grading murmurs: Grade 1 (barely audible), 2 (soft), 3 (moderate), 4 (thrill), 5 (heard with stethoscope tilted), 6 (heard without stethoscope)",
+      "Distinguish MR vs MS: MR = pansystolic, radiates to axilla; MS = mid-diastolic, rumbling, loudest at apex, preceded by OS",
+      "Always comment on the JVP — examiners love it",
+    ],
+    vivaQuestions: [
+      "What is the significance of a pansystolic murmur at the apex?",
+      "How do you differentiate mitral stenosis from mitral regurgitation?",
+      "What are the features of right heart failure vs left heart failure?",
+      "Explain the pathophysiology of jugular venous pressure elevation",
+      "What is the difference between S3 and S4 gallop?",
+    ],
+  },
+  {
+    id: "respiratory",
+    name: "Respiratory System",
+    icon: "wind",
+    color: "#3B82F6",
+    description: "Systematic examination of the chest and respiratory tract.",
+    inspectionFindings: [
+      "General: respiratory rate (normal 12–18/min), use of accessory muscles, nasal flaring, tracheal tug",
+      "Shape of chest: barrel chest (COPD — hyperinflation), pectus excavatum, pectus carinatum, kyphoscoliosis",
+      "Hands: clubbing, cyanosis, CO2 retention flap (asterixis)",
+      "Face: plethora (polycythemia), central cyanosis (SpO2 <85%), pursed lip breathing",
+      "Trachea: deviation (toward collapse/fibrosis; away from effusion/tension pneumothorax)",
+      "Chest expansion: symmetrical vs asymmetrical",
+    ],
+    palpationFindings: [
+      "Tracheal position: midline, deviated",
+      "Chest expansion: bilaterally equal. Reduced ipsilateral: consolidation, collapse, effusion",
+      "Tactile vocal fremitus (TVF): Increased in consolidation. Decreased/absent in effusion, pneumothorax",
+      "Apex beat position",
+      "Lymph nodes: supraclavicular, axillary",
+    ],
+    percussionFindings: [
+      "Normal: resonant over all lung fields",
+      "Dull: consolidation (pneumonia), collapse, pleural thickening",
+      "Stony dull: pleural effusion (most dull sound in medicine)",
+      "Hyper-resonant: pneumothorax, emphysema",
+      "Liver dullness: normally at 5th ICS right, MCL",
+    ],
+    auscultationFindings: [
+      "Breath sounds: vesicular (normal — soft, low-pitched), bronchial (tubular — loud, harsh, equal in/expiration)",
+      "Bronchial breathing indicates: Consolidation, Cavitation, Fibrosis above effusion",
+      "Added sounds: Crepitations (crackles): Fine = pulmonary fibrosis, early failure; Coarse = pneumonia, bronchiectasis, edema",
+      "Wheezes: Polyphonic = asthma; Monophonic = bronchial obstruction. High-pitched expiratory wheeze = asthma",
+      "Stridor: Inspiratory, high-pitched — upper airway obstruction (croup, epiglottitis, foreign body)",
+      "Vocal resonance: Bronchophony, Aegophony (E→A over effusion), Whispering pectoriloquy (consolidation)",
+      "Pleural rub: scratchy, leathery sound — pleuritis",
+    ],
+    importantSigns: [
+      { sign: "Pemberton's sign", significance: "Facial flushing on arm elevation — SVC obstruction (retrosternal goitre, malignancy)" },
+      { sign: "Hoover's sign", significance: "Paradoxical inward movement of lower ribs on inspiration — severe COPD/hyperinflation" },
+      { sign: "Dahl's sign", significance: "Calluses on elbows from leaning forward — severe COPD" },
+      { sign: "Hamman's sign", significance: "Mediastinal crunch with heartbeat — pneumomediastinum" },
+    ],
+    differentialDiagnoses: [
+      "Stony dull + absent TVF + absent breath sounds: Pleural effusion",
+      "Dull + increased TVF + bronchial breathing + crackles: Consolidation (pneumonia)",
+      "Dull + reduced expansion + trachea pulled toward: Collapse/Atelectasis",
+      "Hyper-resonant + absent breath sounds + trachea away: Pneumothorax",
+      "Bilateral crackles + raised JVP + peripheral edema: Pulmonary edema (heart failure)",
+    ],
+    osceTips: [
+      "RSVP framework: Rate, Symmetry, Vessel (trachea), Position of apex",
+      "Remember to examine from front AND back",
+      "Always comment on: tracheal position, chest expansion, percussion, auscultation",
+      "Pleural effusion: Stony dull percussion is PATHOGNOMONIC",
+    ],
+    vivaQuestions: [
+      "What are the differences between pleural effusion and consolidation on examination?",
+      "What causes tracheal deviation?",
+      "What is the significance of clubbing in respiratory disease?",
+      "Describe the examination findings in a right-sided pleural effusion",
+      "What is Hoover's sign and what does it indicate?",
+    ],
+  },
+  {
+    id: "abdomen",
+    name: "Abdominal Examination",
+    icon: "circle",
+    color: "#10B981",
+    description: "Systematic examination of the abdomen and abdominal organs.",
+    inspectionFindings: [
+      "Position: supine, hands by sides, exposed from xiphisternum to groin",
+      "Contour: scaphoid (malnutrition), distended (6 Fs: Fat, Fluid, Fetus, Flatus, Faeces, Fatal mass)",
+      "Umbilicus: central/deviated, everted (ascites, hernia), Cullen's sign (periumbilical bruising — retroperitoneal hemorrhage)",
+      "Skin: caput medusae (portal hypertension), Grey Turner's sign (flank bruising — pancreatitis/retroperitoneal hemorrhage)",
+      "Visible peristalsis: intestinal obstruction",
+      "Hernias: umbilical, inguinal, femoral — ask patient to cough",
+      "Scars: comment on previous surgeries",
+    ],
+    palpationFindings: [
+      "Ask about pain first. Warm hands. Start away from area of pain",
+      "Superficial palpation: tenderness, guarding, rigidity",
+      "Rebound tenderness (Blumberg's sign): peritoneal irritation",
+      "Liver: palpate from RIF upward. Measure cm below costal margin. Comment on edge, surface, tenderness",
+      "Spleen: palpate from RIF toward left. Enlarges toward right iliac fossa. Cannot get above it. Has notch on medial border",
+      "Kidneys: bimanual palpation. Ballotable. Distinguish from spleen (can get above kidney, no notch)",
+      "Murphy's sign: acute cholecystitis — arrest of inspiration on palpation of RUQ",
+      "McBurney's point: 1/3 from ASIS to umbilicus — appendicitis",
+    ],
+    percussionFindings: [
+      "Liver dullness: starts at 5th ICS right MCL, ends at costal margin (~12 cm). Increased: hepatomegaly; decreased: gas interposition",
+      "Shifting dullness: ascites — percussion dull in flanks, shifts with position change",
+      "Fluid thrill: massive ascites (requires assistant to block transmission through subcutaneous tissue)",
+      "Splenic dullness: 9th–11th ICS in left axillary line",
+    ],
+    auscultationFindings: [
+      "Bowel sounds: Normal = intermittent, every 5–30 sec",
+      "Absent (paralytic ileus, peritonitis): post-op, severe sepsis",
+      "Hyperactive/tinkling: intestinal obstruction",
+      "Bruit: renal artery stenosis (renal bruits), hepatocellular carcinoma (hepatic bruit), aortic aneurysm",
+    ],
+    importantSigns: [
+      { sign: "Murphy's sign", significance: "Acute cholecystitis — pain on deep palpation RUQ during inspiration" },
+      { sign: "Rovsing's sign", significance: "Appendicitis — palpation of LIF causes RIF pain" },
+      { sign: "Psoas sign", significance: "Appendicitis — pain on right hip extension (retrocecal appendix)" },
+      { sign: "Cullen's sign", significance: "Periumbilical bruising — retroperitoneal hemorrhage (pancreatitis, ectopic pregnancy)" },
+      { sign: "Grey Turner's sign", significance: "Flank bruising — retroperitoneal hemorrhage (pancreatitis)" },
+      { sign: "Sister Mary Joseph nodule", significance: "Umbilical nodule — intra-abdominal malignancy (gastric, colorectal, ovarian)" },
+      { sign: "Courvoisier's law", significance: "Palpable gallbladder + jaundice = NOT gallstones (likely pancreatic head malignancy)" },
+    ],
+    differentialDiagnoses: [
+      "Hepatomegaly: Cardiac failure, hepatitis, cirrhosis, malignancy (primary/secondary), hemolytic anemia",
+      "Splenomegaly: Infection (malaria, EBV), portal hypertension, hematologic (CML, lymphoma), storage diseases",
+      "Massive splenomegaly: CML, myelofibrosis, malaria, kala-azar, Gaucher's disease",
+      "Ascites: Cirrhosis, malignancy, TB peritonitis, nephrotic syndrome, cardiac failure",
+    ],
+    osceTips: [
+      "Never percuss before palpating for tenderness",
+      "Spleen: You cannot get above it, it has a notch, it's dull to percussion, moves with respiration",
+      "For ascites: Shifting dullness first, then fluid thrill if massive",
+      "Always complete the examination: genitalia (inguinal lymph nodes, hernias), PR exam, lower limbs (edema), ankles",
+    ],
+    vivaQuestions: [
+      "How do you differentiate spleen from kidney on palpation?",
+      "What is the significance of Courvoisier's law?",
+      "What are the causes of massive splenomegaly?",
+      "How do you assess for shifting dullness and what does it indicate?",
+      "What is the pathophysiology of caput medusae?",
+    ],
+  },
+  {
+    id: "neurology",
+    name: "Neurological Examination",
+    icon: "zap",
+    color: "#8B5CF6",
+    description: "Systematic examination of the central and peripheral nervous system.",
+    inspectionFindings: [
+      "General: conscious level (GCS: E4V5M6 = 15), orientation (time, place, person)",
+      "Higher mental function: speech (fluency, comprehension, repetition, naming), memory",
+      "Cranial nerves: CN I–XII assessment",
+      "Gait: hemiparetic (scissor), ataxic (wide-based, cerebellar), steppage (foot drop), parkinsonian (shuffling, festination)",
+      "Involuntary movements: tremor (resting vs intention), chorea, athetosis, fasciculations",
+      "Muscle wasting: asymmetric (LMN), generalized (myopathy, MND)",
+    ],
+    palpationFindings: [
+      "Tone: normal, hypotonia (LMN, cerebellar), hypertonia — spasticity (UMN, clasp-knife), rigidity (extrapyramidal — lead-pipe, cogwheel)",
+      "Power: MRC scale 0–5",
+      "Reflexes: 0 (absent), 1+ (diminished), 2+ (normal), 3+ (brisk), 4+ (clonus) — UMN = brisk; LMN = diminished/absent",
+      "Coordination: finger-nose test, heel-shin test, rapid alternating movements (dysdiadochokinesia)",
+      "Sensory: pain, temperature, light touch, vibration, proprioception, 2-point discrimination",
+    ],
+    percussionFindings: [
+      "Tendon reflexes: hammer used to elicit reflexes",
+      "Biceps C5/C6, Brachioradialis C5/C6, Triceps C7, Knee (patellar) L3/L4, Ankle (Achilles) S1",
+    ],
+    importantSigns: [
+      { sign: "Babinski's sign (extensor plantar)", significance: "UMN lesion — great toe dorsiflexion, fan remaining toes" },
+      { sign: "Kernig's sign", significance: "Meningitis — pain/resistance to knee extension with hip flexed at 90°" },
+      { sign: "Brudzinski's sign", significance: "Meningitis — neck flexion causes involuntary hip/knee flexion" },
+      { sign: "Romberg's sign", significance: "Sensory (dorsal column) ataxia — cannot stand with feet together and eyes closed" },
+      { sign: "Hoffman's reflex", significance: "UMN lesion in upper limbs — flicking middle finger causes thumb/index flexion" },
+      { sign: "Lhermitte's sign", significance: "Cervical myelopathy or MS — electric shock sensation down spine on neck flexion" },
+    ],
+    differentialDiagnoses: [
+      "UMN vs LMN: UMN = increased tone, hyperreflexia, extensor plantar, no wasting; LMN = flaccidity, hyporeflexia, flexor plantar, wasting, fasciculations",
+      "Hemiplegia: Contralateral cortex (MCA stroke), ipsilateral brainstem, contralateral cervical cord",
+      "Paraplegia: Spinal cord lesion T1–L1",
+      "Peripheral neuropathy: Glove-and-stocking sensory loss, areflexia — DM, alcohol, GBS",
+      "Cerebellar signs: DANISH = Dysdiadochokinesia, Ataxia (gait), Nystagmus, Intention tremor, Slurred speech, Hypotonia",
+    ],
+    osceTips: [
+      "Always state 'IIIIUUUTT' for cranial nerves: 12 in order",
+      "UMN vs LMN is the most tested distinction — know it perfectly",
+      "For cerebellar: DANISH mnemonic",
+      "Always check power in proximal and distal groups (myopathy vs neuropathy pattern)",
+    ],
+    vivaQuestions: [
+      "What is the difference between UMN and LMN lesions?",
+      "What is the DANISH mnemonic for cerebellar signs?",
+      "How do you assess GCS and what is its clinical significance?",
+      "What are the features of Parkinson's disease on examination?",
+      "How do you differentiate cortical from subcortical dementia?",
+    ],
+  },
+  {
+    id: "musculoskeletal",
+    name: "Musculoskeletal / Ortho",
+    icon: "activity",
+    color: "#F59E0B",
+    description: "GALS screen and regional musculoskeletal examination.",
+    inspectionFindings: [
+      "GALS screen: Gait, Arms, Legs, Spine",
+      "Joint: swelling (effusion vs bony enlargement vs soft tissue), erythema, deformity",
+      "Rheumatoid hands: Ulnar deviation, subluxation of MCPJs, Bouchard's nodes (PIPJs), Swan neck deformity (PIPJ hyperextension + DIPJ flexion), Boutonnière deformity (PIPJ flexion + DIPJ hyperextension)",
+      "Osteoarthritis hands: Heberden's nodes (DIPJs), Bouchard's nodes (PIPJs)",
+      "Wasting: intrinsic muscle wasting between metacarpals",
+      "Skin: psoriatic plaques (psoriatic arthritis), rheumatoid nodules (extensor surface), tophi (gout)",
+    ],
+    palpationFindings: [
+      "Warmth: active inflammation, septic arthritis",
+      "Joint line tenderness: meniscal tear (knee), OA",
+      "Effusion: bulge sign (small effusion), patellar tap (large effusion), balloon sign (knee)",
+      "ROM: active then passive. Document degrees",
+      "Crepitus: OA joints",
+      "Special tests: McMurray (meniscal), Anterior/Posterior drawer (ACL/PCL), Lachman's test, Valgus/Varus stress (collateral ligaments)",
+    ],
+    importantSigns: [
+      { sign: "Heberden's nodes", significance: "DIPJ bony swellings — Osteoarthritis" },
+      { sign: "Bouchard's nodes", significance: "PIPJ bony swellings — Osteoarthritis or RA" },
+      { sign: "Swan neck deformity", significance: "PIPJ hyperextension + DIPJ flexion — Rheumatoid arthritis" },
+      { sign: "Z-thumb deformity", significance: "1st MCP flexion + IP hyperextension — Rheumatoid arthritis" },
+      { sign: "Podagra", significance: "Acute gout affecting great toe MTP joint" },
+      { sign: "Schober's test", significance: "Ankylosing spondylitis — <5 cm lumbar expansion on forward flexion" },
+    ],
+    differentialDiagnoses: [
+      "Monoarthritis: Septic arthritis, gout/pseudogout, trauma, reactive, early RA/PsA",
+      "Symmetrical polyarthritis: RA, psoriatic arthritis, SLE, viral",
+      "Asymmetrical oligoarthritis: Psoriatic arthritis, reactive arthritis, ankylosing spondylitis, IBD-associated",
+    ],
+    osceTips: [
+      "Always ask 'do you have any pain anywhere?' before moving joints",
+      "Look-Feel-Move sequence for all joint examinations",
+      "Compare bilaterally",
+      "For spine: assess movement in all 3 planes",
+    ],
+    vivaQuestions: [
+      "What are the differences between RA and OA hands?",
+      "What is the GALS examination?",
+      "How do you assess for a knee joint effusion?",
+      "What are the extra-articular features of rheumatoid arthritis?",
+      "What investigations would you request for a hot swollen joint?",
+    ],
+  },
+];
+
+export function getSystemById(id: string): ClinicalSystem | undefined {
+  return clinicalSystems.find((s) => s.id === id);
+}
