@@ -399,6 +399,364 @@ export const calculators: Calculator[] = [
     },
     reference: "BNF for Children, Harriet Lane Handbook, UpToDate Pediatric Dosing",
   },
+  // ─────────────────── ANAESTHESIA CALCULATORS ───────────────────
+  {
+    id: "rsi-calculator",
+    name: "RSI Drug Calculator",
+    abbreviation: "RSI",
+    description: "Calculates drug doses for Rapid Sequence Induction (RSI): induction agent + neuromuscular blocker based on patient weight.",
+    fields: [
+      {
+        id: "weight",
+        label: "Patient Weight",
+        type: "number",
+        unit: "kg",
+        min: 3,
+        max: 200,
+        placeholder: "e.g. 70",
+      },
+      {
+        id: "induction",
+        label: "Induction Agent",
+        type: "select",
+        options: [
+          { label: "Propofol (1.5–2.5 mg/kg)", value: 0 },
+          { label: "Ketamine (1.5–2 mg/kg) — haemodynamic instability", value: 1 },
+          { label: "Thiopentone (4–5 mg/kg) — raised ICP", value: 2 },
+          { label: "Etomidate (0.3 mg/kg) — cardiac compromise", value: 3 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "nmb",
+        label: "Neuromuscular Blocker",
+        type: "select",
+        options: [
+          { label: "Suxamethonium 1.5 mg/kg — standard RSI", value: 0 },
+          { label: "Rocuronium 1.2 mg/kg — MH / sux CI (need sugammadex)", value: 1 },
+          { label: "Suxamethonium 2 mg/kg — paediatric / laryngospasm", value: 2 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "opioid",
+        label: "Pre-intubation Opioid",
+        type: "select",
+        options: [
+          { label: "Fentanyl 1.5 mcg/kg (blunt laryngoscopy response)", value: 0 },
+          { label: "Fentanyl 2 mcg/kg (high-risk haemodynamics)", value: 1 },
+          { label: "None (pure RSI — no opioid)", value: 2 },
+        ],
+        defaultValue: 0,
+      },
+    ],
+    calculate: (values) => {
+      const wt = values.weight ?? 70;
+
+      const inductionAgents = [
+        { name: "Propofol", dose: 2.0, unit: "mg", maxDose: 200, concentration: "10 mg/mL (1%)", note: "Reduce to 1–1.5 mg/kg in elderly, compromised, or if opioid given first. Pain on injection — use large vein." },
+        { name: "Ketamine", dose: 1.5, unit: "mg", maxDose: 200, concentration: "10 mg/mL", note: "Co-administer midazolam 0.05 mg/kg to reduce emergence reactions. Preserves BP — ideal in shock/trauma." },
+        { name: "Thiopentone", dose: 4.5, unit: "mg", maxDose: 500, concentration: "25 mg/mL (2.5%)", note: "Reduces ICP. ABSOLUTE CI in porphyria. Alkaline — give via large vein. Do NOT use in haemodynamic instability." },
+        { name: "Etomidate", dose: 0.3, unit: "mg", maxDose: 60, concentration: "2 mg/mL", note: "Most haemodynamically stable. Adrenal suppression for 6–24h. Pre-treat with fentanyl to reduce myoclonic movements." },
+      ];
+
+      const nmbAgents = [
+        { name: "Suxamethonium", dose: 1.5, unit: "mg", concentration: "50 mg/mL", note: "Onset 45–60 sec. Duration 10–15 min. NO antidote — wait for spontaneous recovery. CI: burns >24h, denervation, hyperkalaemia, MH susceptibility." },
+        { name: "Rocuronium (RSI)", dose: 1.2, unit: "mg", concentration: "10 mg/mL", note: "Onset ~60 sec at 1.2 mg/kg. MUST have Sugammadex 16 mg/kg immediately available for reversal. Duration 60–90 min." },
+        { name: "Suxamethonium (Paeds)", dose: 2.0, unit: "mg", concentration: "50 mg/mL", note: "Paediatric / laryngospasm dose. Pre-treat with atropine 20 mcg/kg IV to prevent bradycardia." },
+      ];
+
+      const opioids = [
+        { name: "Fentanyl", dose: 1.5, unit: "mcg", concentration: "50 mcg/mL", note: "Give 90 sec before laryngoscopy. Blunts haemodynamic response to intubation. Causes slight apnoea." },
+        { name: "Fentanyl", dose: 2.0, unit: "mcg", concentration: "50 mcg/mL", note: "Higher dose for haemodynamic blunting. Ensure BVM and airway adjuncts ready." },
+        { name: "None", dose: 0, unit: "mcg", concentration: "—", note: "Pure RSI — opioid omitted (airway emergency, no time, or specific clinical decision)." },
+      ];
+
+      const ind = inductionAgents[values.induction ?? 0];
+      const nmb = nmbAgents[values.nmb ?? 0];
+      const op = opioids[values.opioid ?? 0];
+
+      const indDose = Math.min(Math.round(wt * ind.dose * 10) / 10, ind.maxDose);
+      const nmbDose = Math.round(wt * nmb.dose * 10) / 10;
+      const opDose = Math.round(wt * op.dose * 10) / 10;
+      const indVol = Math.round((indDose / (parseFloat(ind.concentration) || 1)) * 10) / 10;
+      const nmbVol = Math.round((nmbDose / (parseFloat(nmb.concentration) || 1)) * 10) / 10;
+      const opVol = op.dose > 0 ? Math.round((opDose / 50) * 10) / 10 : 0;
+
+      const color = "#009DB5";
+      const label = `RSI for ${wt} kg patient`;
+
+      const interpretationLines = [
+        op.dose > 0 ? `1. ${op.name} ${opDose} ${op.unit} (${opVol} mL of ${op.concentration}) — give 90 sec before intubation` : "1. No opioid selected",
+        `2. ${ind.name} ${indDose} ${ind.unit} (${indVol} mL of ${ind.concentration}) — induction`,
+        `3. ${nmb.name} ${nmbDose} ${nmb.unit} (${nmbVol} mL of ${nmb.concentration}) — immediately after loss of consciousness`,
+      ].join("\n");
+
+      const actionLines = [
+        ind.note,
+        nmb.note,
+        "\nPost-intubation: Confirm ET tube with ETCO2. Start sedation + analgesia infusion. Monitor SpO2 and ETCO2.",
+      ].join("\n\n");
+
+      return {
+        score: indDose,
+        label,
+        interpretation: interpretationLines,
+        action: actionLines,
+        color,
+      };
+    },
+    reference: "RSI guidelines: RCEM, UpToDate, Miller's Anaesthesia",
+  },
+  {
+    id: "local-anaesthetic-dose",
+    name: "Local Anaesthetic Max Dose Calculator",
+    abbreviation: "LA Dose",
+    description: "Calculates maximum safe dose (mg and volume) for common local anaesthetics based on patient weight and whether adrenaline is added.",
+    fields: [
+      {
+        id: "weight",
+        label: "Patient Weight",
+        type: "number",
+        unit: "kg",
+        min: 3,
+        max: 200,
+        placeholder: "e.g. 70",
+      },
+      {
+        id: "agent",
+        label: "Local Anaesthetic Agent",
+        type: "select",
+        options: [
+          { label: "Lidocaine (Lignocaine) 1% — 10 mg/mL", value: 0 },
+          { label: "Lidocaine (Lignocaine) 2% — 20 mg/mL", value: 1 },
+          { label: "Bupivacaine 0.25% — 2.5 mg/mL", value: 2 },
+          { label: "Bupivacaine 0.5% — 5 mg/mL", value: 3 },
+          { label: "Ropivacaine 0.2% — 2 mg/mL", value: 4 },
+          { label: "Ropivacaine 0.5% — 5 mg/mL", value: 5 },
+          { label: "Ropivacaine 0.75% — 7.5 mg/mL", value: 6 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "adrenaline",
+        label: "With Adrenaline (1:200,000)?",
+        type: "select",
+        options: [
+          { label: "Without Adrenaline (plain)", value: 0 },
+          { label: "With Adrenaline 1:200,000 (5 mcg/mL)", value: 1 },
+        ],
+        defaultValue: 0,
+      },
+    ],
+    calculate: (values) => {
+      const wt = values.weight ?? 70;
+      const withAdr = (values.adrenaline ?? 0) === 1;
+
+      const agents = [
+        { name: "Lidocaine 1%", conc: 10, maxPlain: 3, maxAdren: 7, absMaxPlain: 200, absMaxAdren: 500 },
+        { name: "Lidocaine 2%", conc: 20, maxPlain: 3, maxAdren: 7, absMaxPlain: 200, absMaxAdren: 500 },
+        { name: "Bupivacaine 0.25%", conc: 2.5, maxPlain: 2, maxAdren: 2.5, absMaxPlain: 150, absMaxAdren: 200 },
+        { name: "Bupivacaine 0.5%", conc: 5, maxPlain: 2, maxAdren: 2.5, absMaxPlain: 150, absMaxAdren: 200 },
+        { name: "Ropivacaine 0.2%", conc: 2, maxPlain: 3, maxAdren: 3, absMaxPlain: 200, absMaxAdren: 200 },
+        { name: "Ropivacaine 0.5%", conc: 5, maxPlain: 3, maxAdren: 3, absMaxPlain: 200, absMaxAdren: 200 },
+        { name: "Ropivacaine 0.75%", conc: 7.5, maxPlain: 3, maxAdren: 3, absMaxPlain: 200, absMaxAdren: 200 },
+      ];
+
+      const a = agents[values.agent ?? 0];
+      const mgPerKg = withAdr ? a.maxAdren : a.maxPlain;
+      const absMax = withAdr ? a.absMaxAdren : a.absMaxPlain;
+      const maxMg = Math.min(wt * mgPerKg, absMax);
+      const maxVol = Math.round((maxMg / a.conc) * 10) / 10;
+      const adrLine = withAdr ? " WITH adrenaline 1:200,000" : " WITHOUT adrenaline";
+      const color = maxVol > 40 ? "#F59E0B" : "#10B981";
+
+      return {
+        score: Math.round(maxMg),
+        label: `Max ${a.name}${adrLine}`,
+        interpretation: `Patient: ${wt} kg\nMax dose: ${mgPerKg} mg/kg × ${wt} kg = ${Math.round(maxMg)} mg\nCapped at absolute max: ${absMax} mg\n\nMax volume of ${a.name}: ${maxVol} mL\n\nAdrenaline concentration: ${withAdr ? "5 mcg/mL (1:200,000)" : "None (plain solution)"}`,
+        action: `LAST (Local Anaesthetic Systemic Toxicity) warning signs:\n• CNS: perioral tingling → tinnitus → metallic taste → confusion → seizures → coma\n• CVS: arrhythmias → cardiac arrest\n\nTreatment: Stop injection. Call for help. Intralipid 20%: 1.5 mL/kg IV bolus then 0.25 mL/kg/min infusion. Start CPR if arrest. NEVER give bupivacaine for Bier's block.`,
+        color,
+      };
+    },
+    reference: "AAGBI/ASRA Local Anaesthetic Toxicity Guidelines 2023; BNF",
+  },
+  {
+    id: "mac-calculator",
+    name: "MAC Anaesthetic Depth Calculator",
+    abbreviation: "MAC",
+    description: "Calculates the age-adjusted MAC (Minimum Alveolar Concentration) for common volatile anaesthetic agents and estimates the required vaporiser dial setting.",
+    fields: [
+      {
+        id: "agent",
+        label: "Volatile Agent",
+        type: "select",
+        options: [
+          { label: "Sevoflurane (MAC = 2.0%)", value: 0 },
+          { label: "Isoflurane (MAC = 1.15%)", value: 1 },
+          { label: "Desflurane (MAC = 6.0%)", value: 2 },
+          { label: "Halothane (MAC = 0.77%)", value: 3 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "age",
+        label: "Patient Age",
+        type: "number",
+        unit: "years",
+        min: 0,
+        max: 100,
+        placeholder: "e.g. 40",
+      },
+      {
+        id: "n2o",
+        label: "N₂O in Use?",
+        type: "select",
+        options: [
+          { label: "No N₂O — air/oxygen carrier gas", value: 0 },
+          { label: "Yes — 50% N₂O (reduces MAC by ~50%)", value: 1 },
+          { label: "Yes — 66% N₂O (reduces MAC by ~60%)", value: 2 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "target",
+        label: "Target Depth (× MAC)",
+        type: "select",
+        options: [
+          { label: "0.7 MAC — light anaesthesia (with opioids/regional)", value: 7 },
+          { label: "1.0 MAC — surgical anaesthesia", value: 10 },
+          { label: "1.3 MAC — deep anaesthesia / bronchospasm", value: 13 },
+        ],
+        defaultValue: 10,
+      },
+    ],
+    calculate: (values) => {
+      const baseMac = [2.0, 1.15, 6.0, 0.77][values.agent ?? 0];
+      const agentName = ["Sevoflurane", "Isoflurane", "Desflurane", "Halothane"][values.agent ?? 0];
+      const age = values.age ?? 40;
+      const n2oReduction = [0, 0.5, 0.6][values.n2o ?? 0];
+      const targetMultiple = (values.target ?? 10) / 10;
+
+      let ageMac = baseMac;
+      if (age < 1) ageMac = baseMac * 1.3;
+      else if (age <= 5) ageMac = baseMac * 1.2;
+      else if (age <= 10) ageMac = baseMac * 1.1;
+      else if (age >= 80) ageMac = baseMac * 0.55;
+      else if (age >= 60) ageMac = baseMac * (1 - (age - 40) * 0.006);
+      else ageMac = baseMac;
+
+      const macAfterN2o = ageMac * (1 - n2oReduction);
+      const targetConc = Math.round(macAfterN2o * targetMultiple * 100) / 100;
+      const score = Math.round(ageMac * 100) / 100;
+
+      const n2oText = n2oReduction > 0 ? ` with ${n2oReduction * 100}% N₂O reduction` : "";
+      const color = targetConc > ageMac * 1.2 ? "#F59E0B" : "#10B981";
+
+      return {
+        score,
+        label: `${agentName} for ${age}yr patient`,
+        interpretation: `Base MAC (${agentName}): ${baseMac}%\nAge-adjusted MAC (${age} years): ${score}%\n\nMAC after N₂O adjustment${n2oText}: ${Math.round(macAfterN2o * 100) / 100}%\n\nTarget (${targetMultiple}× MAC): ${targetConc}% end-tidal\n\nSet vaporiser dial slightly higher than target ETAG to allow for fresh gas flow uptake.`,
+        action: `Key MAC facts:\n• 1.0 MAC = prevents movement in 50% of patients to surgical stimulus\n• Maintain > 0.7 MAC to prevent awareness\n• BIS target: 40–60 for surgical anaesthesia\n• MAC reducers: age, hypothermia, opioids, N₂O, pregnancy, acidosis, lithium\n• MAC increases: hyperthermia, hyperthyroidism, chronic alcohol/drug abuse, young children`,
+        color,
+      };
+    },
+    reference: "Miller's Anaesthesia 9th Ed; Eger EI (1984); AAGBI awareness guidelines",
+  },
+  {
+    id: "sugammadex-dose",
+    name: "NMB Reversal Calculator",
+    abbreviation: "NMB Reversal",
+    description: "Calculates doses for reversal of neuromuscular blockade using Sugammadex (for rocuronium/vecuronium) or Neostigmine + Glycopyrrolate (for all non-depolarising NMBs).",
+    fields: [
+      {
+        id: "weight",
+        label: "Patient Weight",
+        type: "number",
+        unit: "kg",
+        min: 10,
+        max: 200,
+        placeholder: "e.g. 70",
+      },
+      {
+        id: "agent",
+        label: "Neuromuscular Blocker Used",
+        type: "select",
+        options: [
+          { label: "Rocuronium (reversible with Sugammadex or Neostigmine)", value: 0 },
+          { label: "Vecuronium (reversible with Sugammadex or Neostigmine)", value: 1 },
+          { label: "Atracurium / Cisatracurium (Neostigmine only — NOT Sugammadex)", value: 2 },
+        ],
+        defaultValue: 0,
+      },
+      {
+        id: "depth",
+        label: "Block Depth at Time of Reversal (TOF monitoring)",
+        type: "select",
+        options: [
+          { label: "Moderate block — TOF count 2–3 (T2/T3 present)", value: 0 },
+          { label: "Deep block — TOF count 0, PTC 1–2 post-tetanic count", value: 1 },
+          { label: "Immediate reversal (CICO emergency / RSI dose 1.2 mg/kg rocuronium)", value: 2 },
+          { label: "TOF ratio ≥ 0.4–0.9 (partial recovery — neostigmine appropriate)", value: 3 },
+        ],
+        defaultValue: 0,
+      },
+    ],
+    calculate: (values) => {
+      const wt = values.weight ?? 70;
+      const agent = values.agent ?? 0;
+      const depth = values.depth ?? 0;
+
+      const agentName = ["Rocuronium", "Vecuronium", "Atracurium/Cisatracurium"][agent];
+      const isAminosteroid = agent <= 1;
+
+      const neostigDose = Math.min(Math.round(wt * 0.05 * 10) / 10, 5);
+      const glycoDose = Math.min(Math.round(wt * 0.01 * 10) / 10, 1);
+      const glycoVolHalf = Math.round((glycoDose / 0.2) * 10) / 10;
+
+      let color = "#009DB5";
+      let label = "";
+      let interpretation = "";
+      let action = "";
+      let score = 0;
+
+      if (!isAminosteroid || depth === 3) {
+        const sugaNote = isAminosteroid ? "\n\nAlternatively: Sugammadex 2 mg/kg IV for moderate block reversal." : "";
+        score = neostigDose;
+        label = `Neostigmine ${neostigDose} mg + Glycopyrrolate ${glycoDose} mg`;
+        interpretation = `Patient: ${wt} kg\nBlock agent: ${agentName}\n\nNeostigmine: ${Math.round(wt * 50)} mcg (${neostigDose} mg) IV — max 5 mg\nGlycopyrrolate: ${Math.round(wt * 10)} mcg (${glycoDose} mg) IV — max 1 mg\n\nGlycopyrrolate volume (0.2 mg/mL): ${glycoVolHalf} mL${sugaNote}`;
+        action = "Give simultaneously (or glycopyrrolate 1 min before). Only effective when TOF ≥ 2 twitches present. Confirm reversal: TOF ratio > 0.9 on quantitative monitor OR sustained 5-second head lift. Do NOT extubate with residual block.";
+        color = "#10B981";
+      } else if (depth === 0) {
+        const sugaDose = Math.round(wt * 2);
+        const sugaVol = Math.round((sugaDose / 200) * 10) / 10;
+        score = sugaDose;
+        label = `Sugammadex ${sugaDose} mg IV`;
+        interpretation = `Patient: ${wt} kg | ${agentName} | Moderate block (TOF 2–3)\n\nSugammadex: 2 mg/kg = ${sugaDose} mg IV\nVolume (200 mg/2 mL): ${sugaVol} mL\n\nExpected full reversal within 2–3 minutes.\n\nAlternative: Neostigmine ${neostigDose} mg + Glycopyrrolate ${glycoDose} mg IV (if Sugammadex unavailable).`;
+        action = "Give as IV bolus. Confirm TOF ratio > 0.9 before extubation. Do NOT re-dose rocuronium within 24h (sugammadex-complex still circulating) — use suxamethonium if re-intubation needed. Advise patients using hormonal contraceptives to use additional contraception for 7 days.";
+        color = "#10B981";
+      } else if (depth === 1) {
+        const sugaDose = Math.round(wt * 4);
+        const sugaVol = Math.round((sugaDose / 200) * 10) / 10;
+        score = sugaDose;
+        label = `Sugammadex ${sugaDose} mg IV`;
+        interpretation = `Patient: ${wt} kg | ${agentName} | Deep block (PTC 1–2)\n\nSugammadex: 4 mg/kg = ${sugaDose} mg IV\nVolume (200 mg/2 mL): ${sugaVol} mL\n\nExpected full reversal within 3 minutes.\n\nNeostigmine is NOT effective at this depth of block.`;
+        action = "Sugammadex ONLY at this depth — neostigmine is ineffective with PTC < 2. Confirm reversal with quantitative TOF monitor (ratio > 0.9). Monitor for re-curarisation if large residual drug load.";
+        color = "#F59E0B";
+      } else {
+        const sugaDose = Math.round(wt * 16);
+        const sugaVol = Math.round((sugaDose / 200) * 10) / 10;
+        score = sugaDose;
+        label = `Sugammadex ${sugaDose} mg IV — CICO EMERGENCY`;
+        interpretation = `Patient: ${wt} kg | CICO Emergency Reversal\n\nSugammadex: 16 mg/kg = ${sugaDose} mg IV\nVolume (200 mg/2 mL): ${sugaVol} mL\n\nThis reverses RSI-dose rocuronium (1.2 mg/kg) within 3 minutes.\n\nThis is a LIFE-SAVING DOSE for cannot intubate cannot oxygenate (CICO) emergencies.`;
+        action = "EMERGENCY: Give immediately as IV bolus. This is the CICO rescue dose. Simultaneously call for surgical airway help. Patient should recover adequate spontaneous ventilation within 3 minutes. Document the emergency and consider anaesthetic incident report.";
+        color = "#EF4444";
+      }
+
+      return { score, label, interpretation, action, color };
+    },
+    reference: "AAGBI / DAS Guidelines; Bridion (Sugammadex) SPC; Miller's Anaesthesia",
+  },
 ];
 
 export function getCalculatorById(id: string): Calculator | undefined {
