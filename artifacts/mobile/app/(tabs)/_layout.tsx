@@ -24,10 +24,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
         <Label>Quiz</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="notes">
-        <Icon sf={{ default: "note.text", selected: "note.text" }} />
-        <Label>Notes</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
         <Label>Profile</Label>
@@ -52,7 +48,7 @@ function ClassicTabLayout() {
         tabBarStyle: {
           position: "absolute",
           backgroundColor: isIOS ? "transparent" : colors.card,
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
           height: isWeb ? 84 : 80,
@@ -67,17 +63,9 @@ function ClassicTabLayout() {
               style={StyleSheet.absoluteFill}
             />
           ) : (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.card },
-              ]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
           ),
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "600",
-        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
       }}
     >
       <Tabs.Screen
@@ -117,18 +105,6 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notes"
-        options={{
-          title: "Notes",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="note.text" tintColor={color} size={24} />
-            ) : (
-              <Feather name="edit-2" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -140,6 +116,8 @@ function ClassicTabLayout() {
             ),
         }}
       />
+      {/* Hidden screens — still accessible via router.push */}
+      <Tabs.Screen name="notes" options={{ href: null }} />
     </Tabs>
   );
 }
