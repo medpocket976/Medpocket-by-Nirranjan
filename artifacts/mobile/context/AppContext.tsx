@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { Appearance } from "react-native";
 
 export interface Note {
   id: string;
@@ -44,10 +45,17 @@ interface AppState {
   totalStudyDays: number;
   recentSearches: string[];
   isOnboarded: boolean;
+  theme: "system" | "light" | "dark";
+  studyReminders: boolean;
+  reminderTime: string;
 }
 
 interface AppContextType extends AppState {
+  resolvedTheme: "light" | "dark";
   updateUser: (user: Partial<UserProfile>) => void;
+  setTheme: (theme: "system" | "light" | "dark") => void;
+  setStudyReminders: (enabled: boolean) => void;
+  setReminderTime: (time: string) => void;
   addBookmark: (bookmark: Omit<Bookmark, "id" | "createdAt">) => void;
   removeBookmark: (itemId: string) => void;
   isBookmarked: (itemId: string) => boolean;
@@ -79,25 +87,36 @@ const defaultState: AppState = {
   totalStudyDays: 0,
   recentSearches: [],
   isOnboarded: false,
+  theme: "system",
+  studyReminders: false,
+  reminderTime: "08:00",
 };
 
-const AppContext = createContext<AppContextType | null>(null);
+export const AppContext = createContext<AppContextType | null>(null);
 
 const STORAGE_KEY = "@medpocket_state_v2";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
+  const [systemScheme, setSystemScheme] = useState<"light" | "dark">(
+    Appearance.getColorScheme() === "dark" ? "dark" : "light"
+  );
 
   useEffect(() => {
     loadState();
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystemScheme(colorScheme === "dark" ? "dark" : "light");
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
-    if (loaded) {
-      saveState(state);
-    }
+    if (loaded) saveState(state);
   }, [state, loaded]);
+
+  const resolvedTheme: "light" | "dark" =
+    state.theme === "system" ? systemScheme : state.theme;
 
   async function loadState() {
     try {
@@ -122,6 +141,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, user: { ...prev.user, ...updates } }));
   }, []);
 
+  const setTheme = useCallback((theme: "system" | "light" | "dark") => {
+    setState((prev) => ({ ...prev, theme }));
+    if (theme !== "system") {
+      Appearance.setColorScheme(theme);
+    } else {
+      Appearance.setColorScheme(null);
+    }
+  }, []);
+
+  const setStudyReminders = useCallback((enabled: boolean) => {
+    setState((prev) => ({ ...prev, studyReminders: enabled }));
+  }, []);
+
+  const setReminderTime = useCallback((time: string) => {
+    setState((prev) => ({ ...prev, reminderTime: time }));
+  }, []);
+
   const completeOnboarding = useCallback((profile: Partial<UserProfile>) => {
     setState((prev) => ({
       ...prev,
@@ -132,6 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(() => {
     setState({ ...defaultState });
+    Appearance.setColorScheme(null);
   }, []);
 
   const addBookmark = useCallback((bookmark: Omit<Bookmark, "id" | "createdAt">) => {
@@ -140,10 +177,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
       createdAt: new Date().toISOString(),
     };
-    setState((prev) => ({
-      ...prev,
-      bookmarks: [newBookmark, ...prev.bookmarks],
-    }));
+    setState((prev) => ({ ...prev, bookmarks: [newBookmark, ...prev.bookmarks] }));
   }, []);
 
   const removeBookmark = useCallback((itemId: string) => {
@@ -166,10 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now,
     };
-    setState((prev) => ({
-      ...prev,
-      notes: [newNote, ...prev.notes],
-    }));
+    setState((prev) => ({ ...prev, notes: [newNote, ...prev.notes] }));
     return newNote;
   }, []);
 
@@ -183,10 +214,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteNote = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((n) => n.id !== id),
-    }));
+    setState((prev) => ({ ...prev, notes: prev.notes.filter((n) => n.id !== id) }));
   }, []);
 
   const addQuizResult = useCallback((result: QuizResult) => {
@@ -230,7 +258,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         ...state,
+        resolvedTheme,
         updateUser,
+        setTheme,
+        setStudyReminders,
+        setReminderTime,
         addBookmark,
         removeBookmark,
         isBookmarked,

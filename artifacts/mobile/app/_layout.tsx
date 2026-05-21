@@ -22,28 +22,35 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isOnboarded } = useApp();
+  const { isOnboarded, resolvedTheme } = useApp();
+  const bg = resolvedTheme === "dark" ? "#0A1628" : "#F8FAFB";
 
   if (!isOnboarded) {
     return <OnboardingScreen />;
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="drug-guide/index" options={{ headerShown: false }} />
-      <Stack.Screen name="drug-guide/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="emergency/index" options={{ headerShown: false }} />
-      <Stack.Screen name="emergency/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="lab-values/index" options={{ headerShown: false }} />
-      <Stack.Screen name="calculators/index" options={{ headerShown: false }} />
-      <Stack.Screen name="calculators/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="anaesthesia-calc" options={{ headerShown: false }} />
-      <Stack.Screen name="clinical-exam/index" options={{ headerShown: false }} />
-      <Stack.Screen name="clinical-exam/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="notes/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="quiz/[subject]" options={{ headerShown: false }} />
-      <Stack.Screen name="search" options={{ headerShown: false, presentation: "modal" }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "ios",
+        contentStyle: { backgroundColor: bg },
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
+      <Stack.Screen name="drug-guide/index" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="drug-guide/[id]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="emergency/index" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="emergency/[id]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="lab-values/index" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="calculators/index" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="calculators/[id]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="anaesthesia-calc" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="clinical-exam/index" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="clinical-exam/[id]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="notes/[id]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="quiz/[subject]" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="search" options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
     </Stack>
   );
 }
