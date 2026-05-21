@@ -58,9 +58,7 @@ const DISCIPLINE_CATEGORIES = [
     label: "Physiotherapy",
     icon: "zap" as const,
     color: "#F59E0B",
-    years: [
-      "BPT 1st Year", "BPT 2nd Year", "BPT 3rd Year", "BPT 4th Year", "MPT",
-    ],
+    years: ["BPT 1st Year", "BPT 2nd Year", "BPT 3rd Year", "BPT 4th Year", "MPT"],
   },
   {
     key: "dental",
@@ -68,7 +66,8 @@ const DISCIPLINE_CATEGORIES = [
     icon: "smile" as const,
     color: "#10B981",
     years: [
-      "BDS 1st Year", "BDS 2nd Year", "BDS 3rd Year", "BDS 4th Year", "BDS Intern", "MDS",
+      "BDS 1st Year", "BDS 2nd Year", "BDS 3rd Year",
+      "BDS 4th Year", "BDS Intern", "MDS",
     ],
   },
   {
@@ -77,7 +76,27 @@ const DISCIPLINE_CATEGORIES = [
     icon: "layers" as const,
     color: "#F97316",
     years: [
-      "DMLT / BMLT", "BRIT / BMRIT", "BSc Optometry",
+      // MLT — Medical Lab Technology
+      "MLT 1st Year", "MLT 2nd Year", "BMLT 3rd Year", "BMLT 4th Year",
+      // OTAT — Occupational Therapy Assistant / Technician
+      "OTAT 1st Year", "OTAT 2nd Year", "OTAT 3rd Year",
+      // PA — Physician Assistant
+      "PA 1st Year", "PA 2nd Year", "PA 3rd Year",
+      // CLP — Clinical Psychology
+      "CLP 1st Year", "CLP 2nd Year", "CLP 3rd Year",
+      // CPPT — Cardiopulmonary Physical Therapy
+      "CPPT 1st Year", "CPPT 2nd Year", "CPPT 3rd Year",
+      // CVT — Cardiovascular Technology
+      "CVT 1st Year", "CVT 2nd Year", "CVT 3rd Year",
+      // CT — Computed Tomography / Cyto Technology
+      "CT 1st Year", "CT 2nd Year", "CT 3rd Year",
+      // RIT — Radiologic Imaging Technology
+      "RIT 1st Year", "RIT 2nd Year", "RIT 3rd Year",
+      // OPTOM — Optometry
+      "OPTOM 1st Year", "OPTOM 2nd Year", "OPTOM 3rd Year", "OPTOM 4th Year",
+      // DT — Dental Technology
+      "DT 1st Year", "DT 2nd Year", "DT 3rd Year",
+      // Other
       "BSc Dietetics", "BSc Audiology",
     ],
   },
@@ -177,293 +196,204 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[
+      <Animated.View
+        style={[
           styles.body,
-          { paddingBottom: insets.bottom + 32, minHeight: SCREEN_HEIGHT * 0.68 },
+          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        {/* ── Step 0: Name & college ── */}
+        {step === 0 && (
+          <ScrollView contentContainerStyle={styles.stepPad} keyboardShouldPersistTaps="handled">
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>
+              Welcome to MedPocket
+            </Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              Your complete paramedical reference. Let's set up your profile.
+            </Text>
 
-          {/* STEP 0 — Welcome */}
-          {step === 0 && (
-            <View style={styles.stepWrap}>
-              <View style={[styles.bigIcon, { backgroundColor: colors.tealLight }]}>
-                <Feather name="heart" size={42} color={colors.primary} />
-              </View>
-              <Text style={[styles.stepTitle, { color: colors.foreground }]}>
-                Welcome to MedPocket
-              </Text>
-              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                Your complete paramedical & medical reference — drugs, calculators, lab values, emergency protocols, and more.
-              </Text>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>YOUR NAME</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border, ...shadow }]}
+              placeholder="e.g. Priya Sharma"
+              placeholderTextColor={colors.mutedForeground}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
 
-              <View style={[styles.groupCard, { backgroundColor: colors.card, ...shadow }]}>
-                {[
-                  { icon: "tablet" as const, label: "1000+ Drug References", color: "#009DB5" },
-                  { icon: "sliders" as const, label: "Clinical Calculators + Anaesthesia Doses", color: "#8B5CF6" },
-                  { icon: "alert-circle" as const, label: "Emergency Protocols", color: "#EF4444" },
-                  { icon: "bar-chart-2" as const, label: "Lab Value Reference", color: "#10B981" },
-                ].map((f, i) => (
-                  <View
-                    key={f.label}
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
+              COLLEGE / INSTITUTION <Text style={{ fontWeight: "400" }}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border, ...shadow }]}
+              placeholder="e.g. AIIMS Delhi, CMC Vellore"
+              placeholderTextColor={colors.mutedForeground}
+              value={college}
+              onChangeText={setCollege}
+              returnKeyType="done"
+            />
+
+            <Text style={[styles.featureHint, { color: colors.mutedForeground, backgroundColor: colors.muted }]}>
+              <Feather name="info" size={12} /> {"  "}All data is stored locally on your device. Nothing is sent to any server.
+            </Text>
+          </ScrollView>
+        )}
+
+        {/* ── Step 1: Discipline ── */}
+        {step === 1 && (
+          <ScrollView contentContainerStyle={styles.stepPad} showsVerticalScrollIndicator={false}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>
+              What's your discipline?
+            </Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              We'll personalise your drug guide, quiz topics, and content.
+            </Text>
+
+            <View style={styles.catGrid}>
+              {DISCIPLINE_CATEGORIES.map((cat) => {
+                const active = selectedCat === cat.key;
+                return (
+                  <Pressable
+                    key={cat.key}
                     style={[
-                      styles.featureRow,
-                      i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+                      styles.catCard,
+                      { backgroundColor: colors.card, borderColor: colors.border, ...shadow },
+                      active && { borderColor: cat.color, backgroundColor: cat.color + "12" },
                     ]}
+                    onPress={() => selectDiscipline(cat.key)}
                   >
-                    <View style={[styles.featureIcon, { backgroundColor: f.color + "18" }]}>
-                      <Feather name={f.icon} size={16} color={f.color} />
+                    <View style={[styles.catCardIcon, { backgroundColor: cat.color + "20" }]}>
+                      <Feather name={cat.icon} size={20} color={cat.color} />
                     </View>
-                    <Text style={[styles.featureLabel, { color: colors.foreground }]}>{f.label}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [styles.primaryBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
-                onPress={() => animateTo(1)}
-              >
-                <Text style={styles.primaryBtnText}>Get Started</Text>
-                <Feather name="arrow-right" size={18} color="#fff" />
-              </Pressable>
-
-              <Text style={[styles.disclaimer, { color: colors.mutedForeground }]}>
-                For educational use only · Not a substitute for clinical judgment
-              </Text>
+                    <Text style={[styles.catCardLabel, { color: active ? cat.color : colors.foreground }]}>
+                      {cat.label}
+                    </Text>
+                    {active && (
+                      <View style={[styles.catCardCheck, { backgroundColor: cat.color }]}>
+                        <Feather name="check" size={10} color="#fff" />
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
-          )}
+          </ScrollView>
+        )}
 
-          {/* STEP 1 — Profile */}
-          {step === 1 && (
-            <View style={styles.stepWrap}>
-              <View style={[styles.smallIcon, { backgroundColor: colors.tealLight }]}>
-                <Feather name="user" size={26} color={colors.primary} />
-              </View>
-              <Text style={[styles.stepTitle, { color: colors.foreground }]}>Set Up Your Profile</Text>
-              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                Personalise your experience. You can update this anytime.
-              </Text>
+        {/* ── Step 2: Year / Course ── */}
+        {step === 2 && (
+          <ScrollView contentContainerStyle={styles.stepPad} showsVerticalScrollIndicator={false}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>
+              Select your course year
+            </Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              {currentCat.label} — choose the closest match
+            </Text>
 
-              <Text style={[styles.iosLabel, { color: colors.mutedForeground }]}>YOUR NAME</Text>
-              <TextInput
-                style={[
-                  styles.iosInput,
-                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, ...shadow },
-                ]}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g. Dr. Nirranjan"
-                placeholderTextColor={colors.mutedForeground}
-                autoCapitalize="words"
-                returnKeyType="next"
-              />
-
-              <Text style={[styles.iosLabel, { color: colors.mutedForeground, marginTop: 16 }]}>
-                COLLEGE / INSTITUTION (optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.iosInput,
-                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, ...shadow },
-                ]}
-                value={college}
-                onChangeText={setCollege}
-                placeholder="e.g. AIIMS Delhi, JIPMER"
-                placeholderTextColor={colors.mutedForeground}
-                returnKeyType="done"
-              />
-
-              <View style={styles.navRow}>
-                <Pressable
-                  style={({ pressed }) => [styles.secondaryBtn, { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
-                  onPress={() => animateTo(0)}
-                >
-                  <Feather name="arrow-left" size={16} color={colors.foreground} />
-                  <Text style={[styles.secondaryBtnText, { color: colors.foreground }]}>Back</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.primaryBtn,
-                    { flex: 1, backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => animateTo(2)}
-                >
-                  <Text style={styles.primaryBtnText}>Continue</Text>
-                  <Feather name="arrow-right" size={16} color="#fff" />
-                </Pressable>
-              </View>
-            </View>
-          )}
-
-          {/* STEP 2 — Discipline + Year */}
-          {step === 2 && (
-            <View style={styles.stepWrap}>
-              <View style={[styles.smallIcon, { backgroundColor: currentCat.color + "18" }]}>
-                <Feather name={currentCat.icon} size={26} color={currentCat.color} />
-              </View>
-              <Text style={[styles.stepTitle, { color: colors.foreground }]}>Your Discipline</Text>
-              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                Select your field and year so we can tailor content for you.
-              </Text>
-
-              <Text style={[styles.iosLabel, { color: colors.mutedForeground }]}>FIELD OF STUDY</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.catScroll}
-              >
-                {DISCIPLINE_CATEGORIES.map((cat) => {
-                  const active = selectedCat === cat.key;
-                  return (
-                    <Pressable
-                      key={cat.key}
+            <View style={[styles.yearList, { backgroundColor: colors.card, ...shadow }]}>
+              {currentCat.years.map((y, i) => {
+                const active = selectedYear === y;
+                return (
+                  <Pressable
+                    key={y}
+                    style={[
+                      styles.yearRow,
+                      i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+                      { backgroundColor: active ? currentCat.color + "10" : "transparent" },
+                    ]}
+                    onPress={() => {
+                      setSelectedYear(y);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <View
                       style={[
-                        styles.catChip,
-                        active
-                          ? { backgroundColor: cat.color, borderColor: cat.color }
-                          : { backgroundColor: colors.card, borderColor: colors.border },
+                        styles.yearDot,
+                        { borderColor: currentCat.color },
+                        active && { backgroundColor: currentCat.color },
                       ]}
-                      onPress={() => selectDiscipline(cat.key)}
-                    >
-                      <Feather name={cat.icon} size={12} color={active ? "#fff" : cat.color} />
-                      <Text style={[styles.catChipText, { color: active ? "#fff" : colors.foreground }]}>
-                        {cat.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-
-              <Text style={[styles.iosLabel, { color: colors.mutedForeground, marginTop: 16 }]}>
-                STUDY YEAR
-              </Text>
-              <View style={[styles.groupCard, { backgroundColor: colors.card, ...shadow }]}>
-                {currentCat.years.map((y, i) => {
-                  const sel = selectedYear === y;
-                  return (
-                    <Pressable
-                      key={y}
-                      style={({ pressed }) => [
-                        styles.yearRow,
-                        i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-                        { opacity: pressed ? 0.6 : 1 },
+                    />
+                    <Text
+                      style={[
+                        styles.yearRowText,
+                        { color: active ? currentCat.color : colors.foreground, fontWeight: active ? "700" : "400" },
                       ]}
-                      onPress={() => {
-                        setSelectedYear(y);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
                     >
-                      <Text
-                        style={[
-                          styles.yearRowText,
-                          { color: colors.foreground },
-                          sel && { color: currentCat.color, fontWeight: "700" },
-                        ]}
-                      >
-                        {y}
-                      </Text>
-                      {sel && <Feather name="check" size={16} color={currentCat.color} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <View style={styles.navRow}>
-                <Pressable
-                  style={({ pressed }) => [styles.secondaryBtn, { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
-                  onPress={() => animateTo(1)}
-                >
-                  <Feather name="arrow-left" size={16} color={colors.foreground} />
-                  <Text style={[styles.secondaryBtnText, { color: colors.foreground }]}>Back</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.primaryBtn,
-                    { flex: 1, backgroundColor: "#10B981", opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={finish}
-                >
-                  <Feather name="check-circle" size={16} color="#fff" />
-                  <Text style={styles.primaryBtnText}>Start Learning</Text>
-                </Pressable>
-              </View>
+                      {y}
+                    </Text>
+                    {active && <Feather name="check" size={15} color={currentCat.color} />}
+                  </Pressable>
+                );
+              })}
             </View>
-          )}
+          </ScrollView>
+        )}
+      </Animated.View>
 
-        </Animated.View>
-      </ScrollView>
+      {/* Footer buttons */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        {step > 0 && (
+          <Pressable
+            style={({ pressed }) => [styles.backBtn, { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => animateTo(step - 1)}
+          >
+            <Feather name="arrow-left" size={18} color={colors.foreground} />
+            <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
+          </Pressable>
+        )}
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.nextBtn,
+            { backgroundColor: currentCat.color, flex: step === 0 ? 1 : undefined, opacity: pressed ? 0.85 : 1 },
+          ]}
+          onPress={() => {
+            if (step < 2) {
+              animateTo(step + 1);
+            } else {
+              finish();
+            }
+          }}
+        >
+          <Text style={styles.nextBtnText}>{step === 2 ? "Get Started" : "Continue"}</Text>
+          <Feather name={step === 2 ? "check" : "arrow-right"} size={18} color="#fff" />
+        </Pressable>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  topBand: { paddingHorizontal: 20, paddingBottom: 20 },
-  logoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 18 },
-  logoIcon: {
-    width: 44, height: 44, borderRadius: 13,
-    backgroundColor: "#fff", alignItems: "center", justifyContent: "center",
-  },
-  logoName: { fontSize: 20, fontWeight: "800", color: "#fff" },
-  logoBy: { fontSize: 11, color: "rgba(255,255,255,0.72)", fontWeight: "500" },
-  dots: { flexDirection: "row", gap: 6 },
-  dot: { width: 22, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.3)" },
-  dotActive: { width: 38, backgroundColor: "#fff" },
-  dotDone: { backgroundColor: "rgba(255,255,255,0.65)" },
-
-  body: { padding: 20 },
-  stepWrap: { gap: 14 },
-
-  bigIcon: {
-    width: 90, height: 90, borderRadius: 26,
-    alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: 4,
-  },
-  smallIcon: {
-    width: 60, height: 60, borderRadius: 18,
-    alignItems: "center", justifyContent: "center", marginBottom: 4,
-  },
-  stepTitle: { fontSize: 28, fontWeight: "800", lineHeight: 34, letterSpacing: -0.3 },
-  stepSub: { fontSize: 14, lineHeight: 21 },
-
-  groupCard: { borderRadius: 14, overflow: "hidden" },
-  featureRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  featureIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  featureLabel: { fontSize: 14, fontWeight: "600", flex: 1 },
-
-  iosLabel: {
-    fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase",
-  },
-  iosInput: {
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14,
-    fontSize: 15, borderWidth: StyleSheet.hairlineWidth,
-  },
-
-  primaryBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    borderRadius: 14, paddingVertical: 15, gap: 8,
-  },
-  primaryBtnText: { fontSize: 16, fontWeight: "800", color: "#fff" },
-  secondaryBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    borderRadius: 14, paddingVertical: 15, paddingHorizontal: 20, gap: 6,
-  },
-  secondaryBtnText: { fontSize: 15, fontWeight: "600" },
-  navRow: { flexDirection: "row", gap: 10 },
-
-  disclaimer: { fontSize: 11, textAlign: "center", lineHeight: 16 },
-
-  catScroll: { gap: 8, paddingVertical: 4 },
-  catChip: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
-  },
-  catChipText: { fontSize: 12, fontWeight: "600" },
-
-  yearRow: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 16, paddingVertical: 13, minHeight: 46,
-  },
-  yearRowText: { flex: 1, fontSize: 15 },
+  topBand:      { paddingHorizontal: 20, paddingBottom: 20 },
+  logoRow:      { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
+  logoIcon:     { width: 40, height: 40, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  logoName:     { fontSize: 20, fontWeight: "800", color: "#fff", letterSpacing: -0.3 },
+  logoBy:       { fontSize: 11, color: "rgba(255,255,255,0.75)" },
+  dots:         { flexDirection: "row", gap: 6 },
+  dot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.35)" },
+  dotActive:    { width: 24, backgroundColor: "#fff" },
+  dotDone:      { backgroundColor: "rgba(255,255,255,0.7)" },
+  body:         { flex: 1 },
+  stepPad:      { padding: 20, paddingBottom: 32 },
+  stepTitle:    { fontSize: 26, fontWeight: "800", letterSpacing: -0.4, marginBottom: 8 },
+  stepSub:      { fontSize: 14, lineHeight: 21, marginBottom: 28 },
+  fieldLabel:   { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 },
+  input:        { borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: StyleSheet.hairlineWidth, marginBottom: 20 },
+  featureHint:  { fontSize: 12, lineHeight: 18, borderRadius: 10, padding: 12, marginTop: 8 },
+  catGrid:      { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  catCard:      { width: "46%", flexGrow: 1, borderRadius: 16, borderWidth: 1.5, padding: 14, alignItems: "center", gap: 8, position: "relative" },
+  catCardIcon:  { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  catCardLabel: { fontSize: 13, fontWeight: "600", textAlign: "center" },
+  catCardCheck: { position: "absolute", top: 8, right: 8, width: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  yearList:     { borderRadius: 16, overflow: "hidden" },
+  yearRow:      { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
+  yearDot:      { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+  yearRowText:  { flex: 1, fontSize: 15 },
+  footer:       { flexDirection: "row", gap: 12, paddingHorizontal: 20, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth },
+  backBtn:      { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingVertical: 16, borderRadius: 16 },
+  backBtnText:  { fontSize: 15, fontWeight: "600" },
+  nextBtn:      { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 28, paddingVertical: 16, borderRadius: 16 },
+  nextBtnText:  { fontSize: 15, fontWeight: "700", color: "#fff" },
 });
