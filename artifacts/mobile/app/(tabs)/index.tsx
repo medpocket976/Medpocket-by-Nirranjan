@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -15,21 +16,66 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const CLINICAL_PEARLS = [
-  "Amoxicillin rash in infectious mononucleosis ≠ penicillin allergy.",
-  "GCS ≤ 8 → intubate. 'Eight, intubate!'",
-  "In anaphylaxis: Epinephrine IM first — never delay for antihistamines.",
-  "Painless jaundice + palpable gallbladder = pancreatic head Ca (Courvoisier's law).",
-  "NEVER perform vaginal exam in suspected placenta previa.",
-  "Correct Na+ slowly — max 8–10 mEq/L per day to prevent osmotic demyelination.",
-  "AST:ALT >2:1 with absolute <300 U/L → alcoholic hepatitis.",
-  "Wells DVT score ≥3 → skip D-dimer, go straight to ultrasound.",
-  "Metformin does NOT cause hypoglycemia as monotherapy.",
-  "Troponin rise and fall = acute MI. Troponin alone = not diagnostic.",
-  "Free gas under diaphragm on erect AXR = perforated viscus → urgent surgery.",
-  "CURB-65 ≥3 → hospital admission for pneumonia.",
-  "Warfarin antidote: Vitamin K for slow reversal; PCC for emergency reversal.",
-  "Loop of Henle active transport: Na-K-2Cl — inhibited by furosemide.",
-  "Coagulative necrosis = ischemic infarcts (except brain → liquefactive).",
+  {
+    text: "Amoxicillin rash in infectious mononucleosis ≠ penicillin allergy.",
+    ref: "Harrison's Principles of Internal Medicine, 21e",
+  },
+  {
+    text: "GCS ≤ 8 → intubate. 'Eight, intubate!'",
+    ref: "Teasdale G, Jennett B. Lancet. 1974",
+  },
+  {
+    text: "In anaphylaxis: Epinephrine IM first — never delay for antihistamines.",
+    ref: "WAO Anaphylaxis Guidelines 2020",
+  },
+  {
+    text: "Painless jaundice + palpable gallbladder = pancreatic head Ca (Courvoisier's law).",
+    ref: "Bailey & Love's Surgery, 27e",
+  },
+  {
+    text: "NEVER perform vaginal exam in suspected placenta previa.",
+    ref: "RCOG Guideline No. 27, 2011",
+  },
+  {
+    text: "Correct Na+ slowly — max 8–10 mEq/L per day to prevent osmotic demyelination.",
+    ref: "Sterns RH. NEJM 2015; 372:55",
+  },
+  {
+    text: "AST:ALT >2:1 with absolute <300 U/L → alcoholic hepatitis.",
+    ref: "Cohen JA, Kaplan MM. Gastroenterology 1979",
+  },
+  {
+    text: "Wells DVT score ≥3 → skip D-dimer, go straight to ultrasound.",
+    ref: "Wells PS et al. Lancet 1997; 350:1795",
+  },
+  {
+    text: "Metformin does NOT cause hypoglycemia as monotherapy.",
+    ref: "BNF 86 / ADA Standards of Care 2024",
+  },
+  {
+    text: "Troponin rise and fall = acute MI. Troponin alone = not diagnostic.",
+    ref: "ESC NSTEMI Guidelines 2020",
+  },
+  {
+    text: "Free gas under diaphragm on erect AXR = perforated viscus → urgent surgery.",
+    ref: "Bailey & Love's Surgery, 27e",
+  },
+  {
+    text: "CURB-65 ≥3 → hospital admission for pneumonia.",
+    ref: "Lim WS et al. Thorax 2003; 58:377",
+  },
+  {
+    text: "Warfarin antidote: Vitamin K for slow reversal; PCC for emergency reversal.",
+    ref: "BSH Guidelines on Anticoagulation 2022",
+  },
+  {
+    text: "Loop of Henle active transport: Na-K-2Cl — inhibited by furosemide.",
+    ref: "Guyton & Hall Medical Physiology, 14e",
+  },
+  {
+    text: "Coagulative necrosis = ischemic infarcts (except brain → liquefactive).",
+    ref: "Robbins & Cotran Pathology, 10e",
+  },
 ];
 
 const MODULES = [
@@ -37,8 +83,9 @@ const MODULES = [
   { id: "clinical-exam", label: "Clinical Exam", icon: "activity" as const, color: "#8B5CF6", desc: "Systems" },
   { id: "emergency", label: "Emergency", icon: "alert-circle" as const, color: "#EF4444", desc: "Protocols" },
   { id: "lab-values", label: "Lab Values", icon: "bar-chart-2" as const, color: "#10B981", desc: "References" },
-  { id: "calculators", label: "Calculators", icon: "sliders" as const, color: "#F59E0B", desc: "8 calculators" },
-  { id: "search", label: "Search All", icon: "search" as const, color: "#6366F1", desc: "Global search" },
+  { id: "calculators", label: "Calculators", icon: "sliders" as const, color: "#F59E0B", desc: "9 calculators" },
+  { id: "anaesthesia-calc", label: "Anaesthesia", icon: "wind" as const, color: "#6366F1", desc: "Dose calculator" },
+  { id: "search", label: "Search All", icon: "search" as const, color: "#EC4899", desc: "Global search" },
 ];
 
 export default function HomeScreen() {
@@ -48,90 +95,140 @@ export default function HomeScreen() {
 
   const todayPearl = CLINICAL_PEARLS[new Date().getDate() % CLINICAL_PEARLS.length];
 
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const statsAnim = useRef(new Animated.Value(0)).current;
+  const pearlAnim = useRef(new Animated.Value(0)).current;
+  const gridAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     recordStudySession();
+    Animated.stagger(80, [
+      Animated.spring(headerAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(statsAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(pearlAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(gridAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+    ]).start();
   }, []);
+
+  const animStyle = (anim: Animated.Value) => ({
+    opacity: anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
+  });
 
   const styles = makeStyles(colors);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   return (
     <ScrollView
-      style={[styles.container]}
+      style={styles.container}
       contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, animStyle(headerAnim)]}>
         <View>
           <Text style={styles.greeting}>Good {getTimeOfDay()},</Text>
           <Text style={styles.name}>{user.name} 👋</Text>
           <Text style={styles.subtitle}>{user.year}</Text>
         </View>
-        <Pressable style={styles.searchBtn} onPress={() => router.push("/search")}>
+        <Pressable
+          style={({ pressed }) => [styles.searchBtn, { opacity: pressed ? 0.8 : 1 }]}
+          onPress={() => router.push("/search")}
+        >
           <Feather name="search" size={20} color={colors.primary} />
         </Pressable>
-      </View>
+      </Animated.View>
 
       {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <StatCard icon="zap" label="Study Streak" value={`${streak} days`} color="#F59E0B" colors={colors} />
-        <StatCard icon="bookmark" label="Bookmarks" value={`${bookmarks.length}`} color="#009DB5" colors={colors} />
+      <Animated.View style={[styles.statsRow, animStyle(statsAnim)]}>
+        <StatCard icon="zap" label="Streak" value={`${streak}d`} color="#F59E0B" colors={colors} />
+        <StatCard icon="bookmark" label="Saved" value={`${bookmarks.length}`} color="#009DB5" colors={colors} />
         <StatCard icon="check-circle" label="Quizzes" value={`${quizHistory.length}`} color="#8B5CF6" colors={colors} />
-        <StatCard icon="calendar" label="Study Days" value={`${totalStudyDays}`} color="#10B981" colors={colors} />
-      </View>
+        <StatCard icon="calendar" label="Days" value={`${totalStudyDays}`} color="#10B981" colors={colors} />
+      </Animated.View>
 
       {/* Daily Pearl */}
-      <Pressable style={styles.pearlCard} onPress={() => {}}>
-        <View style={styles.pearlHeader}>
-          <View style={styles.pearlBadge}>
-            <Feather name="sun" size={12} color="#fff" />
-            <Text style={styles.pearlBadgeText}>Daily Pearl</Text>
+      <Animated.View style={animStyle(pearlAnim)}>
+        <Pressable style={styles.pearlCard} onPress={() => {}}>
+          <View style={styles.pearlHeader}>
+            <View style={styles.pearlBadge}>
+              <Feather name="sun" size={12} color="#fff" />
+              <Text style={styles.pearlBadgeText}>Daily Pearl</Text>
+            </View>
+            <Text style={styles.pearlDate}>
+              {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+            </Text>
           </View>
-          <Text style={styles.pearlDate}>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</Text>
-        </View>
-        <Text style={styles.pearlText}>"{todayPearl}"</Text>
-      </Pressable>
+          <Text style={styles.pearlText}>"{todayPearl.text}"</Text>
+          <View style={styles.pearlRefRow}>
+            <Feather name="book-open" size={10} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.pearlRef}>{todayPearl.ref}</Text>
+          </View>
+        </Pressable>
+      </Animated.View>
 
       {/* Modules Grid */}
-      <Text style={styles.sectionTitle}>Quick Access</Text>
-      <View style={styles.grid}>
-        {MODULES.map((mod) => (
-          <Pressable
-            key={mod.id}
-            style={({ pressed }) => [styles.moduleCard, { opacity: pressed ? 0.8 : 1 }]}
-            onPress={() => router.push(`/${mod.id}` as any)}
-          >
-            <View style={[styles.moduleIcon, { backgroundColor: mod.color + "20" }]}>
-              <Feather name={mod.icon} size={22} color={mod.color} />
-            </View>
-            <Text style={styles.moduleLabel}>{mod.label}</Text>
-            <Text style={styles.moduleDesc}>{mod.desc}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <Animated.View style={animStyle(gridAnim)}>
+        <Text style={styles.sectionTitle}>Quick Access</Text>
+        <View style={styles.grid}>
+          {MODULES.map((mod) => (
+            <Pressable
+              key={mod.id}
+              style={({ pressed }) => [styles.moduleCard, { opacity: pressed ? 0.82 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+              onPress={() => router.push(`/${mod.id}` as any)}
+            >
+              <View style={[styles.moduleIcon, { backgroundColor: mod.color + "20" }]}>
+                <Feather name={mod.icon} size={22} color={mod.color} />
+              </View>
+              <Text style={styles.moduleLabel}>{mod.label}</Text>
+              <Text style={styles.moduleDesc}>{mod.desc}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </Animated.View>
 
       {/* Recent Quiz */}
       {quizHistory.length > 0 && (
-        <>
+        <Animated.View style={animStyle(gridAnim)}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           <View style={styles.activityCard}>
             {quizHistory.slice(0, 3).map((result, i) => (
-              <View key={i} style={[styles.activityRow, i < 2 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View
+                key={i}
+                style={[
+                  styles.activityRow,
+                  i < Math.min(quizHistory.length - 1, 2) && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
+              >
                 <View style={styles.activityLeft}>
-                  <View style={[styles.activityDot, { backgroundColor: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" }]} />
+                  <View
+                    style={[
+                      styles.activityDot,
+                      { backgroundColor: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" },
+                    ]}
+                  />
                   <View>
                     <Text style={styles.activityTitle}>{result.subject} Quiz</Text>
-                    <Text style={styles.activityDate}>{new Date(result.date).toLocaleDateString()}</Text>
+                    <Text style={styles.activityDate}>
+                      {new Date(result.date).toLocaleDateString()}
+                    </Text>
                   </View>
                 </View>
-                <Text style={[styles.activityScore, { color: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" }]}>
+                <Text
+                  style={[
+                    styles.activityScore,
+                    { color: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" },
+                  ]}
+                >
                   {result.score}/{result.total}
                 </Text>
               </View>
             ))}
           </View>
-        </>
+        </Animated.View>
       )}
 
       {/* Disclaimer */}
@@ -213,7 +310,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     pearlCard: {
       marginHorizontal: 20,
       padding: 16,
-      borderRadius: 16,
+      borderRadius: 18,
       backgroundColor: colors.primary,
       marginBottom: 24,
     },
@@ -235,6 +332,16 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     pearlBadgeText: { fontSize: 11, color: "#fff", fontWeight: "600" },
     pearlDate: { fontSize: 11, color: "rgba(255,255,255,0.7)" },
     pearlText: { fontSize: 14, color: "#fff", lineHeight: 22, fontStyle: "italic" },
+    pearlRefRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      marginTop: 10,
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: "rgba(255,255,255,0.2)",
+    },
+    pearlRef: { fontSize: 10, color: "rgba(255,255,255,0.7)", fontStyle: "italic", flex: 1 },
     sectionTitle: {
       fontSize: 18,
       fontWeight: "700",

@@ -43,6 +43,7 @@ interface AppState {
   lastStudyDate: string;
   totalStudyDays: number;
   recentSearches: string[];
+  isOnboarded: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -57,6 +58,8 @@ interface AppContextType extends AppState {
   addRecentSearch: (query: string) => void;
   clearRecentSearches: () => void;
   recordStudySession: () => void;
+  completeOnboarding: (profile: Partial<UserProfile>) => void;
+  signOut: () => void;
 }
 
 const defaultUser: UserProfile = {
@@ -75,11 +78,12 @@ const defaultState: AppState = {
   lastStudyDate: "",
   totalStudyDays: 0,
   recentSearches: [],
+  isOnboarded: false,
 };
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const STORAGE_KEY = "@medpocket_state";
+const STORAGE_KEY = "@medpocket_state_v2";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
@@ -100,7 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as AppState;
-        setState(parsed);
+        setState({ ...defaultState, ...parsed });
       }
     } catch {
     } finally {
@@ -116,6 +120,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = useCallback((updates: Partial<UserProfile>) => {
     setState((prev) => ({ ...prev, user: { ...prev.user, ...updates } }));
+  }, []);
+
+  const completeOnboarding = useCallback((profile: Partial<UserProfile>) => {
+    setState((prev) => ({
+      ...prev,
+      isOnboarded: true,
+      user: { ...prev.user, ...profile },
+    }));
+  }, []);
+
+  const signOut = useCallback(() => {
+    setState({ ...defaultState });
   }, []);
 
   const addBookmark = useCallback((bookmark: Omit<Bookmark, "id" | "createdAt">) => {
@@ -225,6 +241,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addRecentSearch,
         clearRecentSearches,
         recordStudySession,
+        completeOnboarding,
+        signOut,
       }}
     >
       {children}

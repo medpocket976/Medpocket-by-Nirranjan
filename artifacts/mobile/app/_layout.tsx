@@ -14,13 +14,20 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
+import OnboardingScreen from "@/components/Onboarding";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { isOnboarded } = useApp();
+
+  if (!isOnboarded) {
+    return <OnboardingScreen />;
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -31,6 +38,7 @@ function RootLayoutNav() {
       <Stack.Screen name="lab-values/index" options={{ headerShown: false }} />
       <Stack.Screen name="calculators/index" options={{ headerShown: false }} />
       <Stack.Screen name="calculators/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="anaesthesia-calc" options={{ headerShown: false }} />
       <Stack.Screen name="clinical-exam/index" options={{ headerShown: false }} />
       <Stack.Screen name="clinical-exam/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="notes/[id]" options={{ headerShown: false }} />
