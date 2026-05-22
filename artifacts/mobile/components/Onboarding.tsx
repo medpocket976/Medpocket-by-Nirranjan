@@ -215,7 +215,7 @@ export default function OnboardingScreen() {
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>YOUR NAME</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border, ...shadow }]}
-              placeholder="e.g. Priya Sharma"
+              placeholder="e.g. Nirranjan"
               placeholderTextColor={colors.mutedForeground}
               value={name}
               onChangeText={setName}

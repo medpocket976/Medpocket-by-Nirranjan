@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
+  Animated,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -12,6 +14,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+
+const DEVELOPER_EMAIL = "medpocketbynirranjan@gmail.com";
 
 const SECTIONS = [
   {
@@ -66,9 +70,74 @@ const SECTIONS = [
     icon: "mail" as const,
     color: "#009DB5",
     title: "Contact",
-    body: "If you have any questions, concerns, or feedback about this Privacy Policy or the App, you may contact the developer:\n\nDeveloper: Nirranjan\nApp: MedPocket — Paramedical Reference\n\nAs this is an educational app with no data collection, most privacy concerns are addressed by the local-only architecture described above.",
+    body: `If you have any questions, concerns, or feedback about this Privacy Policy or the App, you may contact the developer:\n\nDeveloper: Nirranjan\nApp: MedPocket — Paramedical Reference\nEmail: ${DEVELOPER_EMAIL}\n\nAs this is an educational app with no data collection, most privacy concerns are addressed by the local-only architecture described above.`,
+    email: DEVELOPER_EMAIL,
   },
 ];
+
+function AnimatedCard({
+  section,
+  index,
+  colors,
+  s,
+}: {
+  section: (typeof SECTIONS)[number];
+  index: number;
+  colors: ReturnType<typeof useColors>;
+  s: ReturnType<typeof styles>;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(28)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 380,
+        delay: index * 55,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        tension: 60,
+        friction: 10,
+        delay: index * 55,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        s.card,
+        { backgroundColor: colors.card },
+        { opacity, transform: [{ translateY }] },
+      ]}
+    >
+      <View style={s.cardHeader}>
+        <View style={[s.cardIcon, { backgroundColor: section.color + "18" }]}>
+          <Feather name={section.icon} size={16} color={section.color} />
+        </View>
+        <Text style={[s.cardTitle, { color: colors.foreground }]}>{section.title}</Text>
+      </View>
+      <Text style={[s.cardBody, { color: colors.mutedForeground }]}>{section.body}</Text>
+
+      {section.email && (
+        <Pressable
+          style={({ pressed }) => [
+            s.emailBtn,
+            { backgroundColor: section.color + "14", opacity: pressed ? 0.7 : 1 },
+          ]}
+          onPress={() => Linking.openURL(`mailto:${section.email}`)}
+        >
+          <Feather name="send" size={13} color={section.color} />
+          <Text style={[s.emailBtnText, { color: section.color }]}>{section.email}</Text>
+        </Pressable>
+      )}
+    </Animated.View>
+  );
+}
 
 export default function PrivacyPolicyScreen() {
   const colors = useColors();
@@ -77,22 +146,40 @@ export default function PrivacyPolicyScreen() {
   const isIOS = Platform.OS === "ios";
   const s = styles(colors, insets, isIOS);
 
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerY = useRef(new Animated.Value(-16)).current;
+  const badgeOpacity = useRef(new Animated.Value(0)).current;
+  const badgeScale = useRef(new Animated.Value(0.94)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerOpacity, { toValue: 1, duration: 320, useNativeDriver: true }),
+      Animated.spring(headerY, { toValue: 0, tension: 70, friction: 12, useNativeDriver: true }),
+    ]).start();
+    Animated.parallel([
+      Animated.timing(badgeOpacity, { toValue: 1, duration: 400, delay: 120, useNativeDriver: true }),
+      Animated.spring(badgeScale, { toValue: 1, tension: 60, friction: 10, delay: 120, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   return (
     <View style={s.container}>
       {/* Header */}
-      <View style={s.header}>
+      <Animated.View
+        style={[s.header, { opacity: headerOpacity, transform: [{ translateY: headerY }] }]}
+      >
         <Pressable
-          style={({ pressed }) => [s.backBtn, { opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [s.backBtn, { opacity: pressed ? 0.5 : 1 }]}
           onPress={() => router.back()}
         >
           <Feather name="chevron-left" size={24} color={colors.primary} />
         </Pressable>
         <View style={s.headerCenter}>
           <Text style={s.headerTitle}>Privacy Policy</Text>
-          <Text style={s.headerSub}>Effective: January 2025</Text>
+          <Text style={s.headerSub}>Effective: January 2026</Text>
         </View>
         <View style={{ width: 40 }} />
-      </View>
+      </Animated.View>
 
       <ScrollView
         style={s.scroll}
@@ -100,28 +187,35 @@ export default function PrivacyPolicyScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Badge */}
-        <View style={[s.badge, { backgroundColor: colors.tealLight }]}>
+        <Animated.View
+          style={[
+            s.badge,
+            { backgroundColor: colors.tealLight },
+            { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
+          ]}
+        >
           <Feather name="lock" size={16} color={colors.primary} />
           <Text style={[s.badgeText, { color: colors.primary }]}>
             No data is collected or transmitted. Everything stays on your device.
           </Text>
-        </View>
+        </Animated.View>
 
-        {/* Sections */}
+        {/* Sections — each animates in with staggered delay */}
         {SECTIONS.map((sec, idx) => (
-          <View key={sec.title} style={[s.card, { backgroundColor: colors.card }]}>
-            <View style={s.cardHeader}>
-              <View style={[s.cardIcon, { backgroundColor: sec.color + "18" }]}>
-                <Feather name={sec.icon} size={16} color={sec.color} />
-              </View>
-              <Text style={[s.cardTitle, { color: colors.foreground }]}>{sec.title}</Text>
-            </View>
-            <Text style={[s.cardBody, { color: colors.mutedForeground }]}>{sec.body}</Text>
-          </View>
+          <AnimatedCard key={sec.title} section={sec} index={idx} colors={colors} s={s} />
         ))}
 
         {/* Footer disclaimer */}
-        <View style={[s.disclaimer, { backgroundColor: "#F59E0B10", borderColor: "#F59E0B30" }]}>
+        <Animated.View
+          style={[
+            s.disclaimer,
+            { backgroundColor: "#F59E0B10", borderColor: "#F59E0B30" },
+            {
+              opacity: headerOpacity,
+              transform: [{ translateY: useRef(new Animated.Value(0)).current }],
+            },
+          ]}
+        >
           <Feather name="alert-triangle" size={14} color="#F59E0B" style={{ marginTop: 1 }} />
           <Text style={s.disclaimerText}>
             <Text style={{ fontWeight: "700", color: "#F59E0B" }}>Medical Disclaimer: </Text>
@@ -129,10 +223,10 @@ export default function PrivacyPolicyScreen() {
               Content in this app is for educational reference only. It does not constitute medical advice and must not replace clinical judgment or professional consultation.
             </Text>
           </Text>
-        </View>
+        </Animated.View>
 
         <Text style={[s.footer, { color: colors.mutedForeground }]}>
-          MedPocket by Nirranjan · v1.1.0{"\n"}© 2025 All rights reserved
+          MedPocket by Nirranjan · v1.1.0{"\n"}© 2026 All rights reserved
         </Text>
       </ScrollView>
     </View>
@@ -145,10 +239,10 @@ function styles(
   isIOS: boolean
 ) {
   const cardShadow = isIOS
-    ? { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 }
-    : { elevation: 1 };
+    ? { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6 }
+    : { elevation: 2 };
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container:    { flex: 1, backgroundColor: colors.background },
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -175,15 +269,26 @@ function styles(
     },
     badgeText: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: "600" },
     card: {
-      borderRadius: 14,
+      borderRadius: 16,
       padding: 16,
       marginBottom: 12,
       ...cardShadow,
     },
-    cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-    cardIcon:   { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-    cardTitle:  { fontSize: 15, fontWeight: "700", flex: 1 },
-    cardBody:   { fontSize: 13, lineHeight: 21 },
+    cardHeader:   { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+    cardIcon:     { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    cardTitle:    { fontSize: 15, fontWeight: "700", flex: 1 },
+    cardBody:     { fontSize: 13, lineHeight: 21 },
+    emailBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      marginTop: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 10,
+      alignSelf: "flex-start",
+    },
+    emailBtnText: { fontSize: 13, fontWeight: "600" },
     disclaimer: {
       flexDirection: "row",
       alignItems: "flex-start",
@@ -195,6 +300,6 @@ function styles(
       marginBottom: 16,
     },
     disclaimerText: { flex: 1, fontSize: 12, lineHeight: 18 },
-    footer: { fontSize: 11, textAlign: "center", lineHeight: 18 },
+    footer:         { fontSize: 11, textAlign: "center", lineHeight: 18 },
   });
 }
