@@ -15,6 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
+import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingScreen from "@/components/Onboarding";
 
 SplashScreen.preventAutoHideAsync();
@@ -80,6 +81,7 @@ export default function RootLayout() {
             <KeyboardProvider>
               <AppProvider>
                 <RootLayoutNav />
+                <InstallPrompt />
               </AppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>

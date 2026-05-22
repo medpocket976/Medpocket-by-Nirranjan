@@ -1,29 +1,54 @@
 {
-  "name": "MedPocket",
+  "name": "Med Pocket",
   "short_name": "MedPocket",
-  "description": "Medical reference app for students and clinicians — drug guide, calculators, lab values, emergency protocols and more.",
+  "description": "Medical & paramedical reference for students and clinicians — drug guide, calculators, lab values, emergency protocols and more.",
   "start_url": "/",
   "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "theme_color": "#009DB5",
-  "background_color": "#F8FAFB",
-  "lang": "en",
+  "background_color": "#ffffff",
+  "lang": "en-IN",
+  "dir": "ltr",
   "categories": ["medical", "education", "health"],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "MedPocket Home Screen"
+    }
+  ],
   "icons": [
     {
-      "src": "/assets/images/icon.png",
-      "sizes": "144x144",
-      "type": "image/png"
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/assets/images/icon.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/images/icon.png",
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -33,24 +58,25 @@
     {
       "name": "Drug Guide",
       "short_name": "Drugs",
-      "description": "Browse 300+ drug references",
+      "description": "Browse 200+ drug references",
       "url": "/drug-guide",
-      "icons": [{ "src": "/assets/images/icon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Calculators",
       "short_name": "Calc",
       "description": "Medical calculators",
       "url": "/calculators",
-      "icons": [{ "src": "/assets/images/icon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Emergency",
       "short_name": "Emergency",
       "description": "Emergency protocols",
       "url": "/emergency",
-      "icons": [{ "src": "/assets/images/icon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": []
 }
