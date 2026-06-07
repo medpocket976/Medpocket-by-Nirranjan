@@ -176,7 +176,7 @@ export default function PrivacyPolicyScreen() {
         </Pressable>
         <View style={s.headerCenter}>
           <Text style={s.headerTitle}>Privacy Policy</Text>
-          <Text style={s.headerSub}>Effective: January 2026</Text>
+          <Text style={s.headerSub}>Effective: May 2026</Text>
         </View>
         <View style={{ width: 40 }} />
       </Animated.View>

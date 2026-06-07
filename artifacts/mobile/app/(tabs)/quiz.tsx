@@ -270,7 +270,7 @@ export default function QuizScreen() {
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>By Subject</Text>
         <Text style={[styles.sectionMeta, { color: colors.mutedForeground }]}>
-          Last updated · Jan 2026
+          Last updated · May 2026
         </Text>
       </View>
 

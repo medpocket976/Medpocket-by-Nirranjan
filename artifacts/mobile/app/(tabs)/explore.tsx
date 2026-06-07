@@ -18,7 +18,7 @@ import { useColors } from "@/hooks/useColors";
 const EXPLORE_SECTIONS = [
   {
     title: "Clinical Reference",
-    updatedLabel: "Updated · Jan 2026",
+    updatedLabel: "Updated · May 2026",
     items: [
       {
         id: "drug-guide",
@@ -48,7 +48,7 @@ const EXPLORE_SECTIONS = [
   },
   {
     title: "Clinical Skills",
-    updatedLabel: "Updated · Jan 2026",
+    updatedLabel: "Updated · May 2026",
     items: [
       {
         id: "clinical-exam",
@@ -62,7 +62,7 @@ const EXPLORE_SECTIONS = [
   },
   {
     title: "Tools & Calculators",
-    updatedLabel: "Updated · Jan 2026",
+    updatedLabel: "Updated · May 2026",
     items: [
       {
         id: "calculators",
@@ -240,7 +240,7 @@ export default function ExploreScreen() {
             <View style={[styles.verifiedBadge, { backgroundColor: "#10B98112", borderColor: "#10B98130" }]}>
               <Feather name="shield" size={11} color="#10B981" />
               <Text style={[styles.verifiedText, { color: "#10B981" }]}>
-                Evidence-based content · Verified Jan 2026
+                Evidence-based content · Verified May 2026
               </Text>
             </View>
           </Animated.View>

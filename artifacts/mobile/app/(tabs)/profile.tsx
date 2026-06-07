@@ -351,7 +351,7 @@ export default function ProfileScreen() {
               <Feather name="shield" size={15} color="#10B981" />
             </View>
             <Text style={[s.iosRowText, { flex: 1, color: colors.foreground }]}>Privacy Policy</Text>
-            <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>Jan 2026</Text>
+            <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>May 2026</Text>
             <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
           </SettingPressable>
 
@@ -380,7 +380,7 @@ export default function ProfileScreen() {
           <Text style={[s.sectionHeader, { color: colors.mutedForeground, marginBottom: 0 }]}>CONTENT SOURCES</Text>
           <View style={[s.verifiedBadge, { backgroundColor: "#10B98112", borderColor: "#10B98130" }]}>
             <Feather name="check-circle" size={10} color="#10B981" />
-            <Text style={[s.verifiedText, { color: "#10B981" }]}>Verified · Jan 2026</Text>
+            <Text style={[s.verifiedText, { color: "#10B981" }]}>Verified · May 2026</Text>
           </View>
         </View>
         <View style={[s.iosGrouped, s.shadow, { backgroundColor: colors.card }]}>
