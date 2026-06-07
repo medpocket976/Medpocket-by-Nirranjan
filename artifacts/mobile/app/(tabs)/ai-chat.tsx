@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,31 +18,228 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAIChat } from "@/context/AIChatContext";
 import { useColors } from "@/hooks/useColors";
-import { ChatMessage, MODELS } from "@/services/openRouterService";
+import {
+  BookmarkedAnswer,
+  ChatMessage,
+  MODELS,
+} from "@/services/openRouterService";
 
 const TAB_BAR_HEIGHT = 80;
 
 const QUICK_PROMPTS = [
-  { label: "Spinal anesthesia mechanism", icon: "activity" as const },
+  { label: "Spinal anaesthesia mechanism", icon: "activity" as const },
   { label: "Chest pain differentials", icon: "heart" as const },
   { label: "Warfarin MOA & reversal", icon: "zap" as const },
-  { label: "OSCE: Respiratory exam", icon: "wind" as const },
+  { label: "OSCE: Resp exam steps", icon: "wind" as const },
+  { label: "Sepsis 3 criteria", icon: "alert-circle" as const },
+  { label: "ECG interpretation guide", icon: "bar-chart-2" as const },
 ];
 
-const OFF_TOPIC_PREFIX = "⚠️ MedPocket AI";
+// ─── Inline bold parser ────────────────────────────────────────────────────
+function parseInline(text: string, baseColor: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <Text key={i} style={{ fontWeight: "700", color: baseColor }}>
+              {part.slice(2, -2)}
+            </Text>
+          );
+        }
+        return (
+          <Text key={i} style={{ color: baseColor }}>
+            {part}
+          </Text>
+        );
+      })}
+    </>
+  );
+}
+
+// ─── Markdown Renderer ─────────────────────────────────────────────────────
+function MarkdownContent({
+  content,
+  textColor,
+  colors,
+}: {
+  content: string;
+  textColor: string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const lines = content.split("\n");
+
+  return (
+    <View style={{ gap: 1 }}>
+      {lines.map((line, i) => {
+        // H2
+        if (line.startsWith("## ")) {
+          return (
+            <Text
+              key={i}
+              style={{
+                fontSize: 14.5,
+                fontWeight: "800",
+                color: textColor,
+                marginTop: i > 0 ? 10 : 2,
+                marginBottom: 2,
+                letterSpacing: -0.2,
+              }}
+            >
+              {line.slice(3)}
+            </Text>
+          );
+        }
+        // H1
+        if (line.startsWith("# ")) {
+          return (
+            <Text
+              key={i}
+              style={{
+                fontSize: 16,
+                fontWeight: "800",
+                color: textColor,
+                marginTop: i > 0 ? 12 : 2,
+                marginBottom: 2,
+              }}
+            >
+              {line.slice(2)}
+            </Text>
+          );
+        }
+        // Clinical Pearl
+        if (line.startsWith("🔑")) {
+          return (
+            <View
+              key={i}
+              style={{
+                backgroundColor: colors.primary + "18",
+                borderRadius: 10,
+                borderLeftWidth: 3,
+                borderLeftColor: colors.primary,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                marginTop: 10,
+                marginBottom: 2,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: textColor,
+                  lineHeight: 20,
+                  fontStyle: "italic",
+                }}
+              >
+                {parseInline(line, textColor)}
+              </Text>
+            </View>
+          );
+        }
+        // Bullet
+        if (line.startsWith("- ") || line.startsWith("* ")) {
+          const text = line.slice(2);
+          return (
+            <View
+              key={i}
+              style={{
+                flexDirection: "row",
+                gap: 8,
+                paddingLeft: 4,
+                marginTop: 2,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 14,
+                  lineHeight: 22,
+                  fontWeight: "700",
+                }}
+              >
+                •
+              </Text>
+              <Text
+                style={{
+                  flex: 1,
+                  color: textColor,
+                  fontSize: 14,
+                  lineHeight: 22,
+                }}
+              >
+                {parseInline(text, textColor)}
+              </Text>
+            </View>
+          );
+        }
+        // Sub-bullet
+        if (line.startsWith("  - ") || line.startsWith("   - ")) {
+          const text = line.trimStart().slice(2);
+          return (
+            <View
+              key={i}
+              style={{ flexDirection: "row", gap: 8, paddingLeft: 20, marginTop: 1 }}
+            >
+              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 21 }}>
+                ›
+              </Text>
+              <Text
+                style={{ flex: 1, color: textColor, fontSize: 13, lineHeight: 21 }}
+              >
+                {parseInline(text, textColor)}
+              </Text>
+            </View>
+          );
+        }
+        // Empty line
+        if (line.trim() === "") {
+          return <View key={i} style={{ height: 5 }} />;
+        }
+        // Normal text
+        return (
+          <Text
+            key={i}
+            style={{ color: textColor, fontSize: 14, lineHeight: 22, marginTop: 1 }}
+          >
+            {parseInline(line, textColor)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
 
 // ─── Message Bubble ────────────────────────────────────────────────────────
 function MessageBubble({ message }: { message: ChatMessage }) {
   const colors = useColors();
   const { bookmarkMessage } = useAIChat();
   const [copied, setCopied] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0.94)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   const isUser = message.role === "user";
   const isError = message.content.startsWith("❌");
-  const isOffTopic = message.content.startsWith(OFF_TOPIC_PREFIX);
+  const isOffTopic = message.content.startsWith("⚠️");
   const modelCfg = message.modelId
     ? MODELS.find((m) => m.id === message.modelId)
     : null;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 120,
+        friction: 10,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   async function handleCopy() {
     await Clipboard.setStringAsync(message.content);
@@ -52,54 +250,84 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
   if (isUser) {
     return (
-      <View style={bubbleStyles.userRow}>
-        <View style={[bubbleStyles.userBubble, { backgroundColor: colors.primary }]}>
+      <Animated.View
+        style={[
+          bubbleStyles.userRow,
+          { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
+        ]}
+      >
+        <View
+          style={[bubbleStyles.userBubble, { backgroundColor: colors.primary }]}
+        >
           <Text style={[bubbleStyles.userText, { color: "#fff" }]}>
             {message.content}
           </Text>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
   const bubbleBg = isError
-    ? `${colors.destructive}18`
+    ? `${colors.destructive}12`
     : isOffTopic
-    ? `${colors.warning}18`
-    : colors.muted;
+    ? `#F59E0B12`
+    : colors.card;
 
   const bubbleBorder = isError
-    ? colors.destructive
+    ? colors.destructive + "40"
     : isOffTopic
-    ? colors.warning
+    ? "#F59E0B40"
     : colors.border;
 
   const textColor = isError
     ? colors.destructive
     : isOffTopic
-    ? colors.warning
+    ? "#B45309"
     : colors.foreground;
 
   return (
-    <View style={bubbleStyles.aiRow}>
-      <View style={[bubbleStyles.aiAvatar, { backgroundColor: colors.primary }]}>
-        <Feather name="activity" size={12} color="#fff" />
+    <Animated.View
+      style={[
+        bubbleStyles.aiRow,
+        { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
+      ]}
+    >
+      <View
+        style={[bubbleStyles.aiAvatar, { backgroundColor: colors.primary + "20" }]}
+      >
+        <Feather name="cpu" size={12} color={colors.primary} />
       </View>
       <View style={bubbleStyles.aiContent}>
         {modelCfg && !isOffTopic && !isError && (
-          <Text style={[bubbleStyles.modelTag, { color: modelCfg.color }]}>
-            {modelCfg.label} · {modelCfg.description}
-          </Text>
+          <View style={bubbleStyles.modelTagRow}>
+            <View
+              style={[bubbleStyles.modelDot, { backgroundColor: modelCfg.color }]}
+            />
+            <Text style={[bubbleStyles.modelTag, { color: colors.mutedForeground }]}>
+              {modelCfg.label}
+            </Text>
+          </View>
         )}
         <View
           style={[
             bubbleStyles.aiBubble,
-            { backgroundColor: bubbleBg, borderColor: bubbleBorder, borderWidth: 1 },
+            {
+              backgroundColor: bubbleBg,
+              borderColor: bubbleBorder,
+            },
           ]}
         >
-          <Text style={[bubbleStyles.aiText, { color: textColor }]}>
-            {message.content}
-          </Text>
+          {isError || isOffTopic ? (
+            <Text style={[bubbleStyles.aiText, { color: textColor }]}>
+              {message.content}
+            </Text>
+          ) : (
+            <MarkdownContent
+              content={message.content}
+              textColor={textColor}
+              colors={colors}
+            />
+          )}
         </View>
         {!isOffTopic && !isError && (
           <View style={bubbleStyles.actions}>
@@ -107,7 +335,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               <Feather
                 name={copied ? "check" : "copy"}
                 size={12}
-                color={copied ? colors.success : colors.mutedForeground}
+                color={copied ? "#10B981" : colors.mutedForeground}
               />
               <Text style={[bubbleStyles.actionLabel, { color: colors.mutedForeground }]}>
                 {copied ? "Copied" : "Copy"}
@@ -117,60 +345,70 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               style={bubbleStyles.actionBtn}
               onPress={() => {
                 bookmarkMessage(message.id);
-                if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                if (Platform.OS !== "web")
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               }}
             >
               <Feather
-                name="bookmark"
+                name={message.bookmarked ? "bookmark" : "bookmark"}
                 size={12}
-                color={message.bookmarked ? colors.warning : colors.mutedForeground}
+                color={message.bookmarked ? "#F59E0B" : colors.mutedForeground}
               />
-              <Text style={[bubbleStyles.actionLabel, { color: colors.mutedForeground }]}>
+              <Text
+                style={[
+                  bubbleStyles.actionLabel,
+                  {
+                    color: message.bookmarked ? "#F59E0B" : colors.mutedForeground,
+                    fontWeight: message.bookmarked ? "700" : "400",
+                  },
+                ]}
+              >
                 {message.bookmarked ? "Saved" : "Save"}
               </Text>
             </Pressable>
           </View>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 // ─── Typing Dots ────────────────────────────────────────────────────────────
 function TypingDots() {
   const colors = useColors();
-  const dot1 = useRef(new (require("react-native").Animated.Value)(0)).current;
-  const dot2 = useRef(new (require("react-native").Animated.Value)(0)).current;
-  const dot3 = useRef(new (require("react-native").Animated.Value)(0)).current;
-  const { Animated } = require("react-native");
+  const dots = [
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+  ];
 
   useEffect(() => {
-    const anims = [dot1, dot2, dot3].map((d, i) =>
+    const anims = dots.map((d, i) =>
       Animated.loop(
         Animated.sequence([
-          Animated.delay(i * 160),
-          Animated.timing(d, { toValue: 1, duration: 280, useNativeDriver: true }),
-          Animated.timing(d, { toValue: 0, duration: 280, useNativeDriver: true }),
-          Animated.delay(480 - i * 160),
+          Animated.delay(i * 150),
+          Animated.timing(d, { toValue: 1, duration: 260, useNativeDriver: true }),
+          Animated.timing(d, { toValue: 0, duration: 260, useNativeDriver: true }),
+          Animated.delay(450 - i * 150),
         ])
       )
     );
-    anims.forEach((a: any) => a.start());
-    return () => anims.forEach((a: any) => a.stop());
+    anims.forEach((a) => a.start());
+    return () => anims.forEach((a) => a.stop());
   }, []);
 
   return (
     <View style={bubbleStyles.aiRow}>
-      <View style={[bubbleStyles.aiAvatar, { backgroundColor: colors.primary }]}>
-        <Feather name="activity" size={12} color="#fff" />
+      <View style={[bubbleStyles.aiAvatar, { backgroundColor: colors.primary + "20" }]}>
+        <Feather name="cpu" size={12} color={colors.primary} />
       </View>
       <View
         style={[
           bubbleStyles.typingBubble,
-          { backgroundColor: colors.muted, borderColor: colors.border },
+          { backgroundColor: colors.card, borderColor: colors.border },
         ]}
       >
-        {[dot1, dot2, dot3].map((d, i) => (
+        {dots.map((d, i) => (
           <Animated.View
             key={i}
             style={[
@@ -179,7 +417,7 @@ function TypingDots() {
               {
                 opacity: d,
                 transform: [
-                  { translateY: d.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
+                  { translateY: d.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) },
                 ],
               },
             ]}
@@ -200,11 +438,21 @@ function ModelChip() {
   return (
     <View style={{ zIndex: 100 }}>
       <Pressable
-        style={[chipStyles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
-        onPress={() => setOpen((v) => !v)}
+        style={[
+          chipStyles.chip,
+          { backgroundColor: colors.muted, borderColor: colors.border },
+        ]}
+        onPress={() => {
+          setOpen((v) => !v);
+          if (Platform.OS !== "web")
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }}
       >
         <View style={[chipStyles.colorDot, { backgroundColor: current.color }]} />
-        <Text style={[chipStyles.label, { color: colors.foreground }]} numberOfLines={1}>
+        <Text
+          style={[chipStyles.label, { color: colors.foreground }]}
+          numberOfLines={1}
+        >
           {current.label}
         </Text>
         <Feather
@@ -228,23 +476,31 @@ function ModelChip() {
                 key={m.id}
                 style={[
                   chipStyles.dropItem,
-                  sel && { backgroundColor: colors.tealLight },
+                  sel && { backgroundColor: colors.primary + "14" },
                 ]}
                 onPress={() => {
                   setSelectedModel(m.id);
                   setOpen(false);
+                  if (Platform.OS !== "web")
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
               >
-                <View style={[chipStyles.colorDot, { backgroundColor: m.color }]} />
+                <View
+                  style={[chipStyles.colorDot, { backgroundColor: m.color, width: 10, height: 10 }]}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={[chipStyles.dropLabel, { color: colors.foreground }]}>
                     {m.label}
                   </Text>
-                  <Text style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}>
+                  <Text
+                    style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}
+                  >
                     {m.description}
                   </Text>
                 </View>
-                {sel && <Feather name="check" size={14} color={colors.primary} />}
+                {sel && (
+                  <Feather name="check" size={14} color={colors.primary} />
+                )}
               </Pressable>
             );
           })}
@@ -254,18 +510,163 @@ function ModelChip() {
   );
 }
 
+// ─── Saved Bookmarks View ───────────────────────────────────────────────────
+function BookmarksView() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { bookmarks, removeBookmark } = useAIChat();
+
+  if (bookmarks.length === 0) {
+    return (
+      <View style={savedStyles.empty}>
+        <View
+          style={[savedStyles.emptyIcon, { backgroundColor: colors.muted }]}
+        >
+          <Feather name="bookmark" size={32} color={colors.mutedForeground} />
+        </View>
+        <Text style={[savedStyles.emptyTitle, { color: colors.foreground }]}>
+          No saved answers yet
+        </Text>
+        <Text style={[savedStyles.emptySub, { color: colors.mutedForeground }]}>
+          Tap "Save" on any AI response to keep it here
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      contentContainerStyle={[
+        savedStyles.list,
+        { paddingBottom: TAB_BAR_HEIGHT + insets.bottom + 20 },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={[savedStyles.count, { color: colors.mutedForeground }]}>
+        {bookmarks.length} saved answer{bookmarks.length !== 1 ? "s" : ""}
+      </Text>
+      {bookmarks.map((bk) => (
+        <BookmarkCard
+          key={bk.id}
+          bookmark={bk}
+          onDelete={() => {
+            removeBookmark(bk.id);
+            if (Platform.OS !== "web")
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }}
+          colors={colors}
+        />
+      ))}
+    </ScrollView>
+  );
+}
+
+function BookmarkCard({
+  bookmark,
+  onDelete,
+  colors,
+}: {
+  bookmark: BookmarkedAnswer;
+  onDelete: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const modelCfg = MODELS.find((m) => m.id === bookmark.modelId);
+  const date = new Date(bookmark.timestamp);
+  const dateStr = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  return (
+    <View
+      style={[
+        savedStyles.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+    >
+      {/* Question */}
+      <Pressable onPress={() => setExpanded((v) => !v)}>
+        <View style={savedStyles.cardHeader}>
+          <View
+            style={[
+              savedStyles.qIcon,
+              { backgroundColor: colors.primary + "18" },
+            ]}
+          >
+            <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primary }}>
+              Q
+            </Text>
+          </View>
+          <Text
+            style={[savedStyles.question, { color: colors.foreground }]}
+            numberOfLines={expanded ? undefined : 2}
+          >
+            {bookmark.question}
+          </Text>
+          <Feather
+            name={expanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.mutedForeground}
+          />
+        </View>
+      </Pressable>
+
+      {/* Answer preview / expanded */}
+      {expanded && (
+        <View
+          style={[
+            savedStyles.answerBox,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+          ]}
+        >
+          <MarkdownContent
+            content={bookmark.answer}
+            textColor={colors.foreground}
+            colors={colors}
+          />
+        </View>
+      )}
+
+      {/* Footer */}
+      <View style={savedStyles.cardFooter}>
+        {modelCfg && (
+          <View style={savedStyles.modelBadge}>
+            <View
+              style={[savedStyles.modelDot, { backgroundColor: modelCfg.color }]}
+            />
+            <Text
+              style={[savedStyles.modelLabel, { color: colors.mutedForeground }]}
+            >
+              {modelCfg.label}
+            </Text>
+          </View>
+        )}
+        <Text style={[savedStyles.dateLabel, { color: colors.mutedForeground }]}>
+          {dateStr}
+        </Text>
+        <Pressable onPress={onDelete} style={savedStyles.deleteBtn}>
+          <Feather name="trash-2" size={13} color={colors.destructive} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AIChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { messages, isLoading, sendUserMessage, clearHistory } = useAIChat();
+  const { messages, isLoading, sendUserMessage, clearHistory, bookmarks } =
+    useAIChat();
 
   const [input, setInput] = useState("");
+  const [tab, setTab] = useState<"chat" | "saved">("chat");
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const hasMessages = messages.length > 0;
 
-  // Bottom clearance = tab bar + safe area
   const bottomClearance = TAB_BAR_HEIGHT + insets.bottom;
 
   useEffect(() => {
@@ -276,6 +677,7 @@ export default function AIChatScreen() {
     const msg = (text ?? input).trim();
     if (!msg || isLoading) return;
     setInput("");
+    setTab("chat");
     inputRef.current?.blur();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await sendUserMessage(msg);
@@ -291,177 +693,224 @@ export default function AIChatScreen() {
           {
             backgroundColor: colors.card,
             borderBottomColor: colors.border,
-            paddingTop: insets.top + 10,
+            paddingTop: insets.top + 8,
           },
         ]}
       >
-        <LinearGradient
-          colors={[colors.primary + "28", "transparent"]}
-          style={StyleSheet.absoluteFill}
-        />
+        {/* Top row: logo + title + actions */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            <View style={[styles.headerIcon, { backgroundColor: colors.primary }]}>
-              <Feather name="activity" size={18} color="#fff" />
-            </View>
+            <LinearGradient
+              colors={[colors.primary, colors.primary + "CC"]}
+              style={styles.headerIcon}
+            >
+              <Feather name="cpu" size={17} color="#fff" />
+            </LinearGradient>
             <View>
               <Text style={[styles.headerTitle, { color: colors.foreground }]}>
                 MedPocket AI
               </Text>
               <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-                Medical Education Assistant
+                Medical Education
               </Text>
             </View>
           </View>
           <View style={styles.headerRight}>
             <ModelChip />
-            {hasMessages && (
+            {hasMessages && tab === "chat" && (
               <Pressable
-                style={styles.iconBtn}
+                style={[styles.iconBtn, { backgroundColor: colors.muted }]}
                 onPress={() => {
-                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  if (Platform.OS !== "web")
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   clearHistory();
                 }}
               >
-                <Feather name="trash-2" size={17} color={colors.mutedForeground} />
+                <Feather name="trash-2" size={15} color={colors.mutedForeground} />
               </Pressable>
             )}
           </View>
         </View>
+
+        {/* Tab bar */}
+        <View style={[styles.tabBar, { borderTopColor: colors.border }]}>
+          {(["chat", "saved"] as const).map((t) => {
+            const active = tab === t;
+            const label = t === "chat" ? "Chat" : `Saved${bookmarks.length > 0 ? ` (${bookmarks.length})` : ""}`;
+            const icon = t === "chat" ? "message-circle" : "bookmark";
+            return (
+              <Pressable
+                key={t}
+                style={[
+                  styles.tabItem,
+                  active && {
+                    borderBottomColor: colors.primary,
+                    borderBottomWidth: 2,
+                  },
+                ]}
+                onPress={() => setTab(t)}
+              >
+                <Feather
+                  name={icon}
+                  size={13}
+                  color={active ? colors.primary : colors.mutedForeground}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: active ? colors.primary : colors.mutedForeground },
+                    active && { fontWeight: "700" },
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
-      {/* ── Body ── */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
-        {/* Messages / Empty state */}
-        <ScrollView
-          ref={scrollRef}
+      {/* ── Saved tab ── */}
+      {tab === "saved" ? (
+        <BookmarksView />
+      ) : (
+        /* ── Chat tab ── */
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
-          contentContainerStyle={[
-            styles.scrollContent,
-            !hasMessages && styles.scrollCenter,
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          {!hasMessages ? (
-            <View style={styles.emptyWrap}>
-              <LinearGradient
-                colors={[colors.primary + "38", colors.primary + "0A"]}
-                style={styles.emptyIconBg}
-              >
-                <Feather name="activity" size={38} color={colors.primary} />
-              </LinearGradient>
+          <ScrollView
+            ref={scrollRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={[
+              styles.scrollContent,
+              !hasMessages && styles.scrollCenter,
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+          >
+            {!hasMessages ? (
+              <View style={styles.emptyWrap}>
+                <LinearGradient
+                  colors={[colors.primary + "30", colors.primary + "08"]}
+                  style={styles.emptyIconBg}
+                >
+                  <Feather name="cpu" size={36} color={colors.primary} />
+                </LinearGradient>
 
-              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                Ask MedPocket AI
-              </Text>
-              <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                Clinical Q&A · Drug Info · Anatomy · OSCE · Differentials
-              </Text>
-
-              <View style={styles.quickGrid}>
-                {QUICK_PROMPTS.map((q) => (
-                  <Pressable
-                    key={q.label}
-                    style={[
-                      styles.quickCard,
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                    ]}
-                    onPress={() => handleSend(q.label)}
-                  >
-                    <Feather name={q.icon} size={15} color={colors.primary} />
-                    <Text
-                      style={[styles.quickLabel, { color: colors.foreground }]}
-                      numberOfLines={2}
-                    >
-                      {q.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <View
-                style={[
-                  styles.disclaimerCard,
-                  { backgroundColor: colors.tealLight, borderColor: colors.border },
-                ]}
-              >
-                <Feather name="shield" size={13} color={colors.primary} />
-                <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-                  For medical education purposes only. Not a substitute for professional clinical judgment.
+                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+                  Ask MedPocket AI
                 </Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.conversation}>
-              {messages.map((m) => (
-                <MessageBubble key={m.id} message={m} />
-              ))}
-              {isLoading && <TypingDots />}
-            </View>
-          )}
-        </ScrollView>
+                <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
+                  Clinical Q&A · Drug Info · OSCE · Differentials
+                </Text>
 
-        {/* ── Input Bar ── */}
-        <View
-          style={[
-            styles.inputBar,
-            {
-              backgroundColor: colors.card,
-              borderTopColor: colors.border,
-              // Sit above the tab bar
-              paddingBottom: bottomClearance + 8,
-            },
-          ]}
-        >
+                <View style={styles.quickGrid}>
+                  {QUICK_PROMPTS.map((q) => (
+                    <Pressable
+                      key={q.label}
+                      style={({ pressed }) => [
+                        styles.quickCard,
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: colors.border,
+                          opacity: pressed ? 0.8 : 1,
+                        },
+                      ]}
+                      onPress={() => handleSend(q.label)}
+                    >
+                      <Feather name={q.icon} size={14} color={colors.primary} />
+                      <Text
+                        style={[styles.quickLabel, { color: colors.foreground }]}
+                        numberOfLines={2}
+                      >
+                        {q.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <View
+                  style={[
+                    styles.disclaimerCard,
+                    {
+                      backgroundColor: colors.primary + "10",
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Feather name="shield" size={13} color={colors.primary} />
+                  <Text
+                    style={[styles.disclaimerText, { color: colors.mutedForeground }]}
+                  >
+                    For medical education only · Not a substitute for clinical judgment
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.conversation}>
+                {messages.map((m) => (
+                  <MessageBubble key={m.id} message={m} />
+                ))}
+                {isLoading && <TypingDots />}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* ── Input Bar ── */}
           <View
             style={[
-              styles.inputRow,
-              { backgroundColor: colors.muted, borderColor: colors.border },
+              styles.inputBar,
+              {
+                backgroundColor: colors.card,
+                borderTopColor: colors.border,
+                paddingBottom: bottomClearance + 6,
+              },
             ]}
           >
-            <TextInput
-              ref={inputRef}
-              style={[styles.textInput, { color: colors.foreground }]}
-              placeholder="Type your medical question…"
-              placeholderTextColor={colors.mutedForeground}
-              value={input}
-              onChangeText={setInput}
-              multiline
-              maxLength={800}
-              returnKeyType="send"
-              blurOnSubmit={false}
-              onSubmitEditing={() => handleSend()}
-              editable={!isLoading}
-            />
-            <Pressable
+            <View
               style={[
-                styles.sendBtn,
-                {
-                  backgroundColor:
-                    input.trim() && !isLoading ? colors.primary : colors.border,
-                },
+                styles.inputRow,
+                { backgroundColor: colors.muted, borderColor: colors.border },
               ]}
-              onPress={() => handleSend()}
-              disabled={!input.trim() || isLoading}
             >
-              <Feather
-                name={isLoading ? "loader" : "send"}
-                size={15}
-                color={input.trim() && !isLoading ? "#fff" : colors.mutedForeground}
+              <TextInput
+                ref={inputRef}
+                style={[styles.textInput, { color: colors.foreground }]}
+                placeholder="Ask a medical question…"
+                placeholderTextColor={colors.mutedForeground}
+                value={input}
+                onChangeText={setInput}
+                multiline
+                maxLength={800}
+                blurOnSubmit={false}
+                onSubmitEditing={() => handleSend()}
+                editable={!isLoading}
               />
-            </Pressable>
+              <Pressable
+                style={[
+                  styles.sendBtn,
+                  {
+                    backgroundColor:
+                      input.trim() && !isLoading
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+                onPress={() => handleSend()}
+                disabled={!input.trim() || isLoading}
+              >
+                <Feather
+                  name={isLoading ? "loader" : "arrow-up"}
+                  size={16}
+                  color={input.trim() && !isLoading ? "#fff" : colors.mutedForeground}
+                />
+              </Pressable>
+            </View>
           </View>
-          <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
-            Medical education only · Not clinical advice
-          </Text>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      )}
     </View>
   );
 }
@@ -469,42 +918,59 @@ export default function AIChatScreen() {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1 },
-
   header: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: { fontSize: 17, fontWeight: "700" },
+  headerTitle: { fontSize: 16, fontWeight: "700" },
   headerSub: { fontSize: 11, marginTop: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
-  iconBtn: { padding: 8 },
+  iconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabBar: {
+    flexDirection: "row",
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  tabItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+  },
+  tabLabel: { fontSize: 13 },
 
   scrollContent: { flexGrow: 1, padding: 16 },
   scrollCenter: { justifyContent: "center" },
 
-  emptyWrap: { alignItems: "center", paddingVertical: 16 },
+  emptyWrap: { alignItems: "center", paddingVertical: 12 },
   emptyIconBg: {
-    width: 84,
-    height: 84,
-    borderRadius: 26,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 18,
+    marginBottom: 16,
   },
   emptyTitle: { fontSize: 22, fontWeight: "800", marginBottom: 8 },
   emptySub: {
@@ -512,29 +978,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 20,
-    marginBottom: 28,
+    marginBottom: 24,
   },
-
   quickGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 9,
     justifyContent: "center",
-    marginBottom: 24,
+    marginBottom: 20,
     width: "100%",
   },
   quickCard: {
     width: "46%",
     borderWidth: 1,
     borderRadius: 14,
-    padding: 14,
+    padding: 13,
     gap: 8,
   },
-  quickLabel: { fontSize: 13, fontWeight: "600", lineHeight: 18 },
-
+  quickLabel: { fontSize: 12.5, fontWeight: "600", lineHeight: 17 },
   disclaimerCard: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 8,
     borderWidth: 1,
     borderRadius: 12,
@@ -554,10 +1018,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 22,
     paddingLeft: 16,
-    paddingRight: 6,
-    paddingVertical: 6,
+    paddingRight: 5,
+    paddingVertical: 5,
     gap: 6,
   },
   textInput: {
@@ -565,7 +1029,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     maxHeight: 110,
     lineHeight: 22,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   sendBtn: {
     width: 38,
@@ -575,66 +1039,63 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  footerNote: {
-    fontSize: 10,
-    textAlign: "center",
-    marginTop: 8,
-    marginBottom: 4,
-  },
 });
 
 const bubbleStyles = StyleSheet.create({
   userRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 14,
+    marginBottom: 16,
     paddingLeft: 52,
   },
   userBubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
-    borderBottomRightRadius: 4,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    borderRadius: 20,
+    borderBottomRightRadius: 5,
   },
-  userText: { fontSize: 14, lineHeight: 21 },
+  userText: { fontSize: 14.5, lineHeight: 21 },
 
   aiRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 8,
-    marginBottom: 14,
-    paddingRight: 28,
+    gap: 9,
+    marginBottom: 16,
+    paddingRight: 20,
   },
   aiAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    marginTop: 2,
+    marginTop: 1,
   },
   aiContent: { flex: 1 },
-  modelTag: { fontSize: 10, fontWeight: "700", marginBottom: 4, letterSpacing: 0.4 },
+  modelTagRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 5 },
+  modelDot: { width: 6, height: 6, borderRadius: 3 },
+  modelTag: { fontSize: 10.5, fontWeight: "600", letterSpacing: 0.3 },
   aiBubble: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 18,
-    borderTopLeftRadius: 4,
+    borderTopLeftRadius: 5,
+    borderWidth: 1,
   },
   aiText: { fontSize: 14, lineHeight: 22 },
-  actions: { flexDirection: "row", gap: 16, marginTop: 6, paddingLeft: 4 },
-  actionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
-  actionLabel: { fontSize: 11 },
+  actions: { flexDirection: "row", gap: 18, marginTop: 7, paddingLeft: 6 },
+  actionBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
+  actionLabel: { fontSize: 11.5 },
 
   typingBubble: {
     flexDirection: "row",
     gap: 5,
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 18,
-    borderTopLeftRadius: 4,
+    borderTopLeftRadius: 5,
     borderWidth: 1,
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
@@ -655,17 +1116,17 @@ const chipStyles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: "600", flex: 1 },
   dropdown: {
     position: "absolute",
-    top: 40,
+    top: 42,
     right: 0,
-    width: 210,
+    width: 220,
     borderRadius: 14,
     borderWidth: 1,
     zIndex: 9999,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 16,
     paddingVertical: 6,
   },
   dropItem: {
@@ -673,10 +1134,34 @@ const chipStyles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderRadius: 10,
     marginHorizontal: 4,
   },
   dropLabel: { fontSize: 13, fontWeight: "600" },
   dropDesc: { fontSize: 11, marginTop: 1 },
+});
+
+const savedStyles = StyleSheet.create({
+  list: { padding: 16, gap: 12 },
+  count: { fontSize: 12, fontWeight: "600", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.6 },
+  empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  emptyTitle: { fontSize: 18, fontWeight: "700" },
+  emptySub: { fontSize: 13, textAlign: "center", lineHeight: 20 },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  cardHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14 },
+  qIcon: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 },
+  question: { flex: 1, fontSize: 14, fontWeight: "600", lineHeight: 20 },
+  answerBox: { marginHorizontal: 14, marginBottom: 12, borderRadius: 12, borderWidth: 1, padding: 12 },
+  cardFooter: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingBottom: 12 },
+  modelBadge: { flexDirection: "row", alignItems: "center", gap: 5 },
+  modelDot: { width: 7, height: 7, borderRadius: 4 },
+  modelLabel: { fontSize: 11, fontWeight: "600" },
+  dateLabel: { flex: 1, fontSize: 11, textAlign: "right" },
+  deleteBtn: { padding: 4 },
 });
