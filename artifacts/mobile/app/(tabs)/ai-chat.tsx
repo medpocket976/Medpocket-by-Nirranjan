@@ -4,7 +4,6 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,24 +17,27 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAIChat } from "@/context/AIChatContext";
 import { useColors } from "@/hooks/useColors";
-import { MODELS, ChatMessage } from "@/services/openRouterService";
+import { ChatMessage, MODELS } from "@/services/openRouterService";
+
+const TAB_BAR_HEIGHT = 80;
 
 const QUICK_PROMPTS = [
-  { label: "Spinal anesthesia", icon: "activity" as const },
-  { label: "Differential: chest pain", icon: "heart" as const },
-  { label: "Warfarin mechanism", icon: "zap" as const },
-  { label: "OSCE — respiratory exam", icon: "wind" as const },
+  { label: "Spinal anesthesia mechanism", icon: "activity" as const },
+  { label: "Chest pain differentials", icon: "heart" as const },
+  { label: "Warfarin MOA & reversal", icon: "zap" as const },
+  { label: "OSCE: Respiratory exam", icon: "wind" as const },
 ];
 
 const OFF_TOPIC_PREFIX = "⚠️ MedPocket AI";
 
-// ---------- Message bubble ----------
+// ─── Message Bubble ────────────────────────────────────────────────────────
 function MessageBubble({ message }: { message: ChatMessage }) {
   const colors = useColors();
   const { bookmarkMessage } = useAIChat();
   const [copied, setCopied] = useState(false);
 
   const isUser = message.role === "user";
+  const isError = message.content.startsWith("❌");
   const isOffTopic = message.content.startsWith(OFF_TOPIC_PREFIX);
   const modelCfg = message.modelId
     ? MODELS.find((m) => m.id === message.modelId)
@@ -50,13 +52,33 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
   if (isUser) {
     return (
-      <View style={[bubbleStyles.userRow]}>
+      <View style={bubbleStyles.userRow}>
         <View style={[bubbleStyles.userBubble, { backgroundColor: colors.primary }]}>
-          <Text style={[bubbleStyles.userText, { color: "#fff" }]}>{message.content}</Text>
+          <Text style={[bubbleStyles.userText, { color: "#fff" }]}>
+            {message.content}
+          </Text>
         </View>
       </View>
     );
   }
+
+  const bubbleBg = isError
+    ? `${colors.destructive}18`
+    : isOffTopic
+    ? `${colors.warning}18`
+    : colors.muted;
+
+  const bubbleBorder = isError
+    ? colors.destructive
+    : isOffTopic
+    ? colors.warning
+    : colors.border;
+
+  const textColor = isError
+    ? colors.destructive
+    : isOffTopic
+    ? colors.warning
+    : colors.foreground;
 
   return (
     <View style={bubbleStyles.aiRow}>
@@ -64,7 +86,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <Feather name="activity" size={12} color="#fff" />
       </View>
       <View style={bubbleStyles.aiContent}>
-        {modelCfg && !isOffTopic && (
+        {modelCfg && !isOffTopic && !isError && (
           <Text style={[bubbleStyles.modelTag, { color: modelCfg.color }]}>
             {modelCfg.label} · {modelCfg.description}
           </Text>
@@ -72,25 +94,14 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <View
           style={[
             bubbleStyles.aiBubble,
-            {
-              backgroundColor: isOffTopic
-                ? `${colors.warning}18`
-                : colors.muted,
-              borderColor: isOffTopic ? colors.warning : colors.border,
-              borderWidth: 1,
-            },
+            { backgroundColor: bubbleBg, borderColor: bubbleBorder, borderWidth: 1 },
           ]}
         >
-          <Text
-            style={[
-              bubbleStyles.aiText,
-              { color: isOffTopic ? colors.warning : colors.foreground },
-            ]}
-          >
+          <Text style={[bubbleStyles.aiText, { color: textColor }]}>
             {message.content}
           </Text>
         </View>
-        {!isOffTopic && (
+        {!isOffTopic && !isError && (
           <View style={bubbleStyles.actions}>
             <Pressable style={bubbleStyles.actionBtn} onPress={handleCopy}>
               <Feather
@@ -125,16 +136,16 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-// ---------- Typing indicator ----------
+// ─── Typing Dots ────────────────────────────────────────────────────────────
 function TypingDots() {
   const colors = useColors();
-  const dots = [
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-  ];
+  const dot1 = useRef(new (require("react-native").Animated.Value)(0)).current;
+  const dot2 = useRef(new (require("react-native").Animated.Value)(0)).current;
+  const dot3 = useRef(new (require("react-native").Animated.Value)(0)).current;
+  const { Animated } = require("react-native");
+
   useEffect(() => {
-    const anims = dots.map((d, i) =>
+    const anims = [dot1, dot2, dot3].map((d, i) =>
       Animated.loop(
         Animated.sequence([
           Animated.delay(i * 160),
@@ -144,17 +155,22 @@ function TypingDots() {
         ])
       )
     );
-    anims.forEach((a) => a.start());
-    return () => anims.forEach((a) => a.stop());
+    anims.forEach((a: any) => a.start());
+    return () => anims.forEach((a: any) => a.stop());
   }, []);
 
   return (
-    <View style={[bubbleStyles.aiRow]}>
+    <View style={bubbleStyles.aiRow}>
       <View style={[bubbleStyles.aiAvatar, { backgroundColor: colors.primary }]}>
         <Feather name="activity" size={12} color="#fff" />
       </View>
-      <View style={[bubbleStyles.typingBubble, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-        {dots.map((d, i) => (
+      <View
+        style={[
+          bubbleStyles.typingBubble,
+          { backgroundColor: colors.muted, borderColor: colors.border },
+        ]}
+      >
+        {[dot1, dot2, dot3].map((d, i) => (
           <Animated.View
             key={i}
             style={[
@@ -162,7 +178,9 @@ function TypingDots() {
               { backgroundColor: colors.primary },
               {
                 opacity: d,
-                transform: [{ translateY: d.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) }],
+                transform: [
+                  { translateY: d.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
+                ],
               },
             ]}
           />
@@ -172,25 +190,37 @@ function TypingDots() {
   );
 }
 
-// ---------- Model chip ----------
+// ─── Model Chip ─────────────────────────────────────────────────────────────
 function ModelChip() {
   const colors = useColors();
   const { selectedModel, setSelectedModel } = useAIChat();
   const [open, setOpen] = useState(false);
-  const current = MODELS.find((m) => m.id === selectedModel) ?? MODELS[2];
+  const current = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0];
 
   return (
-    <View>
+    <View style={{ zIndex: 100 }}>
       <Pressable
         style={[chipStyles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
-        onPress={() => setOpen(!open)}
+        onPress={() => setOpen((v) => !v)}
       >
-        <View style={[chipStyles.dot, { backgroundColor: current.color }]} />
-        <Text style={[chipStyles.label, { color: colors.foreground }]}>{current.label}</Text>
-        <Feather name={open ? "chevron-up" : "chevron-down"} size={12} color={colors.mutedForeground} />
+        <View style={[chipStyles.colorDot, { backgroundColor: current.color }]} />
+        <Text style={[chipStyles.label, { color: colors.foreground }]} numberOfLines={1}>
+          {current.label}
+        </Text>
+        <Feather
+          name={open ? "chevron-up" : "chevron-down"}
+          size={12}
+          color={colors.mutedForeground}
+        />
       </Pressable>
+
       {open && (
-        <View style={[chipStyles.dropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            chipStyles.dropdown,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           {MODELS.map((m) => {
             const sel = m.id === selectedModel;
             return (
@@ -200,12 +230,19 @@ function ModelChip() {
                   chipStyles.dropItem,
                   sel && { backgroundColor: colors.tealLight },
                 ]}
-                onPress={() => { setSelectedModel(m.id); setOpen(false); }}
+                onPress={() => {
+                  setSelectedModel(m.id);
+                  setOpen(false);
+                }}
               >
-                <View style={[chipStyles.dot, { backgroundColor: m.color }]} />
+                <View style={[chipStyles.colorDot, { backgroundColor: m.color }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[chipStyles.dropLabel, { color: colors.foreground }]}>{m.label}</Text>
-                  <Text style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}>{m.description}</Text>
+                  <Text style={[chipStyles.dropLabel, { color: colors.foreground }]}>
+                    {m.label}
+                  </Text>
+                  <Text style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}>
+                    {m.description}
+                  </Text>
                 </View>
                 {sel && <Feather name="check" size={14} color={colors.primary} />}
               </Pressable>
@@ -217,7 +254,7 @@ function ModelChip() {
   );
 }
 
-// ---------- Main screen ----------
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AIChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -225,18 +262,24 @@ export default function AIChatScreen() {
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const hasMessages = messages.length > 0;
 
+  // Bottom clearance = tab bar + safe area
+  const bottomClearance = TAB_BAR_HEIGHT + insets.bottom;
+
   useEffect(() => {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }, [messages, isLoading]);
 
   async function handleSend(text?: string) {
     const msg = (text ?? input).trim();
     if (!msg || isLoading) return;
     setInput("");
+    inputRef.current?.blur();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await sendUserMessage(msg);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
   }
 
   return (
@@ -248,15 +291,15 @@ export default function AIChatScreen() {
           {
             backgroundColor: colors.card,
             borderBottomColor: colors.border,
-            paddingTop: insets.top + 8,
+            paddingTop: insets.top + 10,
           },
         ]}
       >
         <LinearGradient
-          colors={[colors.primary + "22", "transparent"]}
+          colors={[colors.primary + "28", "transparent"]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.headerInner}>
+        <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={[styles.headerIcon, { backgroundColor: colors.primary }]}>
               <Feather name="activity" size={18} color="#fff" />
@@ -274,25 +317,26 @@ export default function AIChatScreen() {
             <ModelChip />
             {hasMessages && (
               <Pressable
-                style={styles.clearBtn}
+                style={styles.iconBtn}
                 onPress={() => {
                   if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   clearHistory();
                 }}
               >
-                <Feather name="trash-2" size={16} color={colors.mutedForeground} />
+                <Feather name="trash-2" size={17} color={colors.mutedForeground} />
               </Pressable>
             )}
           </View>
         </View>
       </View>
 
-      {/* ── Messages / Empty state ── */}
+      {/* ── Body ── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
+        {/* Messages / Empty state */}
         <ScrollView
           ref={scrollRef}
           style={{ flex: 1 }}
@@ -302,24 +346,24 @@ export default function AIChatScreen() {
           ]}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
         >
           {!hasMessages ? (
-            /* ── Welcome / Empty state ── */
             <View style={styles.emptyWrap}>
               <LinearGradient
-                colors={[colors.primary + "30", colors.primary + "08"]}
+                colors={[colors.primary + "38", colors.primary + "0A"]}
                 style={styles.emptyIconBg}
               >
-                <Feather name="activity" size={36} color={colors.primary} />
+                <Feather name="activity" size={38} color={colors.primary} />
               </LinearGradient>
+
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
                 Ask MedPocket AI
               </Text>
               <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                Clinical Q&A, drug info, anatomy, OSCE prep, differential diagnosis — all for medical education.
+                Clinical Q&A · Drug Info · Anatomy · OSCE · Differentials
               </Text>
 
-              {/* Quick prompts */}
               <View style={styles.quickGrid}>
                 {QUICK_PROMPTS.map((q) => (
                   <Pressable
@@ -331,22 +375,29 @@ export default function AIChatScreen() {
                     onPress={() => handleSend(q.label)}
                   >
                     <Feather name={q.icon} size={15} color={colors.primary} />
-                    <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>
+                    <Text
+                      style={[styles.quickLabel, { color: colors.foreground }]}
+                      numberOfLines={2}
+                    >
                       {q.label}
                     </Text>
                   </Pressable>
                 ))}
               </View>
 
-              <View style={[styles.disclaimerCard, { backgroundColor: colors.tealLight, borderColor: colors.border }]}>
-                <Feather name="info" size={13} color={colors.primary} />
+              <View
+                style={[
+                  styles.disclaimerCard,
+                  { backgroundColor: colors.tealLight, borderColor: colors.border },
+                ]}
+              >
+                <Feather name="shield" size={13} color={colors.primary} />
                 <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
                   For medical education purposes only. Not a substitute for professional clinical judgment.
                 </Text>
               </View>
             </View>
           ) : (
-            /* ── Conversation ── */
             <View style={styles.conversation}>
               {messages.map((m) => (
                 <MessageBubble key={m.id} message={m} />
@@ -356,61 +407,74 @@ export default function AIChatScreen() {
           )}
         </ScrollView>
 
-        {/* ── Input bar ── */}
+        {/* ── Input Bar ── */}
         <View
           style={[
             styles.inputBar,
             {
               backgroundColor: colors.card,
               borderTopColor: colors.border,
-              paddingBottom: insets.bottom + 8,
+              // Sit above the tab bar
+              paddingBottom: bottomClearance + 8,
             },
           ]}
         >
-          <View style={[styles.inputWrap, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.inputRow,
+              { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+          >
             <TextInput
-              style={[styles.input, { color: colors.foreground }]}
-              placeholder="Ask a medical question…"
+              ref={inputRef}
+              style={[styles.textInput, { color: colors.foreground }]}
+              placeholder="Type your medical question…"
               placeholderTextColor={colors.mutedForeground}
               value={input}
               onChangeText={setInput}
               multiline
               maxLength={800}
+              returnKeyType="send"
+              blurOnSubmit={false}
+              onSubmitEditing={() => handleSend()}
+              editable={!isLoading}
             />
             <Pressable
               style={[
                 styles.sendBtn,
-                { backgroundColor: input.trim() && !isLoading ? colors.primary : colors.border },
+                {
+                  backgroundColor:
+                    input.trim() && !isLoading ? colors.primary : colors.border,
+                },
               ]}
               onPress={() => handleSend()}
               disabled={!input.trim() || isLoading}
             >
               <Feather
-                name="send"
+                name={isLoading ? "loader" : "send"}
                 size={15}
                 color={input.trim() && !isLoading ? "#fff" : colors.mutedForeground}
               />
             </Pressable>
           </View>
-          {hasMessages && (
-            <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
-              For medical education only · Not clinical advice
-            </Text>
-          )}
+          <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
+            Medical education only · Not clinical advice
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
-// ── Styles ──
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1 },
+
   header: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
-  headerInner: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -427,34 +491,37 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 17, fontWeight: "700" },
   headerSub: { fontSize: 11, marginTop: 1 },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  clearBtn: { padding: 8 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  iconBtn: { padding: 8 },
+
   scrollContent: { flexGrow: 1, padding: 16 },
   scrollCenter: { justifyContent: "center" },
-  emptyWrap: { alignItems: "center", paddingVertical: 24 },
+
+  emptyWrap: { alignItems: "center", paddingVertical: 16 },
   emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 84,
+    height: 84,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 18,
   },
   emptyTitle: { fontSize: 22, fontWeight: "800", marginBottom: 8 },
   emptySub: {
-    fontSize: 14,
+    fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     marginBottom: 28,
   },
+
   quickGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
     justifyContent: "center",
     marginBottom: 24,
-    paddingHorizontal: 8,
+    width: "100%",
   },
   quickCard: {
     width: "46%",
@@ -464,6 +531,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickLabel: { fontSize: 13, fontWeight: "600", lineHeight: 18 },
+
   disclaimerCard: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -471,31 +539,48 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
-    marginHorizontal: 8,
+    width: "100%",
   },
   disclaimerText: { fontSize: 11.5, lineHeight: 16, flex: 1 },
-  conversation: { paddingBottom: 8 },
-  inputBar: { borderTopWidth: StyleSheet.hairlineWidth, padding: 12 },
-  inputWrap: {
+
+  conversation: { paddingBottom: 4 },
+
+  inputBar: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+  },
+  inputRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     borderWidth: 1,
-    borderRadius: 18,
-    paddingLeft: 14,
+    borderRadius: 20,
+    paddingLeft: 16,
     paddingRight: 6,
     paddingVertical: 6,
+    gap: 6,
   },
-  input: { flex: 1, fontSize: 15, maxHeight: 100, lineHeight: 21, paddingVertical: 4 },
+  textInput: {
+    flex: 1,
+    fontSize: 15,
+    maxHeight: 110,
+    lineHeight: 22,
+    paddingVertical: 6,
+  },
   sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 6,
     flexShrink: 0,
   },
-  footerNote: { fontSize: 10, textAlign: "center", marginTop: 6 },
+  footerNote: {
+    fontSize: 10,
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 4,
+  },
 });
 
 const bubbleStyles = StyleSheet.create({
@@ -503,7 +588,7 @@ const bubbleStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     marginBottom: 14,
-    paddingLeft: 56,
+    paddingLeft: 52,
   },
   userBubble: {
     paddingHorizontal: 14,
@@ -512,12 +597,13 @@ const bubbleStyles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   userText: { fontSize: 14, lineHeight: 21 },
+
   aiRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
     marginBottom: 14,
-    paddingRight: 32,
+    paddingRight: 28,
   },
   aiAvatar: {
     width: 24,
@@ -540,6 +626,7 @@ const bubbleStyles = StyleSheet.create({
   actions: { flexDirection: "row", gap: 16, marginTop: 6, paddingLeft: 4 },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   actionLabel: { fontSize: 11 },
+
   typingBubble: {
     flexDirection: "row",
     gap: 5,
@@ -562,22 +649,23 @@ const chipStyles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
+    maxWidth: 140,
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  label: { fontSize: 12, fontWeight: "600" },
+  colorDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  label: { fontSize: 12, fontWeight: "600", flex: 1 },
   dropdown: {
     position: "absolute",
-    top: 38,
+    top: 40,
     right: 0,
-    width: 220,
+    width: 210,
     borderRadius: 14,
     borderWidth: 1,
     zIndex: 9999,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.18,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 14,
     paddingVertical: 6,
   },
   dropItem: {
