@@ -16,7 +16,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { AIChatProvider } from "@/context/AIChatContext";
-import { FloatingChatBubble } from "@/components/AIChat";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingScreen from "@/components/Onboarding";
 
@@ -57,7 +56,6 @@ function RootLayoutNav() {
         <Stack.Screen name="search" options={{ headerShown: false, presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="privacy-policy" options={{ animation: "slide_from_right" }} />
       </Stack>
-      <FloatingChatBubble />
     </AIChatProvider>
   );
 }

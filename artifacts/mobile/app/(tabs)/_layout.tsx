@@ -20,6 +20,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
         <Label>Explore</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="ai-chat">
+        <Icon sf={{ default: "brain", selected: "brain.fill" }} />
+        <Label>AI Chat</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="quiz">
         <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
         <Label>Quiz</Label>
@@ -89,6 +93,18 @@ function ClassicTabLayout() {
               <SymbolView name="books.vertical" tintColor={color} size={24} />
             ) : (
               <Feather name="compass" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="ai-chat"
+        options={{
+          title: "AI Chat",
+          tabBarIcon: ({ color, focused }) =>
+            isIOS ? (
+              <SymbolView name="brain" tintColor={color} size={24} />
+            ) : (
+              <Feather name="cpu" size={22} color={color} />
             ),
         }}
       />

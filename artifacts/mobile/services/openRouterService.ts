@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type ModelId =
-  | "deepseek/deepseek-r1:free"
+  | "google/gemma-3-27b-it:free"
   | "qwen/qwen3-235b-a22b:free"
   | "meta-llama/llama-3.3-70b-instruct:free"
   | "mistralai/mistral-7b-instruct:free";
@@ -11,32 +11,37 @@ export interface ModelConfig {
   label: string;
   description: string;
   icon: string;
+  color: string;
 }
 
 export const MODELS: ModelConfig[] = [
   {
-    id: "deepseek/deepseek-r1:free",
-    label: "DeepSeek R1",
+    id: "google/gemma-3-27b-it:free",
+    label: "Gemma 3",
     description: "Clinical Reasoning",
     icon: "cpu",
+    color: "#4285F4",
   },
   {
     id: "qwen/qwen3-235b-a22b:free",
     label: "Qwen 3",
     description: "Medical Learning",
     icon: "book-open",
+    color: "#8B5CF6",
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct:free",
     label: "Llama 3.3",
     description: "General Study",
     icon: "layers",
+    color: "#009DB5",
   },
   {
     id: "mistralai/mistral-7b-instruct:free",
     label: "Mistral 7B",
     description: "Quick Lookups",
     icon: "zap",
+    color: "#F59E0B",
   },
 ];
 
@@ -66,26 +71,28 @@ const STORAGE_KEYS = {
 const MEDICAL_KEYWORDS = [
   "disease", "symptom", "drug", "medication", "dose", "dosage", "anatomy",
   "physiology", "pathology", "pharmacology", "microbiology", "clinical",
-  "surgery", "pediatric", "obstetric", "gynecology", "psychiatry", "emergency",
-  "diagnosis", "differential", "treatment", "therapy", "patient", "hospital",
-  "doctor", "nurse", "medical", "medicine", "health", "healthcare", "blood",
-  "heart", "lung", "liver", "kidney", "brain", "nerve", "bone", "muscle",
-  "cancer", "tumor", "infection", "antibiotic", "vaccine", "virus", "bacteria",
-  "syndrome", "disorder", "condition", "chronic", "acute", "pain", "fever",
-  "osce", "mbbs", "usmle", "mrcp", "medical exam", "case", "history",
-  "examination", "investigation", "lab", "ecg", "x-ray", "mri", "ct scan",
-  "ultrasound", "biopsy", "culture", "sensitivity", "sensitivity", "allergy",
-  "immune", "inflammation", "platelet", "hemoglobin", "white blood cell",
-  "red blood cell", "glucose", "insulin", "diabetes", "hypertension",
-  "cholesterol", "lipid", "thyroid", "hormone", "enzyme", "receptor",
-  "mechanism", "action", "side effect", "contraindication", "interaction",
-  "prognosis", "mortality", "morbidity", "incidence", "prevalence",
-  "anatomy", "biochemistry", "genetics", "epidemiology", "public health",
-  "trauma", "fracture", "wound", "burn", "shock", "sepsis", "icu",
-  "anesthesia", "analgesia", "sedation", "ventilation", "intubation",
+  "surgery", "pediatric", "paediatric", "obstetric", "gynaecology", "gynecology",
+  "psychiatry", "emergency", "diagnosis", "differential", "treatment", "therapy",
+  "patient", "hospital", "doctor", "nurse", "medical", "medicine", "health",
+  "healthcare", "blood", "heart", "lung", "liver", "kidney", "brain", "nerve",
+  "bone", "muscle", "cancer", "tumor", "tumour", "infection", "antibiotic",
+  "vaccine", "virus", "bacteria", "syndrome", "disorder", "condition", "chronic",
+  "acute", "pain", "fever", "osce", "mbbs", "usmle", "mrcp", "plab", "medical exam",
+  "case", "history", "examination", "investigation", "lab", "ecg", "x-ray",
+  "mri", "ct scan", "ultrasound", "biopsy", "allergy", "immune", "inflammation",
+  "platelet", "hemoglobin", "haemoglobin", "glucose", "insulin", "diabetes",
+  "hypertension", "cholesterol", "lipid", "thyroid", "hormone", "enzyme",
+  "receptor", "mechanism", "action", "side effect", "contraindication",
+  "interaction", "prognosis", "mortality", "morbidity", "incidence", "prevalence",
+  "biochemistry", "genetics", "epidemiology", "public health", "trauma",
+  "fracture", "wound", "burn", "shock", "sepsis", "icu", "anesthesia",
+  "anaesthesia", "analgesia", "sedation", "ventilation", "intubation",
   "what is", "how does", "explain", "describe", "causes", "signs",
-  "management", "protocol", "guideline", "classify", "staging",
-  "grading", "scoring", "gcs", "apache", "sofa", "curb", "wells",
+  "management", "protocol", "guideline", "classify", "staging", "grading",
+  "scoring", "gcs", "apache", "sofa", "curb", "wells", "spinal", "epidural",
+  "nerve block", "regional", "local anaesthetic", "cardiac", "respiratory",
+  "renal", "hepatic", "neurological", "musculoskeletal", "dermatology",
+  "ophthalmology", "ent", "ear", "nose", "throat", "skin", "rash",
 ];
 
 export function isMedicalQuestion(question: string): boolean {
@@ -93,40 +100,44 @@ export function isMedicalQuestion(question: string): boolean {
   return MEDICAL_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
-const SYSTEM_PROMPT = `You are MedPocket AI, an expert medical education assistant for medical students and healthcare professionals.
+const SYSTEM_PROMPT = `You are MedPocket AI, a precise medical education assistant for MBBS students and healthcare professionals. Your role is strictly medical education.
 
-Your role is to help with:
-- Anatomy, Physiology, Biochemistry, Pathology
-- Pharmacology, Microbiology, Immunology
-- Clinical Medicine (Internal Medicine, Surgery, Pediatrics, OBG, Psychiatry)
-- Emergency Medicine and ICU protocols
-- Medical Case Discussions and Differential Diagnosis
-- OSCE Preparation and Medical Examinations
-- Drug information, dosages, and interactions
-- Medical Terminology and Concepts
-- Healthcare Education
+Answer questions about: Anatomy, Physiology, Biochemistry, Pathology, Pharmacology, Microbiology, Clinical Medicine, Surgery, Pediatrics, OBG, Psychiatry, Emergency Medicine, Medical Cases, Differential Diagnosis, OSCE, Drug information, Medical Exams.
+
+FORMAT RULES:
+- Use clear headings with ## for sections
+- Use bullet points for lists
+- Include clinical pearls where relevant
+- Be concise but complete
+- For drug questions: include class, mechanism, dose, side effects, contraindications
+- For anatomy: be precise with terminology
+- Always end clinical answers with a brief "Clinical Pearl" if applicable
 
 STRICT RULES:
-1. Answer ONLY medical and healthcare-related questions.
-2. If a question is not related to medicine, healthcare, or medical education, respond EXACTLY with: "OFF_TOPIC"
-3. Always be accurate, educational, and evidence-based.
-4. Format responses clearly with headings, bullet points when appropriate.
-5. Include relevant clinical pearls when applicable.
-6. Always remind users this is for educational purposes only for clinical questions.
+- Answer ONLY medical/healthcare questions
+- If non-medical: respond with exactly "OFF_TOPIC" (nothing else)
+- Never give personal medical advice ("see a doctor for your symptoms")
+- State: educational purpose only when appropriate`;
 
-Be concise but thorough. Prioritize clinical accuracy.`;
+const FALLBACK_ORDER: ModelId[] = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "mistralai/mistral-7b-instruct:free",
+  "qwen/qwen3-235b-a22b:free",
+  "google/gemma-3-27b-it:free",
+];
 
 export async function sendMessage(
   messages: ChatMessage[],
-  modelId: ModelId,
-  onChunk?: (text: string) => void
+  modelId: ModelId
 ): Promise<string> {
   const apiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
   const baseUrl =
     process.env.EXPO_PUBLIC_OPENROUTER_URL || "https://openrouter.ai/api/v1";
 
   if (!apiKey) {
-    throw new Error("OpenRouter API key is not configured.");
+    throw new Error(
+      "OpenRouter API key is not configured. Please add EXPO_PUBLIC_OPENROUTER_API_KEY."
+    );
   }
 
   const formattedMessages = [
@@ -137,17 +148,14 @@ export async function sendMessage(
       .map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  const modelFallbacks: ModelId[] = [
+  // Build fallback chain: selected model first, then the rest in priority order
+  const chain: ModelId[] = [
     modelId,
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "qwen/qwen3-235b-a22b:free",
-    "deepseek/deepseek-r1:free",
-  ].filter((v, i, arr) => arr.indexOf(v) === i) as ModelId[];
+    ...FALLBACK_ORDER.filter((m) => m !== modelId),
+  ];
 
-  let lastError: Error | null = null;
-
-  for (const model of modelFallbacks) {
+  for (let i = 0; i < chain.length; i++) {
+    const model = chain[i];
     try {
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
@@ -155,34 +163,43 @@ export async function sendMessage(
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
           "HTTP-Referer": "https://medpocket.app",
-          "X-Title": "MedPocket AI Assistant",
+          "X-Title": "MedPocket AI",
         },
         body: JSON.stringify({
           model,
           messages: formattedMessages,
           max_tokens: 2048,
-          temperature: 0.7,
-          stream: false,
+          temperature: 0.6,
         }),
       });
 
+      // 404 = model not available → try next silently
+      if (response.status === 404) {
+        continue;
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API error ${response.status}: ${errorText}`);
+        // Rate limit or quota → try next
+        if (response.status === 429 || response.status === 503) {
+          continue;
+        }
+        throw new Error(`Request failed (${response.status}). Please try again.`);
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content ?? "";
+      const content: string = data.choices?.[0]?.message?.content ?? "";
       return content;
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (model !== modelFallbacks[modelFallbacks.length - 1]) {
-        continue;
-      }
+      // Network errors → try next model
+      if (i < chain.length - 1) continue;
+      throw err;
     }
   }
 
-  throw lastError ?? new Error("All models failed. Please try again later.");
+  throw new Error(
+    "All AI models are temporarily busy. Please try again in a moment."
+  );
 }
 
 export async function loadChatHistory(): Promise<ChatMessage[]> {
@@ -206,7 +223,8 @@ export async function saveChatHistory(messages: ChatMessage[]): Promise<void> {
 export async function loadSelectedModel(): Promise<ModelId> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_MODEL);
-    return (raw as ModelId) ?? "meta-llama/llama-3.3-70b-instruct:free";
+    if (raw && MODELS.find((m) => m.id === raw)) return raw as ModelId;
+    return "meta-llama/llama-3.3-70b-instruct:free";
   } catch {
     return "meta-llama/llama-3.3-70b-instruct:free";
   }
