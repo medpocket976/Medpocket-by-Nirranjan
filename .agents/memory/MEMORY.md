@@ -1,0 +1,2 @@
+- [OpenRouter free model availability](openrouter-free-models.md) — only a subset of :free models actually have endpoints; always live-test before shipping.
+- [MedPocket tab bar overlap](medpocket-tab-bar.md) — tab bar is position:absolute 80px; screens need paddingBottom: TAB_BAR_HEIGHT + insets.bottom to avoid hiding content.
