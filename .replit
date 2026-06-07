@@ -38,3 +38,8 @@ externalPort = 3001
 [[ports]]
 localPort = 18116
 externalPort = 3002
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_OPENROUTER_URL = "https://openrouter.ai/api/v1"
