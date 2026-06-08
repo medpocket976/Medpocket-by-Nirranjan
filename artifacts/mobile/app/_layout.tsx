@@ -8,7 +8,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -19,6 +19,7 @@ import { AppProvider, useApp } from "@/context/AppContext";
 import { AIChatProvider } from "@/context/AIChatContext";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingScreen from "@/components/Onboarding";
+import AnimatedSplash from "@/components/AnimatedSplash";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -68,13 +69,16 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
+      // Hide the native splash — our custom animated splash takes over
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
 
+  // While fonts are still loading, keep the teal background visible
   if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: "#009DB5" }} />;
   }
@@ -86,8 +90,13 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <AppProvider>
+                {/* App renders underneath — splash fades out to reveal it */}
                 <RootLayoutNav />
                 <InstallPrompt />
+                {/* Custom animated logo splash overlay */}
+                {!splashDone && (
+                  <AnimatedSplash onDone={() => setSplashDone(true)} />
+                )}
               </AppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
