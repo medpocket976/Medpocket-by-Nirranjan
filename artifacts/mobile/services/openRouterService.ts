@@ -154,11 +154,43 @@ const MEDICAL_KEYWORDS = [
   "mammography","angiography","doppler","echocardiography","echo",
   "diagnostic imaging","radiograph","contrast","shadow","opacity",
 
-  // Anesthesiology
-  "anesthesia","anaesthesia","analgesia","sedation","intubation","airway",
-  "ventilation","spinal anesthesia","epidural","general anesthesia",
-  "regional anesthesia","local anesthesia","neuromuscular blockade",
-  "anesthesiologist","anaesthetist","perioperative","post-operative","preoxygenation",
+  // Anaesthesiology (comprehensive)
+  "anaesthesia","anesthesia","anaesthesiology","anesthesiology",
+  "anaesthetist","anesthesiologist","anaesthetic","anesthetic",
+  "analgesia","sedation","pre-medication","premedication",
+  "general anaesthesia","general anesthesia","ga",
+  "regional anaesthesia","regional anesthesia","regional block","nerve block",
+  "local anaesthesia","local anesthesia","local infiltration",
+  "spinal anaesthesia","spinal anesthesia","spinal block","subarachnoid block",
+  "epidural","epidural anaesthesia","epidural anesthesia","caudal block",
+  "brachial plexus","axillary block","femoral nerve block","sciatic block",
+  "fascia iliaca","erector spinae","paravertebral block","truncal block",
+  "tiva","total intravenous anaesthesia","total intravenous anesthesia",
+  "rsi","rapid sequence induction","rapid sequence intubation",
+  "lma","laryngeal mask airway","supraglottic airway","i-gel","igel",
+  "endotracheal tube","ett","intubation","extubation","difficult airway",
+  "airway management","airway assessment","mallampati","cormack lehane",
+  "propofol","thiopental","ketamine","etomidate","midazolam","fentanyl",
+  "morphine","remifentanil","alfentanil","sevoflurane","desflurane","isoflurane",
+  "volatile agent","inhalational agent","nitrous oxide","n2o",
+  "suxamethonium","succinylcholine","rocuronium","vecuronium","atracurium",
+  "neostigmine","sugammadex","reversal","neuromuscular blockade","twitch",
+  "train of four","tof","bispectral index","bis","depth of anaesthesia",
+  "mac","minimum alveolar concentration","vapour","vaporiser",
+  "ventilation","mechanical ventilation","controlled ventilation","spontaneous",
+  "tidal volume","respiratory rate","peep","fio2","pip",
+  "preoxygenation","denitrogenation","apnoeic oxygenation",
+  "perioperative","intraoperative","post-operative","postoperative",
+  "ponv","post-operative nausea","post-operative vomiting",
+  "pain management","acute pain","chronic pain","pain score","vas","nrs",
+  "multimodal analgesia","pca","patient controlled analgesia",
+  "epidural analgesia","opioid","non-opioid","nsaid","paracetamol",
+  "gabapentin","pregabalin","ketamine infusion","lidocaine infusion",
+  "asa classification","asa grade","fitness for anaesthesia","pre-op assessment",
+  "fasting guidelines","nil by mouth","nbm","fluid management intraoperative",
+  "blood loss","transfusion trigger","cell salvage","massive transfusion",
+  "hypothermia","temperature management","warming","fluid warmer",
+  "anaesthesia machine","breathing circuit","circle system","bain circuit",
 
   // Cardiology
   "cardiology","cardiac","heart","ecg","ekg","electrocardiogram",
@@ -262,6 +294,37 @@ const MEDICAL_KEYWORDS = [
   "speech therapy","dietitian","paramedic","midwifery","midwife",
   "radiographer","pharmacist","optometrist","audiologist",
 
+  // Medical terminology
+  "medical terminology","term","terminology","eponym","abbreviation","acronym",
+  "prefix","suffix","root word","medical word","anatomical term","clinical term",
+
+  // Pain medicine & palliative care
+  "palliative","palliative care","end of life","hospice","terminal",
+  "cancer pain","neuropathic pain","nociceptive","visceral pain","somatic pain",
+  "pain ladder","who pain ladder","opioid rotation","equianalgesic",
+  "breakthrough pain","pain clinic","pain specialist","interventional pain",
+
+  // Healthcare systems & education
+  "healthcare system","health system","nhs","primary care","secondary care",
+  "tertiary care","referral","triage","health policy","health economics",
+  "health literacy","patient education","patient counselling","counseling",
+  "interprofessional","multidisciplinary","mdt","handover","sbar",
+  "clinical governance","audit","quality improvement","patient safety",
+  "incident report","root cause analysis","near miss","never event",
+
+  // Radiology extras
+  "diagnostic imaging","ultrasound interpretation","chest x-ray interpretation",
+  "ct interpretation","mri interpretation","abdominal x-ray","skull x-ray",
+  "bone x-ray","ecg interpretation","echocardiography interpretation",
+  "plain film","radiograph","hounsfield","density","lucency","opacity",
+  "consolidation","effusion on x-ray","pneumothorax on x-ray",
+
+  // Journal / EBM extras
+  "journal article","article interpretation","study design","bias","confounding",
+  "randomisation","blinding","intention to treat","per protocol",
+  "hazard ratio","number needed to treat","nnt","nnh","absolute risk",
+  "relative risk reduction","absolute risk reduction","likelihood ratio",
+
   // Generic clinical question starters
   "what is","what are","how does","how do","explain","describe",
   "causes of","signs of","symptoms of","treatment of","management of",
@@ -277,19 +340,46 @@ export function isMedicalQuestion(question: string): boolean {
 
 const SYSTEM_PROMPT = `You are MedPocket AI, a comprehensive medical education assistant for medical students, nurses, allied health professionals, and healthcare workers.
 
-ALLOWED TOPICS (answer all questions in these areas):
-Basic Sciences: Anatomy, Physiology, Biochemistry, Pathology, Pharmacology, Microbiology, Immunology, Genetics, Histology, Embryology
-Clinical Medicine: Internal Medicine, Family Medicine, Emergency Medicine, Critical Care, Preventive Medicine
-Surgery: General Surgery, Orthopedic, Neurosurgery, Cardiothoracic, Plastic Surgery, Urology
-Specialties: Pediatrics, Neonatology, Obstetrics & Gynecology, Psychiatry, Dermatology, Ophthalmology, ENT, Anesthesiology, Radiology
-Systems: Cardiology, Pulmonology, Gastroenterology, Nephrology, Endocrinology, Rheumatology, Hematology, Oncology, Infectious Diseases, Neurology
-Clinical Skills: OSCE, History Taking, Physical Examination, Clinical Reasoning, Differential Diagnosis, Diagnostic Workups, ECG, ABG, Lab Interpretation
-Medical Exams: USMLE, PLAB, AMC, NEXT, MBBS, MRCP, Nursing Exams, Allied Health Exams
-Evidence & Research: EBM, Clinical Guidelines, Research Methods, Journal Interpretation
-Public Health: Epidemiology, Community Medicine, Preventive Medicine, Screening
-Healthcare: Nursing, Physiotherapy, Allied Health, Paramedic Education, Patient Education
-Pharmacology: Drug Interactions, Medication Safety, Prescription Review (educational)
-Ethics: Medical Ethics, Bioethics, Informed Consent, End-of-Life Care
+ALLOWED TOPICS (answer ALL questions in these areas — be inclusive):
+
+BASIC SCIENCES
+Anatomy · Physiology · Biochemistry · Pathology · Pharmacology · Microbiology · Immunology · Genetics · Histology · Embryology · Cell Biology · Molecular Biology
+
+CLINICAL MEDICINE
+Internal Medicine · Family Medicine · Emergency Medicine · Critical Care / ICU · Preventive Medicine · General Practice
+
+SURGERY
+General Surgery · Orthopedic Surgery · Neurosurgery · Cardiothoracic Surgery · Plastic & Reconstructive Surgery · Urology · Vascular Surgery · Trauma Surgery
+
+ANAESTHESIOLOGY (full scope)
+General Anaesthesia · Regional Anaesthesia · Spinal / Epidural / Caudal · Nerve Blocks (brachial plexus, femoral, sciatic, fascia iliaca, ESP, paravertebral) · TIVA · RSI · Airway Management (LMA, ETT, difficult airway, Mallampati, Cormack-Lehane) · Anaesthetic Agents (propofol, thiopental, ketamine, sevoflurane, desflurane, isoflurane, suxamethonium, rocuronium, sugammadex) · MAC · PONV · Perioperative Care · Pre-op Assessment · ASA Classification · Fasting Guidelines · Pain Management (acute, chronic, cancer, neuropathic, WHO pain ladder, PCA, multimodal analgesia) · Palliative Care · Critical Care Pharmacology
+
+SPECIALTIES
+Cardiology · Pulmonology · Gastroenterology · Nephrology · Endocrinology · Rheumatology · Hematology / Haematology · Oncology · Infectious Diseases · Neurology · Dermatology · Ophthalmology · ENT (Otorhinolaryngology) · Psychiatry · Pediatrics · Neonatology · Obstetrics & Gynecology · Radiology & Diagnostic Imaging · Nuclear Medicine
+
+CLINICAL SKILLS & REASONING
+OSCE Preparation · History Taking · Physical Examination · Clinical Reasoning · Differential Diagnosis · Diagnostic Workups · ECG Interpretation · ABG Interpretation · Chest X-Ray / CT / MRI / Ultrasound Interpretation · Laboratory Medicine · Investigation Interpretation
+
+MEDICAL EXAMS
+USMLE (Step 1, 2, 3) · PLAB (1 & 2) · AMC · NEXT · MBBS · MRCP · FRCS · MRCPCH · Nursing Exams · Allied Health Exams
+
+EVIDENCE-BASED MEDICINE & RESEARCH
+EBM · Clinical Guidelines (NICE, WHO, AHA, ESC, RCOG) · Study Design · Statistical Concepts · Journal Article Interpretation · Systematic Reviews · Meta-analyses
+
+PUBLIC HEALTH
+Epidemiology · Community Medicine · Preventive Medicine · Screening · Vaccination Programmes · Health Economics · Global Health
+
+HEALTHCARE EDUCATION & SYSTEMS
+Nursing · Physiotherapy · Allied Health Sciences · Paramedic Education · Midwifery · Occupational Therapy · Healthcare Systems (NHS, primary/secondary/tertiary care) · Patient Education · Health Literacy · MDT / Interprofessional Care · Clinical Governance · Patient Safety · Quality Improvement
+
+PHARMACOLOGY & DRUG SAFETY
+Drug Interactions · Medication Safety · Prescription Review · Pharmacokinetics · Pharmacodynamics · Adverse Drug Reactions · Therapeutic Drug Monitoring
+
+MEDICAL TERMINOLOGY
+Medical Eponyms · Anatomical Terms · Clinical Abbreviations · Prefixes & Suffixes · Diagnostic Terminology
+
+ETHICS & PROFESSIONALISM
+Medical Ethics · Bioethics · Informed Consent · Confidentiality · Autonomy · End-of-Life Care · Palliative Ethics · Resource Allocation · Professional Conduct
 
 FORMAT RULES:
 - Use ## for section headings (e.g. ## Mechanism, ## Clinical Features)
