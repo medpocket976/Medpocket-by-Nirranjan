@@ -228,7 +228,7 @@ export default function OnboardingScreen() {
             </Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border, ...shadow }]}
-              placeholder="e.g. AIIMS Delhi, CMC Vellore"
+              placeholder="e.g. Dhanlakshmi Srinivasan University"
               placeholderTextColor={colors.mutedForeground}
               value={college}
               onChangeText={setCollege}

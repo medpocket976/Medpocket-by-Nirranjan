@@ -327,7 +327,7 @@ export default function ProfileScreen() {
               <TextInput
                 style={[s.iosInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
                 value={collegeInput} onChangeText={setCollegeInput}
-                placeholder="e.g. AIIMS Delhi (optional)" placeholderTextColor={colors.mutedForeground}
+                placeholder="e.g. Dhanlakshmi Srinivasan University" placeholderTextColor={colors.mutedForeground}
               />
               <View style={s.editActions}>
                 <Pressable style={[s.editActionBtn, { backgroundColor: colors.muted }]} onPress={() => setEditing(false)}>

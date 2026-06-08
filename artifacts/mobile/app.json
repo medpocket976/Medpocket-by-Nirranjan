@@ -25,7 +25,7 @@
     "android": {
       "package": "com.nirranjan.medpocket",
       "versionCode": 3,
-      "backgroundColor": "#F8FAFB",
+      "backgroundColor": "#009DB5",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009DB5"
