@@ -5,7 +5,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -58,6 +60,124 @@ function parseInline(text: string, baseColor: string): React.ReactNode {
   );
 }
 
+// ─── Table block ───────────────────────────────────────────────────────────
+type LineBlock = { kind: "line"; line: string; idx: number };
+type TableBlock = { kind: "table"; rows: string[][]; idx: number };
+type MdBlock = LineBlock | TableBlock;
+
+function isSeparatorRow(line: string) {
+  return line.replace(/[\s|:\-]/g, "").length === 0;
+}
+
+function parseBlocks(lines: string[]): MdBlock[] {
+  const blocks: MdBlock[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (lines[i].trim().startsWith("|")) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      const rows = tableLines
+        .filter((l) => !isSeparatorRow(l))
+        .map((l) =>
+          l
+            .split("|")
+            .slice(1, -1)
+            .map((c) => c.trim())
+        );
+      if (rows.length > 0) {
+        blocks.push({ kind: "table", rows, idx: blocks.length });
+      }
+    } else {
+      blocks.push({ kind: "line", line: lines[i], idx: i });
+      i++;
+    }
+  }
+  return blocks;
+}
+
+function MarkdownTable({
+  rows,
+  textColor,
+  colors,
+}: {
+  rows: string[][];
+  textColor: string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [header, ...body] = rows;
+  const colCount = Math.max(...rows.map((r) => r.length));
+  const colWidth = Math.max(90, Math.floor((Dimensions.get("window").width - 60) / Math.min(colCount, 4)));
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginVertical: 8 }}
+    >
+      <View
+        style={{
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
+        {/* Header row */}
+        {header && (
+          <View style={{ flexDirection: "row", backgroundColor: colors.primary + "22" }}>
+            {header.map((cell, ci) => (
+              <View
+                key={ci}
+                style={{
+                  width: colWidth,
+                  padding: 9,
+                  borderRightWidth: ci < header.length - 1 ? StyleSheet.hairlineWidth : 0,
+                  borderRightColor: colors.border,
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: "700", color: textColor, lineHeight: 17 }}>
+                  {parseInline(cell, textColor)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+        {/* Body rows */}
+        {body.map((row, ri) => (
+          <View
+            key={ri}
+            style={{
+              flexDirection: "row",
+              backgroundColor: ri % 2 === 0 ? "transparent" : colors.muted + "60",
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+            }}
+          >
+            {row.map((cell, ci) => (
+              <View
+                key={ci}
+                style={{
+                  width: colWidth,
+                  padding: 9,
+                  borderRightWidth: ci < row.length - 1 ? StyleSheet.hairlineWidth : 0,
+                  borderRightColor: colors.border,
+                }}
+              >
+                <Text style={{ fontSize: 12, color: textColor, lineHeight: 18 }}>
+                  {parseInline(cell, textColor)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
 // ─── Markdown Renderer ─────────────────────────────────────────────────────
 function MarkdownContent({
   content,
@@ -69,20 +189,34 @@ function MarkdownContent({
   colors: ReturnType<typeof useColors>;
 }) {
   const lines = content.split("\n");
+  const blocks = parseBlocks(lines);
 
   return (
     <View style={{ gap: 1 }}>
-      {lines.map((line, i) => {
+      {blocks.map((block, bi) => {
+        if (block.kind === "table") {
+          return (
+            <MarkdownTable
+              key={`t-${bi}`}
+              rows={block.rows}
+              textColor={textColor}
+              colors={colors}
+            />
+          );
+        }
+
+        const { line, idx } = block;
+
         // H2
         if (line.startsWith("## ")) {
           return (
             <Text
-              key={i}
+              key={idx}
               style={{
                 fontSize: 14.5,
                 fontWeight: "800",
                 color: textColor,
-                marginTop: i > 0 ? 10 : 2,
+                marginTop: idx > 0 ? 10 : 2,
                 marginBottom: 2,
                 letterSpacing: -0.2,
               }}
@@ -95,12 +229,12 @@ function MarkdownContent({
         if (line.startsWith("# ")) {
           return (
             <Text
-              key={i}
+              key={idx}
               style={{
                 fontSize: 16,
                 fontWeight: "800",
                 color: textColor,
-                marginTop: i > 0 ? 12 : 2,
+                marginTop: idx > 0 ? 12 : 2,
                 marginBottom: 2,
               }}
             >
@@ -112,7 +246,7 @@ function MarkdownContent({
         if (line.startsWith("🔑")) {
           return (
             <View
-              key={i}
+              key={idx}
               style={{
                 backgroundColor: colors.primary + "18",
                 borderRadius: 10,
@@ -142,32 +276,13 @@ function MarkdownContent({
           const text = line.slice(2);
           return (
             <View
-              key={i}
-              style={{
-                flexDirection: "row",
-                gap: 8,
-                paddingLeft: 4,
-                marginTop: 2,
-              }}
+              key={idx}
+              style={{ flexDirection: "row", gap: 8, paddingLeft: 4, marginTop: 2 }}
             >
-              <Text
-                style={{
-                  color: colors.primary,
-                  fontSize: 14,
-                  lineHeight: 22,
-                  fontWeight: "700",
-                }}
-              >
+              <Text style={{ color: colors.primary, fontSize: 14, lineHeight: 22, fontWeight: "700" }}>
                 •
               </Text>
-              <Text
-                style={{
-                  flex: 1,
-                  color: textColor,
-                  fontSize: 14,
-                  lineHeight: 22,
-                }}
-              >
+              <Text style={{ flex: 1, color: textColor, fontSize: 14, lineHeight: 22 }}>
                 {parseInline(text, textColor)}
               </Text>
             </View>
@@ -178,30 +293,32 @@ function MarkdownContent({
           const text = line.trimStart().slice(2);
           return (
             <View
-              key={i}
+              key={idx}
               style={{ flexDirection: "row", gap: 8, paddingLeft: 20, marginTop: 1 }}
             >
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 21 }}>
-                ›
-              </Text>
-              <Text
-                style={{ flex: 1, color: textColor, fontSize: 13, lineHeight: 21 }}
-              >
+              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 21 }}>›</Text>
+              <Text style={{ flex: 1, color: textColor, fontSize: 13, lineHeight: 21 }}>
                 {parseInline(text, textColor)}
               </Text>
             </View>
           );
         }
+        // Horizontal rule
+        if (line.trim() === "---" || line.trim() === "***") {
+          return (
+            <View
+              key={idx}
+              style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 8 }}
+            />
+          );
+        }
         // Empty line
         if (line.trim() === "") {
-          return <View key={i} style={{ height: 5 }} />;
+          return <View key={idx} style={{ height: 5 }} />;
         }
         // Normal text
         return (
-          <Text
-            key={i}
-            style={{ color: textColor, fontSize: 14, lineHeight: 22, marginTop: 1 }}
-          >
+          <Text key={idx} style={{ color: textColor, fontSize: 14, lineHeight: 22, marginTop: 1 }}>
             {parseInline(line, textColor)}
           </Text>
         );
@@ -433,26 +550,32 @@ function ModelChip() {
   const colors = useColors();
   const { selectedModel, setSelectedModel } = useAIChat();
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, right: 16 });
+  const chipRef = useRef<View>(null);
   const current = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0];
 
+  function handleOpen() {
+    chipRef.current?.measureInWindow((x, _y, width, height) => {
+      const screenWidth = Dimensions.get("window").width;
+      setDropPos({
+        top: _y + height + 6,
+        right: screenWidth - x - width,
+      });
+      setOpen(true);
+    });
+    if (Platform.OS !== "web")
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
   return (
-    <View style={{ zIndex: 100 }}>
+    <>
       <Pressable
-        style={[
-          chipStyles.chip,
-          { backgroundColor: colors.muted, borderColor: colors.border },
-        ]}
-        onPress={() => {
-          setOpen((v) => !v);
-          if (Platform.OS !== "web")
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }}
+        ref={chipRef}
+        style={[chipStyles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
+        onPress={open ? () => setOpen(false) : handleOpen}
       >
         <View style={[chipStyles.colorDot, { backgroundColor: current.color }]} />
-        <Text
-          style={[chipStyles.label, { color: colors.foreground }]}
-          numberOfLines={1}
-        >
+        <Text style={[chipStyles.label, { color: colors.foreground }]} numberOfLines={1}>
           {current.label}
         </Text>
         <Feather
@@ -462,51 +585,56 @@ function ModelChip() {
         />
       </Pressable>
 
-      {open && (
-        <View
-          style={[
-            chipStyles.dropdown,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          {MODELS.map((m) => {
-            const sel = m.id === selectedModel;
-            return (
-              <Pressable
-                key={m.id}
-                style={[
-                  chipStyles.dropItem,
-                  sel && { backgroundColor: colors.primary + "14" },
-                ]}
-                onPress={() => {
-                  setSelectedModel(m.id);
-                  setOpen(false);
-                  if (Platform.OS !== "web")
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-              >
-                <View
-                  style={[chipStyles.colorDot, { backgroundColor: m.color, width: 10, height: 10 }]}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={[chipStyles.dropLabel, { color: colors.foreground }]}>
-                    {m.label}
-                  </Text>
-                  <Text
-                    style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}
-                  >
-                    {m.description}
-                  </Text>
-                </View>
-                {sel && (
-                  <Feather name="check" size={14} color={colors.primary} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-    </View>
+      <Modal
+        transparent
+        visible={open}
+        animationType="none"
+        onRequestClose={() => setOpen(false)}
+        statusBarTranslucent
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)}>
+          <View
+            style={[
+              chipStyles.dropdown,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                position: "absolute",
+                top: dropPos.top,
+                right: dropPos.right,
+              },
+            ]}
+          >
+            {MODELS.map((m) => {
+              const sel = m.id === selectedModel;
+              return (
+                <Pressable
+                  key={m.id}
+                  style={[chipStyles.dropItem, sel && { backgroundColor: colors.primary + "14" }]}
+                  onPress={() => {
+                    setSelectedModel(m.id);
+                    setOpen(false);
+                    if (Platform.OS !== "web")
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                >
+                  <View style={[chipStyles.colorDot, { backgroundColor: m.color, width: 10, height: 10 }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[chipStyles.dropLabel, { color: colors.foreground }]}>
+                      {m.label}
+                    </Text>
+                    <Text style={[chipStyles.dropDesc, { color: colors.mutedForeground }]}>
+                      {m.description}
+                    </Text>
+                  </View>
+                  {sel && <Feather name="check" size={14} color={colors.primary} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
