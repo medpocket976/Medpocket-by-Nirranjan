@@ -21,7 +21,7 @@ import ChatMessageItem from "./ChatMessage";
 import ModelSelector from "./ModelSelector";
 import TypingIndicator from "./TypingIndicator";
 
-const { height: SCREEN_H, width: SCREEN_W } = Dimensions.get("window");
+const { height: SCREEN_H } = Dimensions.get("window");
 
 const WELCOME_MESSAGE = `👋 **Welcome to MedPocket AI**
 
@@ -42,6 +42,7 @@ export default function ChatWindow() {
     isMinimized,
     messages,
     isLoading,
+    loadingStatus,
     sendUserMessage,
     clearHistory,
     closeChat,
@@ -202,7 +203,16 @@ export default function ChatWindow() {
                 <ChatMessageItem key={msg.id} message={msg} />
               ))}
 
-              {isLoading && <TypingIndicator />}
+              {isLoading && (
+                <View>
+                  <TypingIndicator />
+                  {loadingStatus ? (
+                    <Text style={[styles.loadingStatus, { color: colors.mutedForeground }]}>
+                      {loadingStatus}
+                    </Text>
+                  ) : null}
+                </View>
+              )}
             </ScrollView>
 
             {/* Actions bar */}
@@ -334,6 +344,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   welcomeText: { fontSize: 13, lineHeight: 20 },
+  loadingStatus: {
+    fontSize: 11,
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 6,
+  },
   actionsBar: {
     paddingHorizontal: 14,
     paddingVertical: 6,

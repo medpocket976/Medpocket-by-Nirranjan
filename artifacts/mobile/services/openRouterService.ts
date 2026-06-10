@@ -1,10 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type ModelId =
-  | "openai/gpt-oss-120b:free"
   | "google/gemma-4-31b-it:free"
+  | "openai/gpt-oss-120b:free"
   | "meta-llama/llama-3.3-70b-instruct:free"
   | "qwen/qwen3-next-80b-a3b-instruct:free";
+
+export const DEFAULT_MODEL_ID: ModelId = "google/gemma-4-31b-it:free";
 
 export interface ModelConfig {
   id: ModelId;
@@ -12,22 +14,24 @@ export interface ModelConfig {
   description: string;
   icon: string;
   color: string;
+  isDefault?: boolean;
 }
 
 export const MODELS: ModelConfig[] = [
-  {
-    id: "openai/gpt-oss-120b:free",
-    label: "GPT-OSS 120B",
-    description: "Clinical Reasoning",
-    icon: "cpu",
-    color: "#10A37F",
-  },
   {
     id: "google/gemma-4-31b-it:free",
     label: "Gemma 4",
     description: "Medical Learning",
     icon: "book-open",
     color: "#4285F4",
+    isDefault: true,
+  },
+  {
+    id: "openai/gpt-oss-120b:free",
+    label: "GPT-OSS 120B",
+    description: "Clinical Reasoning",
+    icon: "cpu",
+    color: "#10A37F",
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct:free",
@@ -45,18 +49,18 @@ export const MODELS: ModelConfig[] = [
   },
 ];
 
-// Internal-only fallback chain of confirmed-working models
-// Always ends with the tiny but reliable LFM as absolute last resort
+// Internal fallback chain — Gemma 4 is primary, GPT-OSS is first fallback
 const FALLBACK_CHAIN: string[] = [
-  "openai/gpt-oss-120b:free",
   "google/gemma-4-31b-it:free",
+  "openai/gpt-oss-120b:free",
   "meta-llama/llama-3.3-70b-instruct:free",
   "qwen/qwen3-next-80b-a3b-instruct:free",
-  "liquid/lfm-2.5-1.2b-instruct:free",   // last resort — small but responds
+  "liquid/lfm-2.5-1.2b-instruct:free",
 ];
 
-// Vision-capable models (support image_url content)
+// Vision-capable free models — llama-4-maverick first
 const VISION_CHAIN: string[] = [
+  "meta-llama/llama-4-maverick:free",
   "meta-llama/llama-3.2-11b-vision-instruct:free",
   "qwen/qwen2.5-vl-72b-instruct:free",
   "qwen/qwen2.5-vl-7b-instruct:free",
@@ -477,7 +481,8 @@ export async function sendImageMessage(
   messages: ChatMessage[],
   imageBase64: string,
   imageMimeType: string,
-  userText: string
+  userText: string,
+  onStatusChange?: (status: string) => void
 ): Promise<string> {
   const apiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
   const baseUrl =
@@ -485,9 +490,10 @@ export async function sendImageMessage(
 
   if (!apiKey) throw new Error("API key not configured.");
 
+  onStatusChange?.("Loading Vision AI...");
+
   const dataUrl = `data:${imageMimeType};base64,${imageBase64}`;
 
-  // Build prior conversation context (text-only, last 10 messages)
   const priorContext = messages
     .filter((m) => m.role !== "system" && !m.imageBase64)
     .slice(-10)
@@ -516,6 +522,9 @@ export async function sendImageMessage(
   for (let i = 0; i < VISION_CHAIN.length; i++) {
     const model = VISION_CHAIN[i];
     try {
+      if (i === 0) onStatusChange?.("Analyzing medical image...");
+      else onStatusChange?.("Preparing educational report...");
+
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -551,7 +560,7 @@ export async function sendImageMessage(
     }
   }
 
-  throw new Error("Vision AI is temporarily unavailable. Please try again.");
+  throw new Error("⚠️ Free Vision AI is currently unavailable. Please try again later.");
 }
 
 export async function sendMessage(
@@ -574,7 +583,7 @@ export async function sendMessage(
       .map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  // Build chain: selected model first, then the confirmed fallbacks
+  // Build chain: selected model first, then confirmed fallbacks
   const chain: string[] = [
     modelId,
     ...FALLBACK_CHAIN.filter((m) => m !== modelId),
@@ -599,7 +608,6 @@ export async function sendMessage(
         }),
       });
 
-      // Not available or rate-limited → try next silently
       if (response.status === 404 || response.status === 429 || response.status === 503) {
         continue;
       }
@@ -614,7 +622,6 @@ export async function sendMessage(
       return content;
 
     } catch (err) {
-      // Network errors → try next
       if (i < chain.length - 1) continue;
       throw err;
     }
@@ -630,7 +637,6 @@ export async function loadChatHistory(): Promise<ChatMessage[]> {
     const raw = await AsyncStorage.getItem(STORAGE_KEYS.CHAT_HISTORY);
     if (!raw) return [];
     const parsed: ChatMessage[] = JSON.parse(raw);
-    // Strip stale error messages from old broken versions
     return parsed.filter(
       (m) =>
         !m.content.startsWith("❌ API error") &&
@@ -643,8 +649,6 @@ export async function loadChatHistory(): Promise<ChatMessage[]> {
 
 export async function saveChatHistory(messages: ChatMessage[]): Promise<void> {
   try {
-    // Strip imageBase64 before persisting — it's too large for AsyncStorage
-    // hasImage flag is retained so old messages show a placeholder
     const stripped = messages.slice(-100).map((m) => {
       if (m.imageBase64) {
         const { imageBase64: _b64, ...rest } = m;
@@ -660,9 +664,10 @@ export async function loadSelectedModel(): Promise<ModelId> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_MODEL);
     if (raw && MODELS.find((m) => m.id === raw)) return raw as ModelId;
-    return "openai/gpt-oss-120b:free";
+    // Default to Gemma 4; if unavailable fall back to GPT-OSS 120B (handled at call time)
+    return DEFAULT_MODEL_ID;
   } catch {
-    return "openai/gpt-oss-120b:free";
+    return DEFAULT_MODEL_ID;
   }
 }
 

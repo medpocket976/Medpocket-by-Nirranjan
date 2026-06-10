@@ -11,6 +11,7 @@ import React, {
 import {
   BookmarkedAnswer,
   ChatMessage,
+  DEFAULT_MODEL_ID,
   ModelId,
   isMedicalQuestion,
   loadBookmarks,
@@ -30,6 +31,7 @@ interface AIChatContextType {
   selectedModel: ModelId;
   bookmarks: BookmarkedAnswer[];
   isLoading: boolean;
+  loadingStatus: string;
   openChat: () => void;
   closeChat: () => void;
   toggleMinimize: () => void;
@@ -50,7 +52,7 @@ const OFF_TOPIC_MESSAGE =
   "⚠️ MedPocket AI is designed exclusively for medical education and healthcare-related learning. Please ask a medical or clinical question.";
 
 const IMAGE_NOT_MEDICAL_MESSAGE =
-  "⚠️ MedPocket AI accepts only medical and healthcare-related images for educational purposes. Please upload an ECG, X-ray, lab report, histology slide, clinical photograph, or other medical image.";
+  "⚠️ MedPocket Vision AI is designed only for medical and healthcare-related images. Please upload an ECG, X-ray, lab report, histology slide, clinical photograph, or other medical image.";
 
 const IMAGE_DISCLAIMER =
   "\n\n---\n⚕️ *For medical education purposes only. This AI analysis does not replace professional medical advice, diagnosis, or clinical judgment.*";
@@ -60,9 +62,10 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedModel, setSelectedModelState] =
-    useState<ModelId>("meta-llama/llama-3.3-70b-instruct:free");
+    useState<ModelId>(DEFAULT_MODEL_ID);
   const [bookmarks, setBookmarks] = useState<BookmarkedAnswer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState("");
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -119,7 +122,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
             id: Date.now().toString(),
             question: userMsg?.content ?? (userMsg?.hasImage ? "📷 Image analysis" : ""),
             answer: msg.content,
-            modelId: msg.modelId ?? ("meta-llama/llama-3.3-70b-instruct:free" as ModelId),
+            modelId: msg.modelId ?? DEFAULT_MODEL_ID,
             timestamp: Date.now(),
           };
           setBookmarks((bks) => {
@@ -163,16 +166,20 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       const newMessages = [...messages, userMsg];
       setMessages(newMessages);
       setIsLoading(true);
+      setLoadingStatus("");
 
       try {
         if (hasImage) {
-          // ── Image path: use vision model ─────────────────────────────
+          // Vision path — use vision model with loading status callbacks
           const reply = await sendImageMessage(
             messages,
             imageBase64!,
             imageMimeType ?? "image/jpeg",
-            textTrimmed
+            textTrimmed,
+            (status) => setLoadingStatus(status)
           );
+
+          setLoadingStatus("Preparing educational report...");
 
           let content: string;
           if (reply.trim() === "IMAGE_NOT_MEDICAL") {
@@ -186,13 +193,13 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
             role: "assistant",
             content,
             timestamp: Date.now(),
-            modelId: "meta-llama/llama-3.2-11b-vision-instruct:free" as ModelId,
+            modelId: "meta-llama/llama-4-maverick:free" as ModelId,
           };
           const withResponse = [...newMessages, assistantMsg];
           setMessages(withResponse);
           saveChatHistory(withResponse);
         } else {
-          // ── Text-only path: existing logic unchanged ─────────────────
+          // Text-only path — unchanged
           if (!isMedicalQuestion(textTrimmed)) {
             const offTopicMsg: ChatMessage = {
               id: `a_${Date.now()}`,
@@ -235,6 +242,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         saveChatHistory(withError);
       } finally {
         setIsLoading(false);
+        setLoadingStatus("");
       }
     },
     [messages, isLoading, selectedModel]
@@ -249,6 +257,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         selectedModel,
         bookmarks,
         isLoading,
+        loadingStatus,
         openChat,
         closeChat,
         toggleMinimize,

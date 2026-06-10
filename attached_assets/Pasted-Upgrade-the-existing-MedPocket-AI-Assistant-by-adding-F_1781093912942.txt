@@ -1,0 +1,144 @@
+Upgrade the existing MedPocket AI Assistant by adding FREE Vision AI support.
+
+IMPORTANT:
+- Do NOT rebuild the app.
+- Do NOT break existing chat functionality.
+- Integrate into the current AI architecture.
+- Reuse existing components and UI.
+
+FEATURE:
+# Medical Vision AI
+
+Add image upload support to the AI chat.
+
+## Upload Options
+- Camera capture
+- Gallery upload
+- Image preview
+- Remove image before sending
+
+Supported formats:
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+## Vision AI Routing
+
+If the user uploads an image:
+- Automatically detect image input.
+- Temporarily switch to a FREE vision-capable OpenRouter model.
+- Prefer:
+  1. openrouter/free
+  2. meta-llama/llama-4-maverick:free
+- After analysis, restore the user's previously selected text model.
+
+Never show:
+"Vision AI is temporarily unavailable."
+
+Instead show:
+- "Loading Vision AI..."
+- "Analyzing medical image..."
+- "Preparing educational report..."
+
+## Medical Image Analysis
+
+Accept only healthcare-related images:
+
+- ECG
+- X-ray
+- CT Scan
+- MRI
+- Ultrasound
+- Blood Report
+- Laboratory Report
+- Histology Slide
+- Blood Smear
+- Skin Lesion
+- Prescription
+- Clinical Photograph
+- Medical Document
+
+If a non-medical image is uploaded, respond:
+
+"⚠️ MedPocket Vision AI is designed only for medical and healthcare-related images."
+
+## ECG Educational Analysis
+
+If an ECG is detected, provide:
+
+- Estimated Heart Rate
+- Rhythm
+- Axis
+- PR Interval
+- QRS Duration
+- QT/QTc Assessment
+- ST Segment Findings
+- T Wave Findings
+- Possible Educational Differential Diagnoses
+- Important Learning Points
+
+Never claim certainty.
+
+## Blood Report Analysis
+
+If a laboratory report is detected:
+
+- Extract visible values
+- Explain each parameter
+- Highlight abnormal results
+- Provide educational interpretation
+
+## X-ray Analysis
+
+Provide:
+- Educational observations
+- Possible findings
+- Learning points
+- Differential diagnoses
+
+Do not provide definitive diagnosis.
+
+## User Experience
+
+- Image message bubbles
+- Image preview in chat
+- Save image conversations
+- Bookmark AI responses
+- Copy response
+- Recent image analyses
+- Local storage
+
+## Safety Rules
+
+Answer ONLY medical-related image questions.
+
+Display this disclaimer:
+
+"For medical education purposes only. This AI does not replace professional medical advice, diagnosis, or clinical judgment."
+
+## Error Handling
+
+If no free vision model is available:
+
+Show:
+
+"⚠️ Free Vision AI is currently unavailable. Please try again later."
+
+Do not crash the chat.
+
+## Code Quality
+
+- Modular AI service
+- Separate vision service
+- Reusable components
+- Mobile responsive
+- Production-ready code
+- Preserve existing functionality
+
+Implementation Process:
+1. Analyze the existing codebase.
+2. Integrate Vision AI into the current chat.
+3. Add automatic model switching.
+4. Add medical image analysis.
+5. Test without breaking existing features.

@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { calculators } from "@/data/calculators";
+import { medicalCalculators } from "@/data/medicalCalculators";
 import { useColors } from "@/hooks/useColors";
 
 const CALC_COLORS = [
@@ -38,7 +39,9 @@ export default function CalculatorsScreen() {
         </Pressable>
         <View>
           <Text style={styles.title}>Medical Calculators</Text>
-          <Text style={styles.subtitle}>{calculators.length} clinical scoring tools</Text>
+          <Text style={styles.subtitle}>
+            {calculators.length + medicalCalculators.length}+ clinical tools
+          </Text>
         </View>
       </View>
 
@@ -46,28 +49,56 @@ export default function CalculatorsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Anaesthesia Dose Calculator — featured card */}
+        {/* ── Anaesthesia Dose Calculator — featured card ─────────────────── */}
         <Pressable
           style={({ pressed }) => [styles.featuredCard, { opacity: pressed ? 0.85 : 1 }]}
           onPress={() => router.push("/anaesthesia-calc")}
         >
           <View style={styles.featuredLeft}>
-            <View style={styles.featuredIcon}>
+            <View style={[styles.featuredIcon, { backgroundColor: "#6366F1" }]}>
               <Feather name="wind" size={24} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
               <View style={styles.featuredBadge}>
                 <Feather name="star" size={10} color="#6366F1" />
-                <Text style={styles.featuredBadgeText}>Featured</Text>
+                <Text style={[styles.featuredBadgeText, { color: "#6366F1" }]}>Featured</Text>
               </View>
-              <Text style={styles.featuredName}>Anaesthesia Dose Calculator</Text>
-              <Text style={styles.featuredDesc}>
+              <Text style={[styles.featuredName, { color: "#1E1B4B" }]}>Anaesthesia Dose Calculator</Text>
+              <Text style={[styles.featuredDesc, { color: "#4338CA" }]}>
                 Weight-based dosing for induction agents, opioids, NMBAs, reversal agents & local anaesthetics
               </Text>
             </View>
           </View>
-          <View style={styles.featuredArrow}>
+          <View style={[styles.featuredArrow, { backgroundColor: "#6366F115" }]}>
             <Feather name="arrow-right" size={16} color="#6366F1" />
+          </View>
+        </Pressable>
+
+        {/* ── Blood & Fluid Calculators — featured card ───────────────────── */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.featuredCard,
+            { backgroundColor: "#FFF1F2", borderColor: "#EF444430", opacity: pressed ? 0.85 : 1 },
+          ]}
+          onPress={() => router.push("/medical-calculators")}
+        >
+          <View style={styles.featuredLeft}>
+            <View style={[styles.featuredIcon, { backgroundColor: "#EF4444" }]}>
+              <Feather name="droplet" size={24} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.featuredBadge}>
+                <Feather name="plus-circle" size={10} color="#EF4444" />
+                <Text style={[styles.featuredBadgeText, { color: "#EF4444" }]}>New</Text>
+              </View>
+              <Text style={[styles.featuredName, { color: "#7F1D1D" }]}>Blood & Fluid Calculators</Text>
+              <Text style={[styles.featuredDesc, { color: "#B91C1C" }]}>
+                EBV, MABL, pRBC, Shock Index · Holliday-Segar, Parkland · Electrolyte & Renal tools ({medicalCalculators.length} calculators)
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.featuredArrow, { backgroundColor: "#EF444415" }]}>
+            <Feather name="arrow-right" size={16} color="#EF4444" />
           </View>
         </Pressable>
 
@@ -121,7 +152,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       backgroundColor: "#EEF2FF",
       borderRadius: 18,
       padding: 16,
-      marginBottom: 20,
+      marginBottom: 14,
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
@@ -133,7 +164,6 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       width: 52,
       height: 52,
       borderRadius: 16,
-      backgroundColor: "#6366F1",
       alignItems: "center",
       justifyContent: "center",
     },
@@ -148,14 +178,13 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       alignSelf: "flex-start",
       marginBottom: 4,
     },
-    featuredBadgeText: { fontSize: 10, color: "#6366F1", fontWeight: "700" },
-    featuredName: { fontSize: 14, fontWeight: "800", color: "#1E1B4B", marginBottom: 3 },
-    featuredDesc: { fontSize: 11, color: "#4338CA", lineHeight: 16 },
+    featuredBadgeText: { fontSize: 10, fontWeight: "700" },
+    featuredName: { fontSize: 14, fontWeight: "800", marginBottom: 3 },
+    featuredDesc: { fontSize: 11, lineHeight: 16 },
     featuredArrow: {
       width: 32,
       height: 32,
       borderRadius: 10,
-      backgroundColor: "#6366F115",
       alignItems: "center",
       justifyContent: "center",
     },
@@ -166,6 +195,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       textTransform: "uppercase",
       letterSpacing: 0.8,
       marginBottom: 12,
+      marginTop: 6,
     },
     grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
     calcCard: {
