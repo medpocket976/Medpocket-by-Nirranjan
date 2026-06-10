@@ -55,6 +55,14 @@ const FALLBACK_CHAIN: string[] = [
   "liquid/lfm-2.5-1.2b-instruct:free",   // last resort — small but responds
 ];
 
+// Vision-capable models (support image_url content)
+const VISION_CHAIN: string[] = [
+  "meta-llama/llama-3.2-11b-vision-instruct:free",
+  "qwen/qwen2.5-vl-72b-instruct:free",
+  "qwen/qwen2.5-vl-7b-instruct:free",
+  "google/gemma-3-12b-it:free",
+];
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
@@ -62,6 +70,11 @@ export interface ChatMessage {
   timestamp: number;
   bookmarked?: boolean;
   modelId?: ModelId;
+  /** Base64-encoded image (session-only, stripped before AsyncStorage) */
+  imageBase64?: string;
+  imageMimeType?: string;
+  /** Persisted flag so old messages show an image indicator after reload */
+  hasImage?: boolean;
 }
 
 export interface BookmarkedAnswer {
@@ -396,6 +409,151 @@ RULES:
 - Never refuse a legitimate medical education question
 - Cite guidelines where relevant (NICE, WHO, AHA, etc.)`;
 
+const IMAGE_SYSTEM_PROMPT = `You are MedPocket AI — a medical education assistant specializing in medical image analysis for students and healthcare professionals.
+
+MEDICAL IMAGE ANALYSIS GUIDELINES:
+
+## ECG / EKG Images
+Analyse systematically:
+- **Rate**: Estimate beats per minute
+- **Rhythm**: Regular or irregular; sinus or non-sinus
+- **P waves**: Present, absent, morphology
+- **PR interval**: Normal (120–200 ms) / short / prolonged
+- **QRS complex**: Duration (normal <120 ms), morphology, LBBB/RBBB patterns
+- **Axis**: Normal (−30° to +90°), LAD, RAD
+- **ST segment**: Elevation / depression / normal; leads affected
+- **T waves**: Normal / inverted / peaked / biphasic
+- **QT/QTc interval**: Prolonged if >440 ms (men) / >460 ms (women)
+- **Educational differentials**: e.g. STEMI, NSTEMI, AF, VT, heart block
+
+## Chest X-Rays
+Use ABCDE approach:
+- **Airway**: Tracheal deviation, carina angle
+- **Bones**: Rib fractures, bony lesions
+- **Cardiac**: Heart size (cardiothoracic ratio), borders
+- **Diaphragm**: Flattening, free air, costophrenic angles
+- **Everything else**: Lungs (opacities, hyperinflation), pleural effusions, hila, soft tissues
+
+## CT / MRI Scans
+- Identify modality and body region
+- Describe key findings systematically
+- Highlight pathological features (masses, bleeds, infarcts, hernias)
+
+## Laboratory Reports
+- Extract visible parameters and values
+- State normal reference ranges
+- Mark abnormal values with ↑ (high) or ↓ (low)
+- Provide educational interpretation of the pattern
+
+## Histology / Pathology Slides
+- Describe staining technique if identifiable (H&E, PAS, etc.)
+- Cell types and architectural patterns
+- Pathological changes visible
+- Educational differential diagnoses
+
+## Skin Lesions / Clinical Photos
+- Describe morphology (colour, border, size, surface)
+- Dermoscopic features if visible
+- Educational differentials (benign vs malignant considerations)
+
+## Prescription / Medical Documents
+- Extract medication names, doses, frequencies
+- Flag potential interactions or errors educationally
+- Do NOT provide definitive clinical advice
+
+## NON-MEDICAL IMAGES
+If the image is clearly not medical/healthcare-related, respond ONLY with:
+IMAGE_NOT_MEDICAL
+
+FORMAT RULES:
+- Use ## headings and - bullet points
+- Use **bold** for key values and findings
+- Always end with: 🔑 **Educational Note:** [one key teaching point]
+
+⚠️ **DISCLAIMER (always include at end):**
+> This analysis is for **medical education purposes only**. It does not constitute clinical diagnosis or replace professional medical judgment. Always correlate with clinical history and seek expert review.`;
+
+export async function sendImageMessage(
+  messages: ChatMessage[],
+  imageBase64: string,
+  imageMimeType: string,
+  userText: string
+): Promise<string> {
+  const apiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
+  const baseUrl =
+    process.env.EXPO_PUBLIC_OPENROUTER_URL || "https://openrouter.ai/api/v1";
+
+  if (!apiKey) throw new Error("API key not configured.");
+
+  const dataUrl = `data:${imageMimeType};base64,${imageBase64}`;
+
+  // Build prior conversation context (text-only, last 10 messages)
+  const priorContext = messages
+    .filter((m) => m.role !== "system" && !m.imageBase64)
+    .slice(-10)
+    .map((m) => ({ role: m.role, content: m.content }));
+
+  const imageUserContent: unknown[] = [];
+  if (userText.trim()) {
+    imageUserContent.push({ type: "text", text: userText.trim() });
+  } else {
+    imageUserContent.push({
+      type: "text",
+      text: "Please analyse this medical image and provide an educational interpretation.",
+    });
+  }
+  imageUserContent.push({
+    type: "image_url",
+    image_url: { url: dataUrl },
+  });
+
+  const formatted = [
+    { role: "system", content: IMAGE_SYSTEM_PROMPT },
+    ...priorContext,
+    { role: "user", content: imageUserContent },
+  ];
+
+  for (let i = 0; i < VISION_CHAIN.length; i++) {
+    const model = VISION_CHAIN[i];
+    try {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://medpocket.app",
+          "X-Title": "MedPocket AI Vision",
+        },
+        body: JSON.stringify({
+          model,
+          messages: formatted,
+          max_tokens: 2000,
+          temperature: 0.4,
+        }),
+      });
+
+      if (response.status === 404 || response.status === 429 || response.status === 503) {
+        continue;
+      }
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => "");
+        if (errBody.includes("vision") || errBody.includes("image")) continue;
+        throw new Error(`Vision service error (${response.status}).`);
+      }
+
+      const data = await response.json();
+      const content: string = data.choices?.[0]?.message?.content?.trim() ?? "";
+      if (!content) continue;
+      return content;
+    } catch (err) {
+      if (i < VISION_CHAIN.length - 1) continue;
+      throw err;
+    }
+  }
+
+  throw new Error("Vision AI is temporarily unavailable. Please try again.");
+}
+
 export async function sendMessage(
   messages: ChatMessage[],
   modelId: ModelId
@@ -485,10 +643,16 @@ export async function loadChatHistory(): Promise<ChatMessage[]> {
 
 export async function saveChatHistory(messages: ChatMessage[]): Promise<void> {
   try {
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.CHAT_HISTORY,
-      JSON.stringify(messages.slice(-100))
-    );
+    // Strip imageBase64 before persisting — it's too large for AsyncStorage
+    // hasImage flag is retained so old messages show a placeholder
+    const stripped = messages.slice(-100).map((m) => {
+      if (m.imageBase64) {
+        const { imageBase64: _b64, ...rest } = m;
+        return { ...rest, hasImage: true };
+      }
+      return m;
+    });
+    await AsyncStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(stripped));
   } catch {}
 }
 

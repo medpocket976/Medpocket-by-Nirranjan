@@ -1,11 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActionSheetIOS,
+  Alert,
   Animated,
   Dimensions,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -373,12 +377,36 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View
-          style={[bubbleStyles.userBubble, { backgroundColor: colors.primary }]}
-        >
-          <Text style={[bubbleStyles.userText, { color: "#fff" }]}>
-            {message.content}
-          </Text>
+        <View style={{ alignItems: "flex-end", gap: 6 }}>
+          {/* Image attachment */}
+          {message.imageBase64 ? (
+            <View style={bubbleStyles.imageAttachment}>
+              <Image
+                source={{ uri: `data:${message.imageMimeType ?? "image/jpeg"};base64,${message.imageBase64}` }}
+                style={bubbleStyles.imageThumbnail}
+                resizeMode="cover"
+              />
+              <View style={[bubbleStyles.imageBadge, { backgroundColor: colors.primary }]}>
+                <Feather name="image" size={10} color="#fff" />
+                <Text style={bubbleStyles.imageBadgeText}>Medical Image</Text>
+              </View>
+            </View>
+          ) : message.hasImage ? (
+            <View style={[bubbleStyles.imageAttachment, { backgroundColor: colors.muted }]}>
+              <Feather name="image" size={22} color={colors.mutedForeground} />
+              <Text style={[bubbleStyles.imagePastLabel, { color: colors.mutedForeground }]}>
+                📷 Image (previous session)
+              </Text>
+            </View>
+          ) : null}
+          {/* Text bubble */}
+          {message.content ? (
+            <View style={[bubbleStyles.userBubble, { backgroundColor: colors.primary }]}>
+              <Text style={[bubbleStyles.userText, { color: "#fff" }]}>
+                {message.content}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </Animated.View>
     );
@@ -782,6 +810,54 @@ function BookmarkCard({
   );
 }
 
+// ─── Image Picker Helper ─────────────────────────────────────────────────────
+interface PickedImage {
+  uri: string;
+  base64: string;
+  mimeType: string;
+}
+
+async function pickImageFromGallery(): Promise<PickedImage | null> {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission required", "Please allow access to your photo library to upload medical images.");
+    return null;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"],
+    allowsEditing: false,
+    quality: 0.85,
+    base64: true,
+  });
+  if (result.canceled || !result.assets[0]) return null;
+  const asset = result.assets[0];
+  return {
+    uri: asset.uri,
+    base64: asset.base64 ?? "",
+    mimeType: asset.mimeType ?? "image/jpeg",
+  };
+}
+
+async function pickImageFromCamera(): Promise<PickedImage | null> {
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission required", "Please allow camera access to capture medical images.");
+    return null;
+  }
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: false,
+    quality: 0.85,
+    base64: true,
+  });
+  if (result.canceled || !result.assets[0]) return null;
+  const asset = result.assets[0];
+  return {
+    uri: asset.uri,
+    base64: asset.base64 ?? "",
+    mimeType: asset.mimeType ?? "image/jpeg",
+  };
+}
+
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AIChatScreen() {
   const colors = useColors();
@@ -791,6 +867,7 @@ export default function AIChatScreen() {
 
   const [input, setInput] = useState("");
   const [tab, setTab] = useState<"chat" | "saved">("chat");
+  const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const hasMessages = messages.length > 0;
@@ -803,13 +880,47 @@ export default function AIChatScreen() {
 
   async function handleSend(text?: string) {
     const msg = (text ?? input).trim();
-    if (!msg || isLoading) return;
+    if (!msg && !pickedImage) return;
+    if (isLoading) return;
     setInput("");
+    const imgToSend = pickedImage;
+    setPickedImage(null);
     setTab("chat");
     inputRef.current?.blur();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await sendUserMessage(msg);
+    await sendUserMessage(msg, imgToSend?.base64, imgToSend?.mimeType);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
+  }
+
+  function handleImagePicker() {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        async (idx) => {
+          if (idx === 1) {
+            const img = await pickImageFromCamera();
+            if (img) setPickedImage(img);
+          } else if (idx === 2) {
+            const img = await pickImageFromGallery();
+            if (img) setPickedImage(img);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        "Add Medical Image",
+        "Choose an option",
+        [
+          { text: "Camera", onPress: async () => { const img = await pickImageFromCamera(); if (img) setPickedImage(img); } },
+          { text: "Gallery", onPress: async () => { const img = await pickImageFromGallery(); if (img) setPickedImage(img); } },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+    }
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
   return (
@@ -997,16 +1108,57 @@ export default function AIChatScreen() {
               },
             ]}
           >
+            {/* Image preview strip */}
+            {pickedImage && (
+              <View style={[styles.imagePreviewStrip, { borderColor: colors.border }]}>
+                <Image
+                  source={{ uri: pickedImage.uri }}
+                  style={styles.previewThumb}
+                  resizeMode="cover"
+                />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[styles.previewLabel, { color: colors.foreground }]}>
+                    📷 Medical image ready
+                  </Text>
+                  <Text style={[styles.previewSub, { color: colors.mutedForeground }]}>
+                    Add a note or send directly for analysis
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setPickedImage(null)}
+                  style={[styles.previewRemove, { backgroundColor: colors.muted }]}
+                >
+                  <Feather name="x" size={14} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+            )}
+
             <View
               style={[
                 styles.inputRow,
                 { backgroundColor: colors.muted, borderColor: colors.border },
               ]}
             >
+              {/* Image attach button */}
+              <Pressable
+                onPress={handleImagePicker}
+                disabled={isLoading}
+                style={[
+                  styles.attachBtn,
+                  pickedImage && { backgroundColor: colors.primary + "22" },
+                ]}
+              >
+                <Feather
+                  name={pickedImage ? "image" : "camera"}
+                  size={18}
+                  color={pickedImage ? colors.primary : colors.mutedForeground}
+                />
+              </Pressable>
+
               <TextInput
                 ref={inputRef}
                 style={[styles.textInput, { color: colors.foreground }]}
-                placeholder="Ask a medical question…"
+                placeholder={pickedImage ? "Add a note (optional)…" : "Ask a medical question…"}
                 placeholderTextColor={colors.mutedForeground}
                 value={input}
                 onChangeText={setInput}
@@ -1021,18 +1173,18 @@ export default function AIChatScreen() {
                   styles.sendBtn,
                   {
                     backgroundColor:
-                      input.trim() && !isLoading
+                      (input.trim() || pickedImage) && !isLoading
                         ? colors.primary
                         : colors.border,
                   },
                 ]}
                 onPress={() => handleSend()}
-                disabled={!input.trim() || isLoading}
+                disabled={(!input.trim() && !pickedImage) || isLoading}
               >
                 <Feather
                   name={isLoading ? "loader" : "arrow-up"}
                   size={16}
-                  color={input.trim() && !isLoading ? "#fff" : colors.mutedForeground}
+                  color={(input.trim() || pickedImage) && !isLoading ? "#fff" : colors.mutedForeground}
                 />
               </Pressable>
             </View>
@@ -1147,10 +1299,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     borderWidth: 1,
     borderRadius: 22,
-    paddingLeft: 16,
+    paddingLeft: 4,
     paddingRight: 5,
     paddingVertical: 5,
-    gap: 6,
+    gap: 4,
+  },
+  attachBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
   textInput: {
     flex: 1,
@@ -1166,6 +1326,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+  },
+  imagePreviewStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 8,
+    paddingRight: 12,
+  },
+  previewThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
+    backgroundColor: "#ccc",
+  },
+  previewLabel: { fontSize: 13, fontWeight: "600" },
+  previewSub: { fontSize: 11, lineHeight: 15 },
+  previewRemove: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
@@ -1227,6 +1412,32 @@ const bubbleStyles = StyleSheet.create({
     borderWidth: 1,
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
+
+  imageAttachment: {
+    borderRadius: 14,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+    maxWidth: 220,
+  },
+  imageThumbnail: {
+    width: 220,
+    height: 160,
+    borderRadius: 14,
+  },
+  imageBadge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  imageBadgeText: { fontSize: 10, color: "#fff", fontWeight: "700" },
+  imagePastLabel: { fontSize: 12, fontWeight: "600", marginTop: 6, marginBottom: 6 },
 });
 
 const chipStyles = StyleSheet.create({
