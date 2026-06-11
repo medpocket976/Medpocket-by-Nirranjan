@@ -58,12 +58,15 @@ const FALLBACK_CHAIN: string[] = [
   "liquid/lfm-2.5-1.2b-instruct:free",
 ];
 
-// Vision-capable free models — llama-4-maverick first
+// Vision-capable free models — ordered by reliability
 const VISION_CHAIN: string[] = [
+  "google/gemini-2.0-flash-exp:free",
   "meta-llama/llama-4-maverick:free",
-  "meta-llama/llama-3.2-11b-vision-instruct:free",
+  "meta-llama/llama-4-scout:free",
   "qwen/qwen2.5-vl-72b-instruct:free",
   "qwen/qwen2.5-vl-7b-instruct:free",
+  "meta-llama/llama-3.2-11b-vision-instruct:free",
+  "google/gemma-3-27b-it:free",
   "google/gemma-3-12b-it:free",
 ];
 
@@ -522,45 +525,55 @@ export async function sendImageMessage(
   for (let i = 0; i < VISION_CHAIN.length; i++) {
     const model = VISION_CHAIN[i];
     try {
-      if (i === 0) onStatusChange?.("Analyzing medical image...");
-      else onStatusChange?.("Preparing educational report...");
+      onStatusChange?.(
+        i === 0
+          ? "Analyzing medical image..."
+          : `Trying vision model ${i + 1} of ${VISION_CHAIN.length}...`
+      );
 
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://medpocket.app",
-          "X-Title": "MedPocket AI Vision",
-        },
-        body: JSON.stringify({
-          model,
-          messages: formatted,
-          max_tokens: 2000,
-          temperature: 0.4,
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
-      if (response.status === 404 || response.status === 429 || response.status === 503) {
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+            "HTTP-Referer": "https://medpocket.app",
+            "X-Title": "MedPocket AI Vision",
+          },
+          body: JSON.stringify({
+            model,
+            messages: formatted,
+            max_tokens: 2000,
+            temperature: 0.3,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      // Always continue to next model on any non-success response
+      if (!response.ok) {
         continue;
       }
-      if (!response.ok) {
-        const errBody = await response.text().catch(() => "");
-        if (errBody.includes("vision") || errBody.includes("image")) continue;
-        throw new Error(`Vision service error (${response.status}).`);
-      }
 
-      const data = await response.json();
-      const content: string = data.choices?.[0]?.message?.content?.trim() ?? "";
+      const data = await response.json().catch(() => null);
+      const content: string = data?.choices?.[0]?.message?.content?.trim() ?? "";
       if (!content) continue;
+
+      onStatusChange?.("Preparing educational report...");
       return content;
-    } catch (err) {
-      if (i < VISION_CHAIN.length - 1) continue;
-      throw err;
+    } catch {
+      // Network error, timeout, JSON parse — try next model
+      continue;
     }
   }
 
-  throw new Error("⚠️ Free Vision AI is currently unavailable. Please try again later.");
+  throw new Error("⚠️ Vision AI is temporarily unavailable across all providers. Please check your internet connection and try again.");
 }
 
 export async function sendMessage(
