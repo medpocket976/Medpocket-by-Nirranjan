@@ -96,37 +96,38 @@ export default function DrugGuideScreen() {
       </View>
 
       {/* Category filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.categoryRow, { backgroundColor: colors.card }]}
-        style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}
-      >
-        {DRUG_CATEGORIES.map((cat) => {
-          const active = category === cat;
-          const accent = CATEGORY_COLORS[cat] || colors.primary;
-          return (
-            <Pressable
-              key={cat}
-              onPress={() => {
-                setCategory(cat);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-              style={[
-                styles.catChip,
-                active
-                  ? { backgroundColor: accent, borderColor: accent }
-                  : { backgroundColor: colors.muted, borderColor: colors.border },
-              ]}
-            >
-              {cat !== "All" && (
-                <View style={[styles.catDot, { backgroundColor: active ? "rgba(255,255,255,0.8)" : accent }]} />
-              )}
-              <Text style={[styles.catText, { color: active ? "#fff" : colors.foreground }]}>{cat}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <View style={[styles.categoryWrap, { backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+        >
+          {DRUG_CATEGORIES.map((cat) => {
+            const active = category === cat;
+            const accent = CATEGORY_COLORS[cat] || colors.primary;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => {
+                  setCategory(cat);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={[
+                  styles.catChip,
+                  active
+                    ? { backgroundColor: accent, borderColor: accent }
+                    : { backgroundColor: colors.muted, borderColor: colors.border },
+                ]}
+              >
+                {cat !== "All" && (
+                  <View style={[styles.catDot, { backgroundColor: active ? "rgba(255,255,255,0.8)" : accent }]} />
+                )}
+                <Text style={[styles.catText, { color: active ? "#fff" : colors.foreground }]}>{cat}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Drug list — iOS flat list style */}
       <FlatList
@@ -257,13 +258,23 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
 
-  categoryRow: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-  catChip: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, borderWidth: 1,
+  categoryWrap: { paddingVertical: 8 },
+  categoryRow: {
+    paddingHorizontal: 12,
+    gap: 7,
+    alignItems: "center",
   },
-  catDot: { width: 6, height: 6, borderRadius: 3 },
+  catChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 30,
+  },
+  catDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
   catText: { fontSize: 12, fontWeight: "600" },
 
   row: {

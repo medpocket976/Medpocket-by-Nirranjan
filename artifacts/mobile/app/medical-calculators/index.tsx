@@ -71,41 +71,53 @@ export default function MedicalCalculatorsScreen() {
       </View>
 
       {/* Category Tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        <Pressable
-          style={[
-            styles.tab,
-            activeCategory === "all" && { backgroundColor: colors.primary },
-          ]}
-          onPress={() => setActiveCategory("all")}
+      <View style={styles.tabsWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabs}
         >
-          <Text style={[styles.tabText, { color: activeCategory === "all" ? "#fff" : colors.mutedForeground }]}>
-            All
-          </Text>
-        </Pressable>
-        {CATEGORIES.map((cat) => {
-          const isActive = activeCategory === cat.id;
-          return (
-            <Pressable
-              key={cat.id}
-              style={[
-                styles.tab,
-                isActive && { backgroundColor: cat.color },
-              ]}
-              onPress={() => setActiveCategory(cat.id)}
-            >
-              <Feather name={cat.icon as any} size={12} color={isActive ? "#fff" : cat.color} />
-              <Text style={[styles.tabText, { color: isActive ? "#fff" : colors.mutedForeground }]}>
-                {cat.label.replace(" Calculators", "")}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+          <Pressable
+            style={[
+              styles.tab,
+              activeCategory === "all"
+                ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                : { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+            onPress={() => {
+              setActiveCategory("all");
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+          >
+            <Text style={[styles.tabText, { color: activeCategory === "all" ? "#fff" : colors.mutedForeground }]}>
+              All
+            </Text>
+          </Pressable>
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <Pressable
+                key={cat.id}
+                style={[
+                  styles.tab,
+                  isActive
+                    ? { backgroundColor: cat.color, borderColor: cat.color }
+                    : { backgroundColor: colors.muted, borderColor: colors.border },
+                ]}
+                onPress={() => {
+                  setActiveCategory(cat.id);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <Feather name={cat.icon as any} size={11} color={isActive ? "#fff" : cat.color} />
+                <Text style={[styles.tabText, { color: isActive ? "#fff" : colors.mutedForeground }]}>
+                  {cat.label.replace(" Calculators", "")}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
@@ -229,19 +241,21 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       gap: 8,
     },
     searchInput: { flex: 1, fontSize: 14 },
+    tabsWrap: { paddingVertical: 8 },
     tabs: {
-      paddingHorizontal: 16,
-      paddingBottom: 12,
-      gap: 8,
+      paddingHorizontal: 14,
+      gap: 7,
+      alignItems: "center",
     },
     tab: {
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: 11,
+      paddingVertical: 5,
       borderRadius: 20,
-      backgroundColor: colors.muted,
+      borderWidth: 1,
+      height: 30,
     },
     tabText: { fontSize: 12, fontWeight: "600" },
     content: { paddingHorizontal: 16, paddingTop: 4 },
