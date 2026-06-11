@@ -14,6 +14,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import { calculators } from "@/data/calculators";
+import { clinicalSystems } from "@/data/clinicalExam";
+import { drugs } from "@/data/drugs";
+import { emergencyProtocols } from "@/data/emergencyProtocols";
+import { labValues } from "@/data/labValues";
+import { medicalCalculators } from "@/data/medicalCalculators";
 import { useColors } from "@/hooks/useColors";
 
 const CLINICAL_PEARLS = [
@@ -32,31 +38,38 @@ const CLINICAL_PEARLS = [
   { text: "Warfarin antidote: Vitamin K for slow reversal; PCC for emergency reversal.", ref: "BSH Guidelines on Anticoagulation 2022" },
   { text: "Loop of Henle active transport: Na-K-2Cl — inhibited by furosemide.", ref: "Guyton & Hall Medical Physiology, 14e" },
   { text: "Coagulative necrosis = ischemic infarcts (except brain → liquefactive).", ref: "Robbins & Cotran Pathology, 10e" },
-];
-
-const MODULES = [
-  { id: "drug-guide",      label: "Drug Guide",    icon: "tablet"      as const, color: "#009DB5", desc: "1000+ drugs" },
-  { id: "clinical-exam",  label: "Clinical Exam", icon: "activity"    as const, color: "#8B5CF6", desc: "Systems" },
-  { id: "emergency",      label: "Emergency",     icon: "alert-circle" as const, color: "#EF4444", desc: "Protocols" },
-  { id: "lab-values",     label: "Lab Values",    icon: "bar-chart-2" as const, color: "#10B981", desc: "References" },
-  { id: "calculators",    label: "Calculators",   icon: "sliders"     as const, color: "#F59E0B", desc: "9 calculators" },
-  { id: "anaesthesia-calc", label: "Anaesthesia", icon: "wind"        as const, color: "#6366F1", desc: "Dose calculator" },
-  { id: "search",         label: "Search All",    icon: "search"      as const, color: "#EC4899", desc: "Global search" },
+  { text: "Atrial fibrillation: rate control first, then rhythm control if symptomatic.", ref: "ESC AF Guidelines 2020" },
+  { text: "Penicillin G is the drug of choice for Treponema pallidum (syphilis) at all stages.", ref: "WHO STI Treatment Guidelines 2021" },
+  { text: "First seizure in an adult — always get an MRI to exclude a structural lesion.", ref: "NICE NG217 Epilepsy Guidelines 2022" },
+  { text: "Digoxin toxicity: bradycardia + yellow-green visual halos are classic features.", ref: "BNF 86; Katzung Pharmacology 15e" },
+  { text: "The Beck's Triad of cardiac tamponade: hypotension, muffled heart sounds, JVD.", ref: "Sabiston Textbook of Surgery, 21e" },
+  { text: "In DKA: start insulin only AFTER potassium ≥3.3 mEq/L.", ref: "ADA DKA Management Guidelines 2022" },
+  { text: "FAST exam in trauma: Fluid in Morrison's pouch = blood until proven otherwise.", ref: "ATLS 10th Edition 2018" },
+  { text: "Posterior MI: ST depression in V1-V4 + tall R wave = posterior STEMI.", ref: "ESC STEMI Guidelines 2023" },
+  { text: "Tension pneumothorax: treat clinically — needle decompress before CXR.", ref: "ATLS 10th Edition 2018" },
+  { text: "Child with high fever, stiff neck, non-blanching rash = meningococcal septicaemia. IV benzylpenicillin immediately.", ref: "NICE CG102 2010" },
+  { text: "Ectopic pregnancy: β-hCG >1500 with no intrauterine pregnancy on USS = ectopic until proven otherwise.", ref: "RCOG GTG No. 21, 2016" },
+  { text: "Type 1 RTA: can't acidify urine (urine pH >5.5 despite acidosis). Distal defect.", ref: "Brenner & Rector Kidney, 10e" },
+  { text: "Clopidogrel: prodrug requiring CYP2C19 — poor metabolisers have reduced effect.", ref: "Goodman & Gilman Pharmacology, 13e" },
+  { text: "Horner syndrome (ptosis, miosis, anhidrosis) — always exclude apical lung tumour (Pancoast).", ref: "Clinical Medicine, Kumar & Clark, 10e" },
+  { text: "Corrected QT >500 ms significantly increases risk of Torsades de Pointes.", ref: "ESC Ventricular Arrhythmia Guidelines 2022" },
 ];
 
 function ModuleCard({
-  mod,
-  colors,
-  styles,
+  id, label, icon, color, desc, colors, styles,
 }: {
-  mod: (typeof MODULES)[number];
+  id: string;
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  color: string;
+  desc: string;
   colors: ReturnType<typeof useColors>;
   styles: ReturnType<typeof makeStyles>;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   function pressIn() {
-    Animated.spring(scaleAnim, { toValue: 0.95, tension: 160, friction: 8, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, { toValue: 0.94, tension: 160, friction: 8, useNativeDriver: true }).start();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
   function pressOut() {
@@ -68,7 +81,7 @@ function ModuleCard({
       style={styles.moduleCardOuter}
       onPressIn={pressIn}
       onPressOut={pressOut}
-      onPress={() => router.push(`/${mod.id}` as any)}
+      onPress={() => router.push(`/${id}` as any)}
     >
       <Animated.View
         style={[
@@ -77,11 +90,11 @@ function ModuleCard({
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={[styles.moduleIcon, { backgroundColor: mod.color + "20" }]}>
-          <Feather name={mod.icon} size={22} color={mod.color} />
+        <View style={[styles.moduleIcon, { backgroundColor: color + "20" }]}>
+          <Feather name={icon} size={22} color={color} />
         </View>
-        <Text style={[styles.moduleLabel, { color: colors.foreground }]}>{mod.label}</Text>
-        <Text style={[styles.moduleDesc, { color: colors.mutedForeground }]}>{mod.desc}</Text>
+        <Text style={[styles.moduleLabel, { color: colors.foreground }]}>{label}</Text>
+        <Text style={[styles.moduleDesc, { color: color }]}>{desc}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -97,22 +110,12 @@ function StatCard({
   colors: ReturnType<typeof useColors>;
   styles: ReturnType<typeof makeStyles>;
 }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  function pressIn() {
-    Animated.spring(scaleAnim, { toValue: 0.93, tension: 160, friction: 8, useNativeDriver: true }).start();
-  }
-  function pressOut() {
-    Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
-
   return (
-    <Pressable style={{ flex: 1 }} onPressIn={pressIn} onPressOut={pressOut}>
-      <Animated.View
+    <View style={{ flex: 1 }}>
+      <View
         style={[
           styles.statCard,
           { backgroundColor: colors.card, borderColor: colors.border },
-          { transform: [{ scale: scaleAnim }] },
         ]}
       >
         <View style={[styles.statIconWrap, { backgroundColor: color + "18" }]}>
@@ -120,8 +123,8 @@ function StatCard({
         </View>
         <Text style={[styles.statValue, { color: colors.foreground }]}>{value}</Text>
         <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
-      </Animated.View>
-    </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -130,6 +133,23 @@ export default function HomeScreen() {
   const insets  = useSafeAreaInsets();
   const { user, streak, totalStudyDays, bookmarks, quizHistory, recordStudySession } = useApp();
 
+  // ── Dynamic counts from actual data files ──────────────────────────────────
+  const drugCount        = drugs.length;
+  const calcTotal        = calculators.length + medicalCalculators.length;
+  const emergencyCount   = emergencyProtocols.length;
+  const labCount         = labValues.length;
+  const systemCount      = clinicalSystems.length;
+
+  const MODULES = [
+    { id: "drug-guide",       label: "Drug Guide",    icon: "tablet"       as const, color: "#009DB5", desc: `${drugCount} drugs` },
+    { id: "clinical-exam",    label: "Clinical Exam", icon: "activity"     as const, color: "#8B5CF6", desc: `${systemCount} systems` },
+    { id: "emergency",        label: "Emergency",     icon: "alert-circle" as const, color: "#EF4444", desc: `${emergencyCount} protocols` },
+    { id: "lab-values",       label: "Lab Values",    icon: "bar-chart-2"  as const, color: "#10B981", desc: `${labCount} references` },
+    { id: "calculators",      label: "Calculators",   icon: "sliders"      as const, color: "#F59E0B", desc: `${calcTotal} tools` },
+    { id: "anaesthesia-calc", label: "Anaesthesia",   icon: "wind"         as const, color: "#6366F1", desc: "Dose calculator" },
+    { id: "search",           label: "Search All",    icon: "search"       as const, color: "#EC4899", desc: "Global search" },
+  ];
+
   const todayPearl = CLINICAL_PEARLS[new Date().getDate() % CLINICAL_PEARLS.length];
   const dateLabel  = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -137,14 +157,16 @@ export default function HomeScreen() {
   const statsAnim  = useRef(new Animated.Value(0)).current;
   const pearlAnim  = useRef(new Animated.Value(0)).current;
   const gridAnim   = useRef(new Animated.Value(0)).current;
+  const activityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     recordStudySession();
-    Animated.stagger(70, [
-      Animated.spring(headerAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(statsAnim,  { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(pearlAnim,  { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(gridAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+    Animated.stagger(60, [
+      Animated.spring(headerAnim,  { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(statsAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(pearlAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(gridAnim,    { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(activityAnim,{ toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
     ]).start();
   }, []);
 
@@ -157,20 +179,8 @@ export default function HomeScreen() {
   const topPad  = Platform.OS === "web" ? 67 : insets.top;
 
   const pearlScale = useRef(new Animated.Value(1)).current;
-  function pearlPressIn() {
-    Animated.spring(pearlScale, { toValue: 0.98, tension: 120, friction: 8, useNativeDriver: true }).start();
-  }
-  function pearlPressOut() {
-    Animated.spring(pearlScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
 
   const searchScale = useRef(new Animated.Value(1)).current;
-  function searchPressIn() {
-    Animated.spring(searchScale, { toValue: 0.9, tension: 160, friction: 8, useNativeDriver: true }).start();
-  }
-  function searchPressOut() {
-    Animated.spring(searchScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
 
   return (
     <ScrollView
@@ -178,7 +188,7 @@ export default function HomeScreen() {
       contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <Animated.View style={[styles.header, animStyle(headerAnim)]}>
         <View>
           <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
@@ -188,19 +198,27 @@ export default function HomeScreen() {
           <Text style={[styles.subtitle, { color: colors.primary }]}>{user.year}</Text>
         </View>
         <Pressable
-          onPressIn={searchPressIn}
-          onPressOut={searchPressOut}
+          onPressIn={() =>
+            Animated.spring(searchScale, { toValue: 0.9, tension: 160, friction: 8, useNativeDriver: true }).start()
+          }
+          onPressOut={() =>
+            Animated.spring(searchScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()
+          }
           onPress={() => router.push("/search")}
         >
           <Animated.View
-            style={[styles.searchBtn, { backgroundColor: colors.tealLight }, { transform: [{ scale: searchScale }] }]}
+            style={[
+              styles.searchBtn,
+              { backgroundColor: colors.tealLight },
+              { transform: [{ scale: searchScale }] },
+            ]}
           >
             <Feather name="search" size={20} color={colors.primary} />
           </Animated.View>
         </Pressable>
       </Animated.View>
 
-      {/* Stats Row */}
+      {/* ── Stats Row ──────────────────────────────────────────────────────── */}
       <Animated.View style={[styles.statsRow, animStyle(statsAnim)]}>
         <StatCard icon="zap"          label="Streak"  value={`${streak}d`}            color="#F59E0B" colors={colors} styles={styles} />
         <StatCard icon="bookmark"     label="Saved"   value={`${bookmarks.length}`}   color="#009DB5" colors={colors} styles={styles} />
@@ -208,9 +226,16 @@ export default function HomeScreen() {
         <StatCard icon="calendar"     label="Days"    value={`${totalStudyDays}`}      color="#10B981" colors={colors} styles={styles} />
       </Animated.View>
 
-      {/* Daily Pearl */}
+      {/* ── Daily Pearl ────────────────────────────────────────────────────── */}
       <Animated.View style={animStyle(pearlAnim)}>
-        <Pressable onPressIn={pearlPressIn} onPressOut={pearlPressOut}>
+        <Pressable
+          onPressIn={() =>
+            Animated.spring(pearlScale, { toValue: 0.98, tension: 120, friction: 8, useNativeDriver: true }).start()
+          }
+          onPressOut={() =>
+            Animated.spring(pearlScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()
+          }
+        >
           <Animated.View
             style={[styles.pearlCard, { backgroundColor: colors.primary }, { transform: [{ scale: pearlScale }] }]}
           >
@@ -230,7 +255,7 @@ export default function HomeScreen() {
         </Pressable>
       </Animated.View>
 
-      {/* Modules Grid */}
+      {/* ── Quick Access Grid ──────────────────────────────────────────────── */}
       <Animated.View style={animStyle(gridAnim)}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Access</Text>
@@ -241,14 +266,31 @@ export default function HomeScreen() {
         </View>
         <View style={styles.grid}>
           {MODULES.map((mod) => (
-            <ModuleCard key={mod.id} mod={mod} colors={colors} styles={styles} />
+            <ModuleCard
+              key={mod.id}
+              id={mod.id}
+              label={mod.label}
+              icon={mod.icon}
+              color={mod.color}
+              desc={mod.desc}
+              colors={colors}
+              styles={styles}
+            />
           ))}
         </View>
       </Animated.View>
 
-      {/* Recent Quiz */}
+      {/* ── Content Summary ────────────────────────────────────────────────── */}
+      <Animated.View style={[animStyle(activityAnim), styles.summaryRow]}>
+        <SummaryChip icon="tablet"      color="#009DB5" label={`${drugCount} Drugs`}         colors={colors} />
+        <SummaryChip icon="sliders"     color="#F59E0B" label={`${calcTotal} Calculators`}   colors={colors} />
+        <SummaryChip icon="alert-circle" color="#EF4444" label={`${emergencyCount} Protocols`} colors={colors} />
+        <SummaryChip icon="bar-chart-2" color="#10B981" label={`${labCount} Lab Tests`}       colors={colors} />
+      </Animated.View>
+
+      {/* ── Recent Activity ────────────────────────────────────────────────── */}
       {quizHistory.length > 0 && (
-        <Animated.View style={animStyle(gridAnim)}>
+        <Animated.View style={animStyle(activityAnim)}>
           <Text style={[styles.sectionTitle, { color: colors.foreground, paddingHorizontal: 20, marginBottom: 12 }]}>
             Recent Activity
           </Text>
@@ -282,30 +324,64 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                 </View>
-                <Text
-                  style={[
-                    styles.activityScore,
-                    { color: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" },
-                  ]}
-                >
-                  {result.score}/{result.total}
-                </Text>
+                <View style={styles.activityRight}>
+                  <Text
+                    style={[
+                      styles.activityScore,
+                      { color: result.score / result.total >= 0.6 ? "#10B981" : "#EF4444" },
+                    ]}
+                  >
+                    {result.score}/{result.total}
+                  </Text>
+                  <Text style={[styles.activityPct, { color: colors.mutedForeground }]}>
+                    {Math.round((result.score / result.total) * 100)}%
+                  </Text>
+                </View>
               </View>
             ))}
           </View>
         </Animated.View>
       )}
 
-      {/* Disclaimer */}
+      {/* ── Disclaimer ─────────────────────────────────────────────────────── */}
       <View style={styles.disclaimer}>
         <Feather name="info" size={12} color={colors.mutedForeground} />
         <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-          For educational purposes only. Not a substitute for clinical judgment.
+          For educational purposes only. Not a substitute for clinical judgment or professional medical advice.
         </Text>
       </View>
     </ScrollView>
   );
 }
+
+function SummaryChip({
+  icon, color, label, colors,
+}: {
+  icon: keyof typeof Feather.glyphMap;
+  color: string;
+  label: string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={[chipStyles.chip, { backgroundColor: color + "12", borderColor: color + "30" }]}>
+      <Feather name={icon} size={11} color={color} />
+      <Text style={[chipStyles.label, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+const chipStyles = StyleSheet.create({
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  label: { fontSize: 11, fontWeight: "600" },
+});
 
 function getTimeOfDay() {
   const h = new Date().getHours();
@@ -327,9 +403,9 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     subtitle:        { fontSize: 12, marginTop: 2 },
     searchBtn:       { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
     statsRow:        { flexDirection: "row", gap: 8, paddingHorizontal: 20, marginBottom: 20 },
-    statCard:        { alignItems: "center", paddingVertical: 10, borderRadius: 14, borderWidth: 1, gap: 3, ...shadow },
+    statCard:        { alignItems: "center", paddingVertical: 12, paddingHorizontal: 4, borderRadius: 14, borderWidth: 1, gap: 3, ...shadow },
     statIconWrap:    { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-    statValue:       { fontSize: 14, fontWeight: "700" },
+    statValue:       { fontSize: 15, fontWeight: "700" },
     statLabel:       { fontSize: 9, textAlign: "center" },
     pearlCard:       { marginHorizontal: 20, padding: 18, borderRadius: 20, marginBottom: 24, ...shadow },
     pearlHeader:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
@@ -343,20 +419,23 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     sectionTitle:    { fontSize: 18, fontWeight: "700" },
     verifiedBadge:   { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
     verifiedText:    { fontSize: 10, fontWeight: "600" },
-    grid:            { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 10, marginBottom: 24 },
+    grid:            { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 10, marginBottom: 20 },
     moduleCardOuter: { width: "30%", flexGrow: 1 },
     moduleCard:      { borderRadius: 16, padding: 14, borderWidth: 1, alignItems: "center", gap: 6, ...shadow },
     moduleIcon:      { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
     moduleLabel:     { fontSize: 12, fontWeight: "600", textAlign: "center" },
-    moduleDesc:      { fontSize: 10, textAlign: "center" },
+    moduleDesc:      { fontSize: 10, textAlign: "center", fontWeight: "600" },
+    summaryRow:      { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, gap: 8, marginBottom: 24 },
     activityCard:    { marginHorizontal: 20, borderRadius: 16, borderWidth: 1, marginBottom: 20, overflow: "hidden" },
     activityRow:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14 },
     activityLeft:    { flexDirection: "row", alignItems: "center", gap: 10 },
+    activityRight:   { alignItems: "flex-end" },
     activityDot:     { width: 8, height: 8, borderRadius: 4 },
     activityTitle:   { fontSize: 13, fontWeight: "600" },
     activityDate:    { fontSize: 11, marginTop: 2 },
     activityScore:   { fontSize: 14, fontWeight: "700" },
-    disclaimer:      { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingBottom: 8 },
+    activityPct:     { fontSize: 10, marginTop: 1 },
+    disclaimer:      { flexDirection: "row", alignItems: "flex-start", gap: 6, paddingHorizontal: 20, paddingBottom: 8 },
     disclaimerText:  { fontSize: 10, flex: 1, lineHeight: 14 },
   });
 }
