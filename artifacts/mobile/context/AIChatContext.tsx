@@ -21,7 +21,6 @@ import {
   saveChatHistory,
   saveSelectedModel,
   sendMessage,
-  sendImageMessage,
 } from "@/services/openRouterService";
 
 interface AIChatContextType {
@@ -35,11 +34,7 @@ interface AIChatContextType {
   openChat: () => void;
   closeChat: () => void;
   toggleMinimize: () => void;
-  sendUserMessage: (
-    text: string,
-    imageBase64?: string,
-    imageMimeType?: string
-  ) => Promise<void>;
+  sendUserMessage: (text: string) => Promise<void>;
   setSelectedModel: (id: ModelId) => void;
   clearHistory: () => void;
   bookmarkMessage: (messageId: string) => void;
@@ -51,11 +46,6 @@ const AIChatContext = createContext<AIChatContextType | null>(null);
 const OFF_TOPIC_MESSAGE =
   "⚠️ MedPocket AI is designed exclusively for medical education and healthcare-related learning. Please ask a medical or clinical question.";
 
-const IMAGE_NOT_MEDICAL_MESSAGE =
-  "⚠️ MedPocket Vision AI is designed only for medical and healthcare-related images. Please upload an ECG, X-ray, lab report, histology slide, clinical photograph, or other medical image.";
-
-const IMAGE_DISCLAIMER =
-  "\n\n---\n⚕️ *For medical education purposes only. This AI analysis does not replace professional medical advice, diagnosis, or clinical judgment.*";
 
 export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -120,7 +110,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
           const userMsg = prev[prev.findIndex((m) => m.id === messageId) - 1];
           const newBookmark: BookmarkedAnswer = {
             id: Date.now().toString(),
-            question: userMsg?.content ?? (userMsg?.hasImage ? "📷 Image analysis" : ""),
+            question: userMsg?.content ?? "",
             answer: msg.content,
             modelId: msg.modelId ?? DEFAULT_MODEL_ID,
             timestamp: Date.now(),
@@ -146,21 +136,16 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const sendUserMessage = useCallback(
-    async (text: string, imageBase64?: string, imageMimeType?: string) => {
-      const hasImage = !!imageBase64;
+    async (text: string) => {
       const textTrimmed = text.trim();
-
-      if (!textTrimmed && !hasImage) return;
+      if (!textTrimmed) return;
       if (isLoading) return;
 
       const userMsg: ChatMessage = {
         id: `u_${Date.now()}`,
         role: "user",
-        content: textTrimmed || (hasImage ? "Please analyse this medical image." : ""),
+        content: textTrimmed,
         timestamp: Date.now(),
-        imageBase64: imageBase64,
-        imageMimeType: imageMimeType,
-        hasImage: hasImage,
       };
 
       const newMessages = [...messages, userMsg];
@@ -169,66 +154,33 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       setLoadingStatus("");
 
       try {
-        if (hasImage) {
-          // Vision path — use vision model with loading status callbacks
-          const reply = await sendImageMessage(
-            messages,
-            imageBase64!,
-            imageMimeType ?? "image/jpeg",
-            textTrimmed,
-            (status) => setLoadingStatus(status)
-          );
-
-          setLoadingStatus("Preparing educational report...");
-
-          let content: string;
-          if (reply.trim() === "IMAGE_NOT_MEDICAL") {
-            content = IMAGE_NOT_MEDICAL_MESSAGE;
-          } else {
-            content = reply + IMAGE_DISCLAIMER;
-          }
-
-          const assistantMsg: ChatMessage = {
+        if (!isMedicalQuestion(textTrimmed)) {
+          const offTopicMsg: ChatMessage = {
             id: `a_${Date.now()}`,
             role: "assistant",
-            content,
-            timestamp: Date.now(),
-            modelId: "meta-llama/llama-4-maverick:free" as ModelId,
-          };
-          const withResponse = [...newMessages, assistantMsg];
-          setMessages(withResponse);
-          saveChatHistory(withResponse);
-        } else {
-          // Text-only path — unchanged
-          if (!isMedicalQuestion(textTrimmed)) {
-            const offTopicMsg: ChatMessage = {
-              id: `a_${Date.now()}`,
-              role: "assistant",
-              content: OFF_TOPIC_MESSAGE,
-              timestamp: Date.now(),
-              modelId: selectedModel,
-            };
-            const withResponse = [...newMessages, offTopicMsg];
-            setMessages(withResponse);
-            saveChatHistory(withResponse);
-            return;
-          }
-
-          const reply = await sendMessage(newMessages, selectedModel);
-          const content =
-            reply.trim() === "OFF_TOPIC" ? OFF_TOPIC_MESSAGE : reply;
-
-          const assistantMsg: ChatMessage = {
-            id: `a_${Date.now()}`,
-            role: "assistant",
-            content,
+            content: OFF_TOPIC_MESSAGE,
             timestamp: Date.now(),
             modelId: selectedModel,
           };
-          const withResponse = [...newMessages, assistantMsg];
+          const withResponse = [...newMessages, offTopicMsg];
           setMessages(withResponse);
           saveChatHistory(withResponse);
+          return;
         }
+
+        const reply = await sendMessage(newMessages, selectedModel);
+        const content = reply.trim() === "OFF_TOPIC" ? OFF_TOPIC_MESSAGE : reply;
+
+        const assistantMsg: ChatMessage = {
+          id: `a_${Date.now()}`,
+          role: "assistant",
+          content,
+          timestamp: Date.now(),
+          modelId: selectedModel,
+        };
+        const withResponse = [...newMessages, assistantMsg];
+        setMessages(withResponse);
+        saveChatHistory(withResponse);
       } catch (err) {
         const errMsg: ChatMessage = {
           id: `e_${Date.now()}`,
