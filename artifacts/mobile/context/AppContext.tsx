@@ -66,6 +66,7 @@ interface AppContextType extends AppState {
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
   addQuizResult: (result: QuizResult) => void;
+  clearQuizHistory: () => void;
   addRecentSearch: (query: string) => void;
   clearRecentSearches: () => void;
   recordStudySession: () => void;
@@ -247,6 +248,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const clearQuizHistory = useCallback(() => {
+    setState((prev) => ({ ...prev, quizHistory: [] }));
+  }, []);
+
   const addRecentSearch = useCallback((query: string) => {
     if (!query.trim()) return;
     setState((prev) => {
@@ -291,6 +296,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateNote,
         deleteNote,
         addQuizResult,
+        clearQuizHistory,
         addRecentSearch,
         clearRecentSearches,
         recordStudySession,

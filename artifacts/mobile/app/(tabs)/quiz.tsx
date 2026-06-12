@@ -303,6 +303,10 @@ export default function QuizScreen() {
         <Animated.View style={{ opacity: headerOpacity }}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Results</Text>
+            <Pressable onPress={() => router.push("/quiz-history" as any)} style={styles.viewAllBtn}>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
+              <Feather name="chevron-right" size={13} color={colors.primary} />
+            </Pressable>
           </View>
           <View
             style={[
@@ -380,6 +384,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     sectionTitle:     { fontSize: 18, fontWeight: "700" },
     sectionMeta:      { fontSize: 11 },
+    viewAllBtn:       { flexDirection: "row", alignItems: "center", gap: 2 },
+    viewAllText:      { fontSize: 12, fontWeight: "600" },
     grid:             { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 14, gap: 10, marginBottom: 28 },
     subjectCardOuter: { width: "46%", flexGrow: 1 },
     subjectCard: {
