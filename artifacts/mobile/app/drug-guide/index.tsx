@@ -115,14 +115,14 @@ export default function DrugGuideScreen() {
                 style={[
                   styles.catChip,
                   active
-                    ? { backgroundColor: accent, borderColor: accent }
+                    ? { backgroundColor: accent + "20", borderColor: accent }
                     : { backgroundColor: colors.muted, borderColor: colors.border },
                 ]}
               >
                 {cat !== "All" && (
-                  <View style={[styles.catDot, { backgroundColor: active ? "rgba(255,255,255,0.8)" : accent }]} />
+                  <View style={[styles.catDot, { backgroundColor: accent }]} />
                 )}
-                <Text style={[styles.catText, { color: active ? "#fff" : colors.foreground }]}>{cat}</Text>
+                <Text style={[styles.catText, { color: active ? accent : colors.foreground }]}>{cat}</Text>
               </Pressable>
             );
           })}

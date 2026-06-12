@@ -2168,18 +2168,29 @@ export const drugs: Drug[] = [
   { id:"enoxaparin", name:"Enoxaparin", brandNames:["Clexane","Lovenox","Inhixa"], drugClass:"Low Molecular Weight Heparin (LMWH)", category:"Anticoagulants", mechanism:"Binds antithrombin → predominantly inhibits Factor Xa (anti-Xa > anti-IIa activity).", indications:["DVT/PE prophylaxis and treatment","ACS (NSTEMI/STEMI)","Thromboprophylaxis in medical/surgical patients","Bridging anticoagulation"], contraindications:["HIT","Active major bleeding","eGFR <15 (use UFH)","Weight <45 kg or >120 kg (anti-Xa monitoring needed)"], sideEffects:["Bleeding","Injection site bruising","HIT (rarer than UFH, but switch to argatroban if suspected)","Hyperkalaemia","Osteoporosis (less than UFH)"], dosage:"Treatment: 1 mg/kg SC BD or 1.5 mg/kg OD. Prophylaxis: 40 mg SC OD. ACS: 1 mg/kg SC BD.", pregnancyCategory:"B", interactions:["Anticoagulants/antiplatelets: bleeding risk"], monitoring:["Anti-Xa levels (if renal impairment, extremes of weight, or pregnancy)","Platelet count (day 5–10)","Signs of bleeding"], clinicalPearls:["Predictable pharmacokinetics — routine APTT monitoring not required unlike UFH","Anti-Xa level: 4h post-dose; therapeutic BD dosing: 0.6–1.0 IU/mL","Renal clearance — accumulates in CKD — use UFH or reduce dose with monitoring if eGFR <30","HIT: anti-PF4 antibodies — cross-reactive with UFH, but switching to LMWH still risks anamnestic response; use non-heparin anticoagulants"] },
 ];
 
+function deduplicateById(list: Drug[]): Drug[] {
+  const seen = new Set<string>();
+  return list.filter((d) => {
+    if (seen.has(d.id)) return false;
+    seen.add(d.id);
+    return true;
+  });
+}
+
 export function searchDrugs(query: string, category?: string): Drug[] {
   const q = query.toLowerCase();
   const base = category && category !== "All" ? drugs.filter((d) => d.category === category) : drugs;
-  if (!q) return base;
-  return base.filter(
-    (d) =>
-      d.name.toLowerCase().includes(q) ||
-      d.brandNames.some((b) => b.toLowerCase().includes(q)) ||
-      d.drugClass.toLowerCase().includes(q) ||
-      d.category.toLowerCase().includes(q) ||
-      d.indications.some((i) => i.toLowerCase().includes(q))
-  );
+  const filtered = !q
+    ? base
+    : base.filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.brandNames.some((b) => b.toLowerCase().includes(q)) ||
+          d.drugClass.toLowerCase().includes(q) ||
+          d.category.toLowerCase().includes(q) ||
+          d.indications.some((i) => i.toLowerCase().includes(q))
+      );
+  return deduplicateById(filtered).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function getDrugById(id: string): Drug | undefined {
@@ -2187,6 +2198,6 @@ export function getDrugById(id: string): Drug | undefined {
 }
 
 export function getDrugsByCategory(category: string): Drug[] {
-  if (category === "All") return drugs;
-  return drugs.filter((d) => d.category === category);
+  const list = category === "All" ? drugs : drugs.filter((d) => d.category === category);
+  return deduplicateById(list).sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -202,10 +202,11 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 10,
     },
     searchInput: { flex: 1, fontSize: 14, color: colors.foreground },
-    groupRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 12 },
+    groupRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 12, alignItems: 'center' },
     groupChip: {
-      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+      height: 32, paddingHorizontal: 12, borderRadius: 20,
       backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border,
+      alignItems: 'center', justifyContent: 'center',
     },
     groupText: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
     labCard: {
