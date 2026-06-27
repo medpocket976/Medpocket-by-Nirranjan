@@ -280,13 +280,6 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
 
-      {/* ── Content Summary ────────────────────────────────────────────────── */}
-      <Animated.View style={[animStyle(activityAnim), styles.summaryRow]}>
-        <SummaryChip icon="tablet"      color="#009DB5" label={`${drugCount} Drugs`}         colors={colors} />
-        <SummaryChip icon="sliders"     color="#F59E0B" label={`${calcTotal} Calculators`}   colors={colors} />
-        <SummaryChip icon="alert-circle" color="#EF4444" label={`${emergencyCount} Protocols`} colors={colors} />
-        <SummaryChip icon="bar-chart-2" color="#10B981" label={`${labCount} Lab Tests`}       colors={colors} />
-      </Animated.View>
 
       {/* ── Recent Activity ────────────────────────────────────────────────── */}
       {quizHistory.length > 0 && (

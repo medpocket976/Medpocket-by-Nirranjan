@@ -96,8 +96,17 @@ const DISCIPLINE_CATEGORIES = [
       "OPTOM 1st Year", "OPTOM 2nd Year", "OPTOM 3rd Year", "OPTOM 4th Year",
       // DT — Dental Technology
       "DT 1st Year", "DT 2nd Year", "DT 3rd Year",
+      // AECT — Anaesthesia & Critical Care Technology
+      "AECT 1st Year", "AECT 2nd Year", "AECT 3rd Year",
+      // CCT — Cardiac Care Technology
+      "CCT 1st Year", "CCT 2nd Year", "CCT 3rd Year",
+      // RT — Respiratory Therapy
+      "RT 1st Year", "RT 2nd Year", "RT 3rd Year",
+      // NEP — Neuro-Electrophysiology
+      "NEP 1st Year", "NEP 2nd Year", "NEP 3rd Year",
       // Other
-      "BSc Dietetics", "BSc Audiology",
+      "BSc Dietetics", "BSc Audiology", "BSc MLT", "BSc Radiology",
+      "BSc OT", "BSc PT", "BSc Perfusion Technology",
     ],
   },
   {
