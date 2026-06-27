@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MedPocket by Nirranjan",
-    "slug": "mobile",
+    "slug": "medpocket-by-nirranjan",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -73,7 +73,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "medpocket-nirranjan"
+        "projectId": "0d8a26b4-0d28-48e0-8908-b9062831a721"
       }
     }
   }
