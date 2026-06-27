@@ -27,6 +27,12 @@ const GROUP_COLORS: Record<string, string> = {
   Coagulation: "#EC4899",
   Cardiac: "#EF4444",
   Thyroid: "#F97316",
+  Lipids: "#6366F1",
+  Glucose: "#F59E0B",
+  "Iron Studies": "#DC2626",
+  Inflammatory: "#EF4444",
+  "Tumour Markers": "#8B5CF6",
+  Urine: "#06B6D4",
 };
 
 export default function LabValuesScreen() {
@@ -202,13 +208,13 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 10,
     },
     searchInput: { flex: 1, fontSize: 14, color: colors.foreground },
-    groupRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 12, alignItems: 'center' },
+    groupRow: { paddingHorizontal: 16, gap: 6, paddingBottom: 10, alignItems: 'center' },
     groupChip: {
-      height: 32, paddingHorizontal: 12, borderRadius: 20,
+      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
       backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border,
       alignItems: 'center', justifyContent: 'center',
     },
-    groupText: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
+    groupText: { fontSize: 11, fontWeight: "600", color: colors.mutedForeground },
     labCard: {
       backgroundColor: colors.card, borderRadius: 14, padding: 14,
       marginBottom: 10, borderWidth: 1, borderColor: colors.border,

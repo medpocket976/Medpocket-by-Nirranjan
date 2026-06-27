@@ -24,7 +24,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Antidiabetics: "#10B981",
   Analgesics: "#F59E0B",
   "CNS Drugs": "#8B5CF6",
-  Emergency: "#EF4444",
+  Emergency: "#DC2626",
   Respiratory: "#3B82F6",
   "GI Drugs": "#F97316",
   Diuretics: "#06B6D4",
@@ -40,6 +40,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   Anaesthesia: "#7C3AED",
   "Local Anaesthetics": "#0891B2",
   "Neuromuscular Blockers": "#B45309",
+  Antiparasitics: "#65A30D",
+  Immunosuppressants: "#D946EF",
+  Urology: "#0284C7",
+  Endocrine: "#CA8A04",
+  "Bone Health": "#78716C",
+  Haematinics: "#BE123C",
+  Vitamins: "#F59E0B",
+  Minerals: "#6B7280",
 };
 
 export default function DrugGuideScreen() {
