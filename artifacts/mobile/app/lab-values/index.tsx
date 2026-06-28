@@ -93,16 +93,30 @@ export default function LabValuesScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.groupRow}
+        style={styles.groupScroll}
+        decelerationRate="fast"
       >
-        {LAB_GROUPS.map((g) => (
-          <Pressable
-            key={g}
-            style={[styles.groupChip, group === g && { backgroundColor: GROUP_COLORS[g] || colors.primary, borderColor: GROUP_COLORS[g] || colors.primary }]}
-            onPress={() => setGroup(g)}
-          >
-            <Text style={[styles.groupText, group === g && { color: "#fff" }]}>{g}</Text>
-          </Pressable>
-        ))}
+        {LAB_GROUPS.map((g) => {
+          const active = group === g;
+          const accent = GROUP_COLORS[g] || colors.primary;
+          return (
+            <Pressable
+              key={g}
+              style={[
+                styles.groupChip,
+                { backgroundColor: active ? accent : colors.muted, borderColor: active ? accent : colors.border },
+              ]}
+              onPress={() => setGroup(g)}
+            >
+              <Text
+                style={[styles.groupText, { color: active ? "#fff" : colors.mutedForeground }]}
+                numberOfLines={1}
+              >
+                {g}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       <FlatList
@@ -208,13 +222,25 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 10,
     },
     searchInput: { flex: 1, fontSize: 14, color: colors.foreground },
-    groupRow: { paddingHorizontal: 16, gap: 6, paddingBottom: 10, alignItems: 'center' },
-    groupChip: {
-      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
-      backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border,
-      alignItems: 'center', justifyContent: 'center',
+    groupScroll: { flexGrow: 0, flexShrink: 0 },
+    groupRow: {
+      paddingHorizontal: 16,
+      paddingVertical: 4,
+      paddingBottom: 10,
+      gap: 6,
+      flexDirection: "row",
+      alignItems: "center",
     },
-    groupText: { fontSize: 11, fontWeight: "600", color: colors.mutedForeground },
+    groupChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 20,
+      borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 32,
+    },
+    groupText: { fontSize: 12, fontWeight: "600" },
     labCard: {
       backgroundColor: colors.card, borderRadius: 14, padding: 14,
       marginBottom: 10, borderWidth: 1, borderColor: colors.border,

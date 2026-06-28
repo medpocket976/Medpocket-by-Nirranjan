@@ -18,7 +18,7 @@ import { useColors } from "@/hooks/useColors";
 const EXPLORE_SECTIONS = [
   {
     title: "Clinical Reference",
-    updatedLabel: "Updated · May 2026",
+    updatedLabel: "Updated · Jun 2026",
     items: [
       {
         id: "drug-guide",
@@ -43,6 +43,20 @@ const EXPLORE_SECTIONS = [
         color: "#EF4444",
         description: "Step-by-step emergency management algorithms",
         source: "WHO · ACLS · AHA Guidelines 2023",
+      },
+    ],
+  },
+  {
+    title: "Anaesthesia & OT",
+    updatedLabel: "Updated · Jun 2026",
+    items: [
+      {
+        id: "anaesthesia-equipment",
+        label: "Anaesthesia Equipment & Airway",
+        icon: "wind" as const,
+        color: "#7C3AED",
+        description: "100+ OT equipment, airway devices, scopes and monitoring — with viva questions, OSCE tips and mnemonics",
+        source: "Miller's Anaesthesia 9e · DAS Guidelines",
       },
     ],
   },
