@@ -1,8 +1,21 @@
 {
   "expo": {
+    "name": "MedPocket by Nirranjan",
+    "slug": "medpocket-by-nirranjan",
+    "version": "1.3.0",
+    "orientation": "portrait",
+    "scheme": "medpocket",
+    "icon": "./artifacts/mobile/assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.nirranjan.medpocket"
+    },
+    "android": {
+      "package": "com.nirranjan.medpocket"
+    },
     "extra": {
       "eas": {
-        "projectId": "5423a382-7059-419b-95cd-22008222b2e9"
+        "projectId": "0d8a26b4-0d28-48e0-8908-b9062831a721"
       }
     }
   }

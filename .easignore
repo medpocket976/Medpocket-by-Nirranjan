@@ -1,0 +1,26 @@
+# Ignore monorepo-level files not needed by EAS Build
+node_modules/
+.git/
+attached_assets/
+zipFile.zip
+
+# Ignore other artifacts (not the mobile app)
+artifacts/api-server/node_modules/
+artifacts/mockup-sandbox/node_modules/
+artifacts/api-server/dist/
+artifacts/mockup-sandbox/dist/
+
+# Ignore library node_modules (will be reinstalled by EAS)
+lib/*/node_modules/
+
+# Ignore scripts
+scripts/node_modules/
+
+# Ignore development/IDE files
+.replit
+replit.nix
+replit.md
+.agents/
+.local/
+*.log
+*.zip
