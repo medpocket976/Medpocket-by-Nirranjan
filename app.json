@@ -53,7 +53,7 @@
       [
         "expo-router",
         {
-          "origin": "https://medpocket.app/"
+          "origin": "https://replit.com/"
         }
       ],
       "expo-font",
