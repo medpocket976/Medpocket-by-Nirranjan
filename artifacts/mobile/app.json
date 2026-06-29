@@ -45,7 +45,10 @@
               "host": "medpocket.app"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -70,6 +73,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "aefd6624-6650-4d45-b7a8-eff2b610acf8"
+      }
     }
   }
 }
