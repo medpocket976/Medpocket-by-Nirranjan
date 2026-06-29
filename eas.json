@@ -6,7 +6,6 @@
   },
   "build": {
     "development": {
-      "projectRootDirectory": "artifacts/mobile",
       "developmentClient": true,
       "distribution": "internal",
       "android": {
@@ -18,14 +17,12 @@
       }
     },
     "preview": {
-      "projectRootDirectory": "artifacts/mobile",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "projectRootDirectory": "artifacts/mobile",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
