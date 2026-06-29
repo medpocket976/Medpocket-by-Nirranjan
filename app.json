@@ -4,14 +4,64 @@
     "slug": "medpocket-by-nirranjan",
     "version": "1.3.0",
     "orientation": "portrait",
-    "scheme": "medpocket",
     "icon": "./artifacts/mobile/assets/images/icon.png",
+    "scheme": "medpocket",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./artifacts/mobile/assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#009DB5"
+    },
     "ios": {
-      "bundleIdentifier": "com.nirranjan.medpocket"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nirranjan.medpocket",
+      "buildNumber": "2",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Used to set your profile photo.",
+        "NSCameraUsageDescription": "Used to capture profile photo."
+      }
     },
     "android": {
-      "package": "com.nirranjan.medpocket"
+      "package": "com.nirranjan.medpocket",
+      "versionCode": 4,
+      "backgroundColor": "#009DB5",
+      "adaptiveIcon": {
+        "foregroundImage": "./artifacts/mobile/assets/images/icon.png",
+        "backgroundColor": "#009DB5"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.VIBRATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "medpocket.app"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://medpocket.app/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-splash-screen"
+    ],
+    "experiments": {
+      "typedRoutes": true
     },
     "extra": {
       "eas": {
