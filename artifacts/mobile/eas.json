@@ -1,10 +1,12 @@
 {
   "cli": {
-    "version": ">= 20.4.0",
-    "appVersionSource": "remote"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote",
+    "requireCommit": false
   },
   "build": {
     "development": {
+      "pnpm": "10.26.1",
       "developmentClient": true,
       "distribution": "internal",
       "android": {
@@ -16,15 +18,20 @@
       }
     },
     "preview": {
+      "pnpm": "10.26.1",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "pnpm": "10.26.1",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "image": "latest"
       }
     }
   },

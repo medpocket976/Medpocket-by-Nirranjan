@@ -12,6 +12,11 @@
     },
     "android": {
       "package": "com.nirranjan.medpocket"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "aefd6624-6650-4d45-b7a8-eff2b610acf8"
+      }
     }
   }
 }
