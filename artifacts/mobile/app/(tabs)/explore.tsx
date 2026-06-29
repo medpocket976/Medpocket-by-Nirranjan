@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -92,36 +92,48 @@ const EXPLORE_SECTIONS = [
 
 const TOTAL_ITEMS = EXPLORE_SECTIONS.reduce((s, sec) => s + sec.items.length, 0);
 
-function ExploreCard({
+type ExploreItem = typeof EXPLORE_SECTIONS[number]["items"][number];
+
+const ExploreCard = memo(function ExploreCard({
   item,
   entranceAnim,
   colors,
   styles,
 }: {
-  item: (typeof EXPLORE_SECTIONS)[number]["items"][number];
+  item: ExploreItem;
   entranceAnim: { opacity: Animated.Value; translateY: Animated.Value };
   colors: ReturnType<typeof useColors>;
   styles: ReturnType<typeof makeStyles>;
 }) {
-  const scaleAnim  = useRef(new Animated.Value(1)).current;
+  const scaleAnim   = useRef(new Animated.Value(1)).current;
   const chevronAnim = useRef(new Animated.Value(0)).current;
 
-  function pressIn() {
+  const pressIn = useCallback(() => {
     Animated.parallel([
-      Animated.spring(scaleAnim,  { toValue: 0.97, tension: 160, friction: 8, useNativeDriver: true }),
+      Animated.spring(scaleAnim,   { toValue: 0.97, tension: 160, friction: 8, useNativeDriver: true }),
       Animated.spring(chevronAnim, { toValue: 5, tension: 120, friction: 8, useNativeDriver: true }),
     ]).start();
-  }
+  }, [scaleAnim, chevronAnim]);
 
-  function pressOut() {
+  const pressOut = useCallback(() => {
     Animated.parallel([
-      Animated.spring(scaleAnim,  { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }),
+      Animated.spring(scaleAnim,   { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }),
       Animated.spring(chevronAnim, { toValue: 0, tension: 80, friction: 7, useNativeDriver: true }),
     ]).start();
-  }
+  }, [scaleAnim, chevronAnim]);
+
+  const handlePress = useCallback(() => {
+    router.push(`/${item.id}` as any);
+  }, [item.id]);
 
   return (
-    <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={() => router.push(`/${item.id}` as any)}>
+    <Pressable
+      onPressIn={pressIn}
+      onPressOut={pressOut}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={item.label}
+    >
       <Animated.View
         style={[
           styles.card,
@@ -149,9 +161,9 @@ function ExploreCard({
       </Animated.View>
     </Pressable>
   );
-}
+});
 
-function SkeletonSection({ colors }: { colors: ReturnType<typeof useColors> }) {
+const SkeletonSection = memo(function SkeletonSection({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <View style={{ marginBottom: 24 }}>
       <SkeletonLoader width={120} height={12} borderRadius={6} style={{ marginHorizontal: 20, marginBottom: 12 }} />
@@ -180,17 +192,17 @@ function SkeletonSection({ colors }: { colors: ReturnType<typeof useColors> }) {
       ))}
     </View>
   );
-}
+});
 
 export default function ExploreScreen() {
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
   const topPad  = Platform.OS === "web" ? 67 : insets.top;
-  const styles  = makeStyles(colors);
+  const styles  = useMemo(() => makeStyles(colors), [colors]);
 
   const [skeletonVisible, setSkeletonVisible] = useState(true);
 
-  const headerOpacity  = useRef(new Animated.Value(0)).current;
+  const headerOpacity    = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-14)).current;
 
   const itemAnims = useRef(
@@ -205,7 +217,7 @@ export default function ExploreScreen() {
       setSkeletonVisible(false);
 
       Animated.parallel([
-        Animated.timing(headerOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(headerOpacity,    { toValue: 1, duration: 300, useNativeDriver: true }),
         Animated.spring(headerTranslateY, { toValue: 0, tension: 80, friction: 10, useNativeDriver: true }),
       ]).start();
 
@@ -213,7 +225,7 @@ export default function ExploreScreen() {
         65,
         itemAnims.map((a) =>
           Animated.parallel([
-            Animated.timing(a.opacity, { toValue: 1, duration: 360, useNativeDriver: true }),
+            Animated.timing(a.opacity,    { toValue: 1, duration: 360, useNativeDriver: true }),
             Animated.spring(a.translateY, { toValue: 0, tension: 65, friction: 10, useNativeDriver: true }),
           ])
         )

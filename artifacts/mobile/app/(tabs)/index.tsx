@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Animated,
   Platform,
@@ -55,7 +55,7 @@ const CLINICAL_PEARLS = [
   { text: "Corrected QT >500 ms significantly increases risk of Torsades de Pointes.", ref: "ESC Ventricular Arrhythmia Guidelines 2022" },
 ];
 
-function ModuleCard({
+const ModuleCard = memo(function ModuleCard({
   id, label, icon, color, desc, colors, styles,
 }: {
   id: string;
@@ -68,20 +68,27 @@ function ModuleCard({
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  function pressIn() {
+  const pressIn = useCallback(() => {
     Animated.spring(scaleAnim, { toValue: 0.94, tension: 160, friction: 8, useNativeDriver: true }).start();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-  function pressOut() {
+  }, [scaleAnim]);
+
+  const pressOut = useCallback(() => {
     Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
+  }, [scaleAnim]);
+
+  const handlePress = useCallback(() => {
+    router.push(`/${id}` as any);
+  }, [id]);
 
   return (
     <Pressable
       style={styles.moduleCardOuter}
       onPressIn={pressIn}
       onPressOut={pressOut}
-      onPress={() => router.push(`/${id}` as any)}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${desc}`}
     >
       <Animated.View
         style={[
@@ -94,13 +101,13 @@ function ModuleCard({
           <Feather name={icon} size={22} color={color} />
         </View>
         <Text style={[styles.moduleLabel, { color: colors.foreground }]}>{label}</Text>
-        <Text style={[styles.moduleDesc, { color: color }]}>{desc}</Text>
+        <Text style={[styles.moduleDesc, { color }]}>{desc}</Text>
       </Animated.View>
     </Pressable>
   );
-}
+});
 
-function StatCard({
+const StatCard = memo(function StatCard({
   icon, label, value, color, colors, styles,
 }: {
   icon: keyof typeof Feather.glyphMap;
@@ -126,6 +133,42 @@ function StatCard({
       </View>
     </View>
   );
+});
+
+const SummaryChip = memo(function SummaryChip({
+  icon, color, label, colors,
+}: {
+  icon: keyof typeof Feather.glyphMap;
+  color: string;
+  label: string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={[chipStyles.chip, { backgroundColor: color + "12", borderColor: color + "30" }]}>
+      <Feather name={icon} size={11} color={color} />
+      <Text style={[chipStyles.label, { color }]}>{label}</Text>
+    </View>
+  );
+});
+
+const chipStyles = StyleSheet.create({
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  label: { fontSize: 11, fontWeight: "600" },
+});
+
+function getTimeOfDay() {
+  const h = new Date().getHours();
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
 }
 
 export default function HomeScreen() {
@@ -133,14 +176,13 @@ export default function HomeScreen() {
   const insets  = useSafeAreaInsets();
   const { user, streak, totalStudyDays, bookmarks, quizHistory, recordStudySession } = useApp();
 
-  // ── Dynamic counts from actual data files ──────────────────────────────────
-  const drugCount        = drugs.length;
-  const calcTotal        = calculators.length + medicalCalculators.length;
-  const emergencyCount   = emergencyProtocols.length;
-  const labCount         = labValues.length;
-  const systemCount      = clinicalSystems.length;
+  const drugCount      = drugs.length;
+  const calcTotal      = calculators.length + medicalCalculators.length;
+  const emergencyCount = emergencyProtocols.length;
+  const labCount       = labValues.length;
+  const systemCount    = clinicalSystems.length;
 
-  const MODULES = [
+  const MODULES = useMemo(() => [
     { id: "drug-guide",       label: "Drug Guide",    icon: "tablet"       as const, color: "#009DB5", desc: `${drugCount} drugs` },
     { id: "clinical-exam",    label: "Clinical Exam", icon: "activity"     as const, color: "#8B5CF6", desc: `${systemCount} systems` },
     { id: "emergency",        label: "Emergency",     icon: "alert-circle" as const, color: "#EF4444", desc: `${emergencyCount} protocols` },
@@ -148,45 +190,66 @@ export default function HomeScreen() {
     { id: "calculators",      label: "Calculators",   icon: "sliders"      as const, color: "#F59E0B", desc: `${calcTotal} tools` },
     { id: "anaesthesia-calc", label: "Anaesthesia",   icon: "wind"         as const, color: "#6366F1", desc: "Dose calculator" },
     { id: "search",           label: "Search All",    icon: "search"       as const, color: "#EC4899", desc: "Global search" },
-  ];
+  ], [drugCount, calcTotal, emergencyCount, labCount, systemCount]);
 
-  const todayPearl = CLINICAL_PEARLS[new Date().getDate() % CLINICAL_PEARLS.length];
-  const dateLabel  = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const todayPearl = useMemo(
+    () => CLINICAL_PEARLS[new Date().getDate() % CLINICAL_PEARLS.length],
+    []
+  );
+  const dateLabel = useMemo(
+    () => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+    []
+  );
 
-  const headerAnim = useRef(new Animated.Value(0)).current;
-  const statsAnim  = useRef(new Animated.Value(0)).current;
-  const pearlAnim  = useRef(new Animated.Value(0)).current;
-  const gridAnim   = useRef(new Animated.Value(0)).current;
+  const headerAnim   = useRef(new Animated.Value(0)).current;
+  const statsAnim    = useRef(new Animated.Value(0)).current;
+  const pearlAnim    = useRef(new Animated.Value(0)).current;
+  const gridAnim     = useRef(new Animated.Value(0)).current;
   const activityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     recordStudySession();
     Animated.stagger(60, [
-      Animated.spring(headerAnim,  { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(statsAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(pearlAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(gridAnim,    { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
-      Animated.spring(activityAnim,{ toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(headerAnim,   { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(statsAnim,    { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(pearlAnim,    { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(gridAnim,     { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
+      Animated.spring(activityAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }),
     ]).start();
   }, []);
 
-  const animStyle = (anim: Animated.Value) => ({
+  const animStyle = useCallback((anim: Animated.Value) => ({
     opacity: anim,
     transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }],
-  });
+  }), []);
 
-  const styles  = makeStyles(colors);
+  const styles  = useMemo(() => makeStyles(colors), [colors]);
   const topPad  = Platform.OS === "web" ? 67 : insets.top;
 
-  const pearlScale = useRef(new Animated.Value(1)).current;
-
+  const pearlScale  = useRef(new Animated.Value(1)).current;
   const searchScale = useRef(new Animated.Value(1)).current;
+
+  const pearlPressIn = useCallback(() => {
+    Animated.spring(pearlScale, { toValue: 0.98, tension: 120, friction: 8, useNativeDriver: true }).start();
+  }, [pearlScale]);
+  const pearlPressOut = useCallback(() => {
+    Animated.spring(pearlScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
+  }, [pearlScale]);
+
+  const searchPressIn = useCallback(() => {
+    Animated.spring(searchScale, { toValue: 0.9, tension: 160, friction: 8, useNativeDriver: true }).start();
+  }, [searchScale]);
+  const searchPressOut = useCallback(() => {
+    Animated.spring(searchScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
+  }, [searchScale]);
+  const goToSearch = useCallback(() => router.push("/search"), []);
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <Animated.View style={[styles.header, animStyle(headerAnim)]}>
@@ -198,13 +261,12 @@ export default function HomeScreen() {
           <Text style={[styles.subtitle, { color: colors.primary }]}>{user.year}</Text>
         </View>
         <Pressable
-          onPressIn={() =>
-            Animated.spring(searchScale, { toValue: 0.9, tension: 160, friction: 8, useNativeDriver: true }).start()
-          }
-          onPressOut={() =>
-            Animated.spring(searchScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()
-          }
-          onPress={() => router.push("/search")}
+          onPressIn={searchPressIn}
+          onPressOut={searchPressOut}
+          onPress={goToSearch}
+          accessibilityRole="button"
+          accessibilityLabel="Open search"
+          hitSlop={8}
         >
           <Animated.View
             style={[
@@ -229,12 +291,9 @@ export default function HomeScreen() {
       {/* ── Daily Pearl ────────────────────────────────────────────────────── */}
       <Animated.View style={animStyle(pearlAnim)}>
         <Pressable
-          onPressIn={() =>
-            Animated.spring(pearlScale, { toValue: 0.98, tension: 120, friction: 8, useNativeDriver: true }).start()
-          }
-          onPressOut={() =>
-            Animated.spring(pearlScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()
-          }
+          onPressIn={pearlPressIn}
+          onPressOut={pearlPressOut}
+          accessibilityRole="none"
         >
           <Animated.View
             style={[styles.pearlCard, { backgroundColor: colors.primary }, { transform: [{ scale: pearlScale }] }]}
@@ -279,7 +338,6 @@ export default function HomeScreen() {
           ))}
         </View>
       </Animated.View>
-
 
       {/* ── Recent Activity ────────────────────────────────────────────────── */}
       {quizHistory.length > 0 && (
@@ -347,42 +405,6 @@ export default function HomeScreen() {
   );
 }
 
-function SummaryChip({
-  icon, color, label, colors,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  color: string;
-  label: string;
-  colors: ReturnType<typeof useColors>;
-}) {
-  return (
-    <View style={[chipStyles.chip, { backgroundColor: color + "12", borderColor: color + "30" }]}>
-      <Feather name={icon} size={11} color={color} />
-      <Text style={[chipStyles.label, { color }]}>{label}</Text>
-    </View>
-  );
-}
-
-const chipStyles = StyleSheet.create({
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  label: { fontSize: 11, fontWeight: "600" },
-});
-
-function getTimeOfDay() {
-  const h = new Date().getHours();
-  if (h < 12) return "morning";
-  if (h < 17) return "afternoon";
-  return "evening";
-}
-
 function makeStyles(colors: ReturnType<typeof useColors>) {
   const isIOS = Platform.OS === "ios";
   const shadow = isIOS
@@ -418,7 +440,6 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     moduleIcon:      { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
     moduleLabel:     { fontSize: 12, fontWeight: "600", textAlign: "center" },
     moduleDesc:      { fontSize: 10, textAlign: "center", fontWeight: "600" },
-    summaryRow:      { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, gap: 8, marginBottom: 24 },
     activityCard:    { marginHorizontal: 20, borderRadius: 16, borderWidth: 1, marginBottom: 20, overflow: "hidden" },
     activityRow:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14 },
     activityLeft:    { flexDirection: "row", alignItems: "center", gap: 10 },
@@ -430,5 +451,6 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     activityPct:     { fontSize: 10, marginTop: 1 },
     disclaimer:      { flexDirection: "row", alignItems: "flex-start", gap: 6, paddingHorizontal: 20, paddingBottom: 8 },
     disclaimerText:  { fontSize: 10, flex: 1, lineHeight: 14 },
+    summaryRow:      { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, gap: 8, marginBottom: 24 },
   });
 }

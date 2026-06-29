@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   Platform,
@@ -50,131 +50,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   Minerals: "#6B7280",
 };
 
-export default function DrugGuideScreen() {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const { isBookmarked } = useApp();
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+const ITEM_HEIGHT = 72;
 
-  const results = searchDrugs(query, category);
-  const isIOS = Platform.OS === "ios";
-  const shadow = isIOS
-    ? { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 }
-    : { elevation: 1 };
-
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* iOS-style Navigation Header */}
-      <View style={[styles.navHeader, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-        <Pressable
-          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.5 : 1 }]}
-          onPress={() => router.back()}
-        >
-          <Feather name="chevron-left" size={26} color={colors.primary} />
-        </Pressable>
-        <Text style={[styles.navTitle, { color: colors.foreground }]}>Drug Guide</Text>
-        <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
-          <Text style={styles.countText}>{results.length}</Text>
-        </View>
-      </View>
-
-      {/* Search bar — iOS style inset */}
-      <View style={[styles.searchWrap, { backgroundColor: colors.card }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.muted }]}>
-          <Feather name="search" size={15} color={colors.mutedForeground} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search drugs, brand names, class..."
-            placeholderTextColor={colors.mutedForeground}
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-            clearButtonMode="while-editing"
-          />
-          {query.length > 0 && (
-            <Pressable onPress={() => setQuery("")} hitSlop={8}>
-              <View style={styles.clearBtn}>
-                <Feather name="x" size={11} color="#fff" />
-              </View>
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {/* Category filter chips */}
-      <View style={[styles.categoryWrap, { backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryRow}
-        >
-          {DRUG_CATEGORIES.map((cat) => {
-            const active = category === cat;
-            const accent = CATEGORY_COLORS[cat] || colors.primary;
-            return (
-              <Pressable
-                key={cat}
-                onPress={() => {
-                  setCategory(cat);
-                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-                style={[
-                  styles.catChip,
-                  active
-                    ? { backgroundColor: accent + "20", borderColor: accent }
-                    : { backgroundColor: colors.muted, borderColor: colors.border },
-                ]}
-              >
-                {cat !== "All" && (
-                  <View style={[styles.catDot, { backgroundColor: accent }]} />
-                )}
-                <Text style={[styles.catText, { color: active ? accent : colors.foreground }]}>{cat}</Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Drug list — iOS flat list style */}
-      <FlatList
-        data={results}
-        keyExtractor={(d) => d.id}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
-        ItemSeparatorComponent={() => (
-          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 70 }} />
-        )}
-        renderItem={({ item, index }) => (
-          <DrugRow
-            drug={item}
-            colors={colors}
-            bookmarked={isBookmarked(item.id)}
-            categoryColor={CATEGORY_COLORS[item.category] || colors.primary}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push(`/drug-guide/${item.id}`);
-            }}
-          />
-        )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
-              <Feather name="search" size={32} color={colors.mutedForeground} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No drugs found</Text>
-            <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-              Try a different search term or category
-            </Text>
-          </View>
-        }
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
-  );
-}
-
-function DrugRow({
+const DrugRow = memo(function DrugRow({
   drug,
   colors,
   bookmarked,
@@ -196,13 +74,13 @@ function DrugRow({
         { backgroundColor: pressed ? colors.muted : colors.card },
       ]}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${drug.name}, ${drug.drugClass}`}
     >
-      {/* Left — color circle with initial */}
       <View style={[styles.avatar, { backgroundColor: categoryColor + "20" }]}>
         <Text style={[styles.avatarText, { color: categoryColor }]}>{initials}</Text>
       </View>
 
-      {/* Center — name, class, tags */}
       <View style={styles.rowContent}>
         <View style={styles.rowTop}>
           <Text style={[styles.drugName, { color: colors.foreground }]} numberOfLines={1}>
@@ -234,6 +112,161 @@ function DrugRow({
 
       <Feather name="chevron-right" size={16} color={colors.border} />
     </Pressable>
+  );
+});
+
+function ItemSeparator() {
+  return <View style={styles.separator} />;
+}
+
+export default function DrugGuideScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { isBookmarked } = useApp();
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const results = useMemo(() => searchDrugs(query, category), [query, category]);
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
+
+  const keyExtractor = useCallback((d: Drug) => d.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Drug }) => (
+      <DrugRow
+        drug={item}
+        colors={colors}
+        bookmarked={isBookmarked(item.id)}
+        categoryColor={CATEGORY_COLORS[item.category] || colors.primary}
+        onPress={() => {
+          if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push(`/drug-guide/${item.id}`);
+        }}
+      />
+    ),
+    [colors, isBookmarked]
+  );
+
+  const clearQuery = useCallback(() => setQuery(""), []);
+  const goBack = useCallback(() => router.back(), []);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Navigation Header */}
+      <View style={[styles.navHeader, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+        <Pressable
+          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.5 : 1 }]}
+          onPress={goBack}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Feather name="chevron-left" size={26} color={colors.primary} />
+        </Pressable>
+        <Text style={[styles.navTitle, { color: colors.foreground }]}>Drug Guide</Text>
+        <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
+          <Text style={styles.countText}>{results.length}</Text>
+        </View>
+      </View>
+
+      {/* Search bar */}
+      <View style={[styles.searchWrap, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.muted }]}>
+          <Feather name="search" size={15} color={colors.mutedForeground} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.foreground }]}
+            placeholder="Search drugs, brand names, class..."
+            placeholderTextColor={colors.mutedForeground}
+            value={query}
+            onChangeText={setQuery}
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
+          />
+          {query.length > 0 && (
+            <Pressable onPress={clearQuery} hitSlop={8}>
+              <View style={styles.clearBtn}>
+                <Feather name="x" size={11} color="#fff" />
+              </View>
+            </Pressable>
+          )}
+        </View>
+      </View>
+
+      {/* Category filter chips */}
+      <View style={[styles.categoryWrap, { backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+          keyboardShouldPersistTaps="handled"
+        >
+          {DRUG_CATEGORIES.map((cat) => {
+            const active = category === cat;
+            const accent = CATEGORY_COLORS[cat] || colors.primary;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => {
+                  setCategory(cat);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={[
+                  styles.catChip,
+                  active
+                    ? { backgroundColor: accent + "20", borderColor: accent }
+                    : { backgroundColor: colors.muted, borderColor: colors.border },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                {cat !== "All" && (
+                  <View style={[styles.catDot, { backgroundColor: accent }]} />
+                )}
+                <Text style={[styles.catText, { color: active ? accent : colors.foreground }]}>{cat}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Drug list */}
+      <FlatList
+        data={results}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        ItemSeparatorComponent={ItemSeparator}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
+              <Feather name="search" size={32} color={colors.mutedForeground} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No drugs found</Text>
+            <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
+              Try a different search term or category
+            </Text>
+          </View>
+        }
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        maxToRenderPerBatch={12}
+        windowSize={10}
+        removeClippedSubviews={true}
+        initialNumToRender={15}
+      />
+    </View>
   );
 }
 
@@ -285,13 +318,15 @@ const styles = StyleSheet.create({
   catDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
   catText: { fontSize: 12, fontWeight: "600" },
 
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: "transparent", marginLeft: 70 },
+
   row: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 14,
-    minHeight: 72,
+    height: ITEM_HEIGHT,
   },
   avatar: {
     width: 42, height: 42, borderRadius: 21,

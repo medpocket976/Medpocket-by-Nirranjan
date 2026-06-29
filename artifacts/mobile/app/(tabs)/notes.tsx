@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -15,9 +15,82 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import type { Note } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const SUBJECTS = ["All", "Anatomy", "Physiology", "Pathology", "Pharmacology", "Medicine", "Surgery", "General"];
+
+const NoteCard = memo(function NoteCard({
+  note, colors, onPress, onDelete, onTogglePin,
+}: {
+  note: Note;
+  colors: ReturnType<typeof useColors>;
+  onPress: () => void;
+  onDelete: () => void;
+  onTogglePin: () => void;
+}) {
+  const preview = note.content.replace(/[#*_`]/g, "").trim().slice(0, 80);
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        noteCardStyles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={note.title}
+    >
+      <View style={noteCardStyles.topRow}>
+        <Text style={[noteCardStyles.title, { color: colors.foreground }]} numberOfLines={1}>
+          {note.title}
+        </Text>
+        <View style={noteCardStyles.actions}>
+          <Pressable onPress={onTogglePin} hitSlop={10} accessibilityRole="button" accessibilityLabel={note.isPinned ? "Unpin note" : "Pin note"}>
+            <Feather name="bookmark" size={15} color={note.isPinned ? colors.primary : colors.mutedForeground} />
+          </Pressable>
+          <Pressable onPress={onDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Delete note">
+            <Feather name="trash-2" size={15} color={colors.destructive} />
+          </Pressable>
+        </View>
+      </View>
+      {preview.length > 0 && (
+        <Text style={[noteCardStyles.preview, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {preview}
+        </Text>
+      )}
+      <View style={noteCardStyles.footer}>
+        <View style={[noteCardStyles.subjectTag, { backgroundColor: colors.tealLight }]}>
+          <Text style={[noteCardStyles.subjectText, { color: colors.primary }]}>{note.subject}</Text>
+        </View>
+        <Text style={[noteCardStyles.dateText, { color: colors.mutedForeground }]}>
+          {new Date(note.updatedAt).toLocaleDateString()}
+        </Text>
+      </View>
+    </Pressable>
+  );
+});
+
+const noteCardStyles = StyleSheet.create({
+  card: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  topRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
+  title: { fontSize: 15, fontWeight: "700", flex: 1 },
+  actions: { flexDirection: "row", gap: 12, alignItems: "center" },
+  preview: { fontSize: 12, lineHeight: 18, marginBottom: 8 },
+  footer: { flexDirection: "row", alignItems: "center", gap: 8 },
+  subjectTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  subjectText: { fontSize: 10, fontWeight: "600" },
+  dateText: { fontSize: 10 },
+});
 
 export default function NotesScreen() {
   const colors = useColors();
@@ -26,21 +99,23 @@ export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const filteredNotes = notes.filter((n) => {
-    const matchSubject = selectedSubject === "All" || n.subject === selectedSubject;
-    const matchSearch =
-      !searchQuery ||
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchSubject && matchSearch;
-  });
+  const filteredNotes = useMemo(() => {
+    return notes.filter((n) => {
+      const matchSubject = selectedSubject === "All" || n.subject === selectedSubject;
+      const matchSearch =
+        !searchQuery ||
+        n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.content.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchSubject && matchSearch;
+    });
+  }, [notes, selectedSubject, searchQuery]);
 
-  const pinnedNotes = filteredNotes.filter((n) => n.isPinned);
-  const otherNotes = filteredNotes.filter((n) => !n.isPinned);
+  const pinnedNotes = useMemo(() => filteredNotes.filter((n) => n.isPinned), [filteredNotes]);
+  const otherNotes  = useMemo(() => filteredNotes.filter((n) => !n.isPinned), [filteredNotes]);
 
-  function handleCreateNote() {
+  const handleCreateNote = useCallback(() => {
     const note = createNote({
       title: "New Note",
       content: "",
@@ -50,9 +125,9 @@ export default function NotesScreen() {
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/notes/${note.id}`);
-  }
+  }, [createNote]);
 
-  function handleDeleteNote(id: string, title: string) {
+  const handleDeleteNote = useCallback((id: string, title: string) => {
     Alert.alert("Delete Note", `Delete "${title}"?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -64,18 +139,22 @@ export default function NotesScreen() {
         },
       },
     ]);
-  }
+  }, [deleteNote]);
 
-  function handleTogglePin(id: string, isPinned: boolean) {
+  const handleTogglePin = useCallback((id: string, isPinned: boolean) => {
     updateNote(id, { isPinned: !isPinned });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
+  }, [updateNote]);
+
+  const clearSearch = useCallback(() => setSearchQuery(""), []);
 
   return (
-    <View style={[styles.container]}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: insets.bottom + 120 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Header */}
         <View style={styles.header}>
@@ -94,9 +173,10 @@ export default function NotesScreen() {
             placeholderTextColor={colors.mutedForeground}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery("")}>
+            <Pressable onPress={clearSearch} hitSlop={8}>
               <Feather name="x" size={16} color={colors.mutedForeground} />
             </Pressable>
           )}
@@ -107,12 +187,15 @@ export default function NotesScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}
+          keyboardShouldPersistTaps="handled"
         >
           {SUBJECTS.map((s) => (
             <Pressable
               key={s}
               style={[styles.filterChip, selectedSubject === s && styles.filterChipActive]}
               onPress={() => setSelectedSubject(s)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedSubject === s }}
             >
               <Text style={[styles.filterChipText, selectedSubject === s && styles.filterChipTextActive]}>
                 {s}
@@ -169,66 +252,12 @@ export default function NotesScreen() {
       <Pressable
         style={[styles.fab, { bottom: insets.bottom + 90 }]}
         onPress={handleCreateNote}
+        accessibilityRole="button"
+        accessibilityLabel="Create new note"
       >
         <Feather name="plus" size={24} color="#fff" />
       </Pressable>
     </View>
-  );
-}
-
-function NoteCard({
-  note, colors, onPress, onDelete, onTogglePin,
-}: {
-  note: ReturnType<typeof useApp>["notes"][0];
-  colors: ReturnType<typeof useColors>;
-  onPress: () => void;
-  onDelete: () => void;
-  onTogglePin: () => void;
-}) {
-  const preview = note.content.replace(/[#*_`]/g, "").trim().slice(0, 80);
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        {
-          backgroundColor: colors.card,
-          marginHorizontal: 20,
-          marginBottom: 10,
-          padding: 16,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: colors.border,
-          opacity: pressed ? 0.85 : 1,
-        },
-      ]}
-      onPress={onPress}
-    >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-        <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground, flex: 1 }} numberOfLines={1}>
-          {note.title}
-        </Text>
-        <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <Pressable onPress={onTogglePin} hitSlop={8}>
-            <Feather name="bookmark" size={15} color={note.isPinned ? colors.primary : colors.mutedForeground} />
-          </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8}>
-            <Feather name="trash-2" size={15} color={colors.destructive} />
-          </Pressable>
-        </View>
-      </View>
-      {preview.length > 0 && (
-        <Text style={{ fontSize: 12, color: colors.mutedForeground, lineHeight: 18, marginBottom: 8 }} numberOfLines={2}>
-          {preview}
-        </Text>
-      )}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <View style={{ backgroundColor: colors.tealLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-          <Text style={{ fontSize: 10, color: colors.primary, fontWeight: "600" }}>{note.subject}</Text>
-        </View>
-        <Text style={{ fontSize: 10, color: colors.mutedForeground }}>
-          {new Date(note.updatedAt).toLocaleDateString()}
-        </Text>
-      </View>
-    </Pressable>
   );
 }
 
@@ -242,7 +271,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       paddingHorizontal: 20,
       marginBottom: 16,
     },
-    title: { fontSize: 28, fontWeight: "800", color: colors.foreground },
+    title:    { fontSize: 28, fontWeight: "800", color: colors.foreground },
     subtitle: { fontSize: 13, color: colors.mutedForeground, marginTop: 4 },
     searchRow: {
       flexDirection: "row",
@@ -267,11 +296,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       borderWidth: 1,
       borderColor: colors.border,
     },
-    filterChipActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    filterChipText: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
+    filterChipActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
+    filterChipText:       { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
     filterChipTextActive: { color: "#fff" },
     sectionLabel: {
       fontSize: 13,
@@ -289,7 +315,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       gap: 8,
     },
     emptyTitle: { fontSize: 18, fontWeight: "700", color: colors.mutedForeground },
-    emptyDesc: { fontSize: 13, color: colors.mutedForeground },
+    emptyDesc:  { fontSize: 13, color: colors.mutedForeground },
     fab: {
       position: "absolute",
       right: 24,

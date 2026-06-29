@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -40,7 +40,12 @@ const SUBJECT_ICONS: Record<string, keyof typeof Feather.glyphMap> = {
   OBGYN:        "user",
 };
 
-function SubjectCard({
+interface SubjectStats {
+  attempts: number;
+  avg: number;
+}
+
+const SubjectCard = memo(function SubjectCard({
   subject,
   stats,
   color,
@@ -50,7 +55,7 @@ function SubjectCard({
   colors,
 }: {
   subject: string;
-  stats: { attempts: number; avg: number } | null;
+  stats: SubjectStats | null;
   color: string;
   icon: keyof typeof Feather.glyphMap;
   entranceAnim: { opacity: Animated.Value; translateY: Animated.Value };
@@ -69,15 +74,20 @@ function SubjectCard({
         useNativeDriver: false,
       }).start();
     }
-  }, [stats]);
+  }, [stats?.avg]);
 
-  function pressIn() {
+  const pressIn = useCallback(() => {
     Animated.spring(scaleAnim, { toValue: 0.96, tension: 160, friction: 8, useNativeDriver: true }).start();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-  function pressOut() {
+  }, [scaleAnim]);
+
+  const pressOut = useCallback(() => {
     Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
+  }, [scaleAnim]);
+
+  const handlePress = useCallback(() => {
+    router.push(`/quiz/${encodeURIComponent(subject)}` as any);
+  }, [subject]);
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 100],
@@ -90,7 +100,9 @@ function SubjectCard({
       style={styles.subjectCardOuter}
       onPressIn={pressIn}
       onPressOut={pressOut}
-      onPress={() => router.push(`/quiz/${encodeURIComponent(subject)}` as any)}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`${subject} quiz${stats ? `, ${stats.avg}% average` : ", not started"}`}
     >
       <Animated.View
         style={[
@@ -130,9 +142,9 @@ function SubjectCard({
       </Animated.View>
     </Pressable>
   );
-}
+});
 
-function SkeletonGrid({ colors }: { colors: ReturnType<typeof useColors> }) {
+const SkeletonGrid = memo(function SkeletonGrid({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 14, gap: 10, marginBottom: 28 }}>
       {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -154,23 +166,23 @@ function SkeletonGrid({ colors }: { colors: ReturnType<typeof useColors> }) {
       ))}
     </View>
   );
-}
+});
 
 export default function QuizScreen() {
   const colors     = useColors();
   const insets     = useSafeAreaInsets();
   const { quizHistory } = useApp();
   const topPad     = Platform.OS === "web" ? 67 : insets.top;
-  const styles     = makeStyles(colors);
-  const subjects   = QUIZ_SUBJECTS.filter((s) => s !== "All");
+  const styles     = useMemo(() => makeStyles(colors), [colors]);
+  const subjects   = useMemo(() => QUIZ_SUBJECTS.filter((s) => s !== "All"), []);
 
   const [skeletonVisible, setSkeletonVisible] = useState(true);
 
-  const headerOpacity   = useRef(new Animated.Value(0)).current;
+  const headerOpacity    = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(-14)).current;
-  const dailyScale      = useRef(new Animated.Value(1)).current;
-  const dailyOpacity    = useRef(new Animated.Value(0)).current;
-  const dailyTranslateY = useRef(new Animated.Value(20)).current;
+  const dailyScale       = useRef(new Animated.Value(1)).current;
+  const dailyOpacity     = useRef(new Animated.Value(0)).current;
+  const dailyTranslateY  = useRef(new Animated.Value(20)).current;
 
   const subjectAnims = useRef(
     subjects.map(() => ({
@@ -204,20 +216,32 @@ export default function QuizScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const getSubjectStats = (subject: string) => {
-    const results = quizHistory.filter((r) => r.subject === subject);
-    if (!results.length) return null;
-    const avg = results.reduce((acc, r) => acc + r.score / r.total, 0) / results.length;
-    return { attempts: results.length, avg: Math.round(avg * 100) };
-  };
+  // Pre-compute all subject stats once when quizHistory changes
+  const allSubjectStats = useMemo<Record<string, SubjectStats | null>>(() => {
+    const map: Record<string, SubjectStats | null> = {};
+    for (const subject of subjects) {
+      const results = quizHistory.filter((r) => r.subject === subject);
+      if (!results.length) {
+        map[subject] = null;
+      } else {
+        const avg = results.reduce((acc, r) => acc + r.score / r.total, 0) / results.length;
+        map[subject] = { attempts: results.length, avg: Math.round(avg * 100) };
+      }
+    }
+    return map;
+  }, [quizHistory, subjects]);
 
-  function dailyPressIn() {
+  const dailyPressIn = useCallback(() => {
     Animated.spring(dailyScale, { toValue: 0.97, tension: 160, friction: 8, useNativeDriver: true }).start();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }
-  function dailyPressOut() {
+  }, [dailyScale]);
+
+  const dailyPressOut = useCallback(() => {
     Animated.spring(dailyScale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start();
-  }
+  }, [dailyScale]);
+
+  const goToAllQuiz = useCallback(() => router.push("/quiz/All"), []);
+  const goToHistory = useCallback(() => router.push("/quiz-history" as any), []);
 
   return (
     <ScrollView
@@ -240,7 +264,9 @@ export default function QuizScreen() {
       <Pressable
         onPressIn={dailyPressIn}
         onPressOut={dailyPressOut}
-        onPress={() => router.push("/quiz/All")}
+        onPress={goToAllQuiz}
+        accessibilityRole="button"
+        accessibilityLabel="Daily Challenge: Mixed Subject Quiz"
       >
         <Animated.View
           style={[
@@ -279,7 +305,7 @@ export default function QuizScreen() {
       ) : (
         <View style={styles.grid}>
           {subjects.map((subject, i) => {
-            const stats = getSubjectStats(subject);
+            const stats = allSubjectStats[subject];
             const color = SUBJECT_COLORS[subject] || colors.primary;
             const icon  = SUBJECT_ICONS[subject] || ("book" as const);
             return (
@@ -303,17 +329,12 @@ export default function QuizScreen() {
         <Animated.View style={{ opacity: headerOpacity }}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Results</Text>
-            <Pressable onPress={() => router.push("/quiz-history" as any)} style={styles.viewAllBtn}>
+            <Pressable onPress={goToHistory} style={styles.viewAllBtn} hitSlop={8}>
               <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
               <Feather name="chevron-right" size={13} color={colors.primary} />
             </Pressable>
           </View>
-          <View
-            style={[
-              styles.historyCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
+          <View style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {quizHistory.slice(0, 5).map((result, i) => {
               const pct   = Math.round((result.score / result.total) * 100);
               const color = pct >= 70 ? "#10B981" : pct >= 50 ? "#F59E0B" : "#EF4444";
