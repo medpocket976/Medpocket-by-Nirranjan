@@ -57,5 +57,7 @@
     "zod": "catalog:",
     "zod-validation-error": "^3.4.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "whatwg-fetch": "^3.6.20"
+  }
 }
