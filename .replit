@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "python-3.11"]
+modules = ["nodejs-24", "python-3.11", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -79,3 +79,6 @@ externalPort = 8099
 
 [userenv.shared]
 EXPO_PUBLIC_OPENROUTER_URL = "https://openrouter.ai/api/v1"
+
+[nix]
+channel = "stable-25_05"
