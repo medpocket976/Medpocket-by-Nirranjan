@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "75e81d05-3ebb-43d3-9a1e-532e818f8339"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.nirranjan.medpocket",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
