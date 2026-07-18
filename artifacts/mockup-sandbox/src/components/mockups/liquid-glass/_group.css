@@ -1,0 +1,32 @@
+/* MedPocket Liquid Glass — shared tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --lg-primary: #009DB5;
+  --lg-primary-light: #00C6D8;
+  --lg-primary-dark: #007A8C;
+  --lg-accent: #00D4E5;
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255,255,255,0.14);
+  --glass-bg-strong: rgba(255,255,255,0.22);
+  --glass-border: rgba(255,255,255,0.18);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  --glass-shadow-lifted: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.10);
+
+  /* Dark glass */
+  --glass-dark-bg: rgba(10,22,40,0.72);
+  --glass-dark-border: rgba(255,255,255,0.08);
+
+  /* Radius */
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 36px;
+
+  /* Font */
+  --font-base: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-base); -webkit-font-smoothing: antialiased; }
