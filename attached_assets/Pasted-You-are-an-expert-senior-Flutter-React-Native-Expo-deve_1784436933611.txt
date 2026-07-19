@@ -1,0 +1,352 @@
+You are an expert senior Flutter/React Native/Expo developer and UI/UX designer.
+
+Refactor the entire MedPocket project into a polished, production-ready medical application while preserving all existing medical content and core functionality.
+
+IMPORTANT:
+• Do NOT remove or modify any medical data, quizzes, calculators, or navigation unless explicitly stated.
+• Update every affected file consistently (code, assets, configuration, metadata, package files, app config, manifests, version files, etc.).
+• Ensure there are no broken imports, references, or build errors.
+
+====================================================
+1. APP LOGO REPLACEMENT
+====================================================
+
+• Replace the existing app logo everywhere with the new MedPocket logo.
+• Update:
+  - App launcher icon
+  - Adaptive icon
+  - Splash icon
+  - Notification icon (if applicable)
+  - Favicon
+  - Website logo
+  - Header logo
+  - Sidebar logo
+  - Social preview images
+  - README images (if applicable)
+• Generate all required icon sizes automatically.
+• Preserve transparency and high resolution.
+
+====================================================
+2. NEW INTRODUCTION ANIMATION
+====================================================
+
+Remove the current introduction/onboarding animation completely.
+
+Create a premium medical introduction animation using Apple's Liquid Glass design language.
+
+Animation Flow:
+
+Scene 1
+• MedPocket logo fades in
+• Liquid glass background
+• Soft ambient lighting
+• Floating particles
+• Gentle blur animation
+
+Scene 2
+Display:
+
+"Your Pocket Medical Companion"
+
+Scene 3
+
+Animated medical icons
+
+• Stethoscope
+• ECG
+• Anatomy
+• Medicine
+• Calculator
+• Quiz
+• Surgical Instruments
+
+Scene 4
+
+Display:
+
+"Study Smarter.
+Learn Faster.
+Anywhere."
+
+Scene 5
+
+Transition into Home Screen
+
+Animation Requirements
+
+• 60 FPS
+• Spring animations
+• Glass reflections
+• Blur transitions
+• Native iOS quality
+• Duration 4–6 seconds
+• Skip button
+• Never replay after first launch
+• Replay only from Settings if the user chooses
+
+Replace every reference to the old introduction with this new animation.
+
+====================================================
+3. CONTACT INFORMATION
+====================================================
+
+Replace every old contact email throughout the project with:
+
+medpocket.support@gmail.com
+
+Update:
+
+• Contact page
+• Footer
+• About page
+• Support page
+• Privacy Policy
+• Terms
+• Feedback page
+• Bug report
+• Settings
+• Metadata
+• Manifest
+• README
+• Documentation
+• Anywhere else the previous email exists
+
+====================================================
+4. REMOVE ALL AI FEATURES
+====================================================
+
+Remove every AI-related feature completely.
+
+Delete:
+
+• AI Chat
+• AI Assistant
+• AI Buttons
+• AI Navigation
+• AI API
+• AI Services
+• AI Screens
+• AI Components
+• AI Icons
+• AI Assets
+• AI Models
+• AI Routes
+• AI Configurations
+• AI Environment Variables
+• AI Packages
+• AI Dependencies
+• AI Permissions
+• AI Documentation
+
+Clean up:
+
+• Imports
+• Unused packages
+• Dead code
+• Routes
+• Assets
+• Navigation references
+• Build files
+
+Ensure no broken references remain.
+
+====================================================
+5. COMPLETE iOS LIQUID GLASS REDESIGN
+====================================================
+
+Redesign EVERY SINGLE SCREEN.
+
+Apply Apple Liquid Glass design to:
+
+• Home
+• Profile
+• Library
+• Categories
+• Search
+• Quiz
+• Calculator
+• Bookmarks
+• Settings
+• About
+• Contact
+• Every Dialog
+• Every Modal
+• Every Card
+• Every Tab
+• Every Navigation Bar
+• Every Bottom Sheet
+• Every Button
+• Every Input
+• Every Dropdown
+• Every Popup
+• Every Toast
+• Every Component
+
+Style:
+
+• Frosted glass
+• Dynamic blur
+• Soft reflections
+• Floating UI
+• Thin glass borders
+• Rounded corners (24px)
+• Smooth gradients
+• Elegant shadows
+• Premium spacing
+• Apple Human Interface Guidelines
+
+Animations:
+
+• Spring animations
+• Smooth transitions
+• Blur animations
+• Scale effects
+• Card lift
+• Native iOS interactions
+
+====================================================
+6. STARTUP NAME SCREEN
+====================================================
+
+Create a First Launch screen.
+
+The application MUST NOT proceed until the user enters their name.
+
+Requirements
+
+• Beautiful glassmorphism interface
+• Name input field
+• Validation
+• Continue button disabled until a valid name is entered
+• Save locally
+• Welcome user on Home Screen:
+
+"Welcome back, <Name>"
+
+Settings should allow:
+
+• Change Name
+• Reset Name
+
+This should only appear on first launch unless reset.
+
+====================================================
+7. VERSION UPDATE
+====================================================
+
+Update the application version everywhere.
+
+Version Name:
+
+1.3.0
+
+Increment Version Code/Build Number appropriately.
+
+Update:
+
+• package.json
+• app.json
+• app.config.*
+• Android Manifest
+• build.gradle
+• iOS Info.plist
+• pubspec.yaml (if Flutter)
+• package-lock
+• metadata
+• release notes
+• changelog
+• any remaining version references
+
+====================================================
+8. PREMIUM COLOR SYSTEM
+====================================================
+
+Replace the existing colors with a premium medical palette.
+
+Primary
+#2563EB
+
+Secondary
+#14B8A6
+
+Accent
+#10B981
+
+Warning
+#F59E0B
+
+Danger
+#EF4444
+
+Background Light
+#F8FAFC
+
+Background Dark
+#0B1220
+
+Cards
+
+Glass White
+18% opacity
+
+Borders
+
+White
+8% opacity
+
+Typography
+
+Primary
+#0F172A
+
+Secondary
+#64748B
+
+Dark Text
+#F8FAFC
+
+Use beautiful gradients.
+
+Improve:
+
+• Contrast
+• Readability
+• Accessibility
+• Visual hierarchy
+
+====================================================
+9. PERFORMANCE
+====================================================
+
+• Lazy loading
+• Remove unused assets
+• Compress images
+• Optimize animations
+• 60 FPS
+• Reduce app size
+• Faster startup
+• Better memory usage
+
+====================================================
+10. FINAL QUALITY CHECK
+====================================================
+
+Ensure:
+
+✅ No broken links
+✅ No missing assets
+✅ No missing imports
+✅ No console errors
+✅ No warnings
+✅ No duplicate code
+✅ No unused dependencies
+✅ Production-ready build
+✅ Responsive on all devices
+✅ Offline functionality preserved
+✅ Smooth navigation
+✅ Consistent design system
+✅ All existing medical content retained
+✅ All quizzes retained and expanded
+✅ Build succeeds without errors
+
+Deliver a clean, production-ready MedPocket v1.3.0 with a premium Apple-inspired Liquid Glass interface, new logo, new onboarding animation, updated contact email (medpocket.support@gmail.com), complete AI removal, mandatory first-launch name setup, enhanced color grading, and consistent styling across every screen and component.

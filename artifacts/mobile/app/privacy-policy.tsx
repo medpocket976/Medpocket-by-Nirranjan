@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 
-const DEVELOPER_EMAIL = "medpocketbynirranjan@gmail.com";
+const DEVELOPER_EMAIL = "medpocket.support@gmail.com";
 
 const SECTIONS = [
   {

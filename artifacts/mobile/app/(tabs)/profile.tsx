@@ -1,37 +1,54 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import { useApp } from "@/context/AppContext";
-import type { Bookmark, QuizResult } from "@/context/AppContext";
+import type { Bookmark } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 // ─── Discipline data ──────────────────────────────────────────────────────────
 const DISCIPLINE_CATEGORIES = [
-  { key: "medical",   label: "Medical",        icon: "activity" as const, color: "#009DB5",
-    years: ["MBBS 1st Year","MBBS 2nd Year","MBBS 3rd Year","MBBS 4th Year","MBBS Final Year","MBBS Intern"] },
-  { key: "nursing",   label: "Nursing",         icon: "heart"    as const, color: "#EC4899",
-    years: ["GNM 1st Year","GNM 2nd Year","GNM 3rd Year","BSc Nursing 1st Year","BSc Nursing 2nd Year","BSc Nursing 3rd Year","BSc Nursing 4th Year","Post Basic BSc Nursing","MSc Nursing"] },
-  { key: "pharmacy",  label: "Pharmacy",        icon: "tablet"   as const, color: "#8B5CF6",
-    years: ["D.Pharm 1st Year","D.Pharm 2nd Year","B.Pharm 1st Year","B.Pharm 2nd Year","B.Pharm 3rd Year","B.Pharm 4th Year","M.Pharm","Pharm.D"] },
-  { key: "physio",    label: "Physiotherapy",   icon: "zap"      as const, color: "#F59E0B",
-    years: ["BPT 1st Year","BPT 2nd Year","BPT 3rd Year","BPT 4th Year","MPT"] },
-  { key: "dental",    label: "Dental",          icon: "smile"    as const, color: "#10B981",
-    years: ["BDS 1st Year","BDS 2nd Year","BDS 3rd Year","BDS 4th Year","BDS Intern","MDS"] },
-  { key: "allied",    label: "Allied Health",   icon: "layers"   as const, color: "#F97316",
+  {
+    key: "medical", label: "Medical", icon: "activity" as const, color: "#009DB5",
+    years: ["MBBS 1st Year","MBBS 2nd Year","MBBS 3rd Year","MBBS 4th Year","MBBS Final Year","MBBS Intern"],
+  },
+  {
+    key: "nursing", label: "Nursing", icon: "heart" as const, color: "#EC4899",
+    years: ["GNM 1st Year","GNM 2nd Year","GNM 3rd Year","BSc Nursing 1st Year","BSc Nursing 2nd Year","BSc Nursing 3rd Year","BSc Nursing 4th Year","Post Basic BSc Nursing","MSc Nursing"],
+  },
+  {
+    key: "pharmacy", label: "Pharmacy", icon: "tablet" as const, color: "#8B5CF6",
+    years: ["D.Pharm 1st Year","D.Pharm 2nd Year","B.Pharm 1st Year","B.Pharm 2nd Year","B.Pharm 3rd Year","B.Pharm 4th Year","M.Pharm","Pharm.D"],
+  },
+  {
+    key: "physio", label: "Physiotherapy", icon: "zap" as const, color: "#F59E0B",
+    years: ["BPT 1st Year","BPT 2nd Year","BPT 3rd Year","BPT 4th Year","MPT"],
+  },
+  {
+    key: "dental", label: "Dental", icon: "smile" as const, color: "#10B981",
+    years: ["BDS 1st Year","BDS 2nd Year","BDS 3rd Year","BDS 4th Year","BDS Intern","MDS"],
+  },
+  {
+    key: "allied", label: "Allied Health", icon: "layers" as const, color: "#F97316",
     years: [
       "MLT 1st Year","MLT 2nd Year","BMLT 3rd Year","BMLT 4th Year",
       "OTAT 1st Year","OTAT 2nd Year","OTAT 3rd Year",
@@ -49,211 +66,234 @@ const DISCIPLINE_CATEGORIES = [
       "NEP 1st Year","NEP 2nd Year","NEP 3rd Year",
       "BSc Dietetics","BSc Audiology","BSc MLT","BSc Radiology",
       "BSc OT","BSc PT","BSc Perfusion Technology",
-    ] },
-  { key: "pg",        label: "PG / Consultant", icon: "award"    as const, color: "#6366F1",
-    years: ["Resident (PG Year 1)","Resident (PG Year 2)","Resident (PG Year 3)","Fellow","Consultant / Specialist"] },
+    ],
+  },
+  {
+    key: "pg", label: "PG / Consultant", icon: "award" as const, color: "#6366F1",
+    years: ["Resident (PG Year 1)","Resident (PG Year 2)","Resident (PG Year 3)","Fellow","Consultant / Specialist"],
+  },
 ];
 
 function findCatForYear(year: string) {
   return DISCIPLINE_CATEGORIES.find((c) => c.years.includes(year))?.key ?? "medical";
 }
 
-// ─── Bookmark type helpers ───────────────────────────────────────────────────
 const BOOKMARK_TYPE_META: Record<
   Bookmark["type"],
   { icon: keyof typeof Feather.glyphMap; color: string; label: string; getRoute: (id: string) => string }
 > = {
-  drug:      { icon: "tablet",      color: "#009DB5", label: "Drug",      getRoute: (id) => `/drug-guide/${id}` },
-  lab:       { icon: "bar-chart-2", color: "#10B981", label: "Lab",       getRoute: ()   => `/lab-values` },
-  emergency: { icon: "alert-circle",color: "#EF4444", label: "Protocol",  getRoute: (id) => `/emergency/${id}` },
-  exam:      { icon: "activity",    color: "#8B5CF6", label: "Exam",      getRoute: (id) => `/clinical-exam/${id}` },
-  question:  { icon: "help-circle", color: "#F59E0B", label: "Quiz",      getRoute: ()   => `/quiz` },
+  drug:      { icon: "tablet",       color: "#009DB5", label: "Drug",     getRoute: (id) => `/drug-guide/${id}` },
+  lab:       { icon: "bar-chart-2",  color: "#10B981", label: "Lab",      getRoute: ()   => `/lab-values` },
+  emergency: { icon: "alert-circle", color: "#EF4444", label: "Protocol", getRoute: (id) => `/emergency/${id}` },
+  exam:      { icon: "activity",     color: "#8B5CF6", label: "Exam",     getRoute: (id) => `/clinical-exam/${id}` },
+  question:  { icon: "help-circle",  color: "#F59E0B", label: "Quiz",     getRoute: ()   => `/quiz` },
 };
 
-// ─── Streak dots (simulate last 7 days from streak count) ───────────────────
-function StreakDots({ streak, color }: { streak: number; color: string }) {
-  const days = ["M", "T", "W", "T", "F", "S", "S"];
-  const today = new Date().getDay(); // 0=Sun,1=Mon,...
-  const todayIdx = today === 0 ? 6 : today - 1;
+const THEME_META: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
+  system: { icon: "monitor", label: "System" },
+  light:  { icon: "sun",     label: "Light"  },
+  dark:   { icon: "moon",    label: "Dark"   },
+};
 
-  return (
-    <View style={streakStyles.dotsRow}>
-      {days.map((label, i) => {
-        // Count back from today: i is Mon-Sun index, todayIdx is today
-        const daysAgo = (todayIdx - i + 7) % 7;
-        const active = daysAgo < streak;
-        const isToday = i === todayIdx;
-        return (
-          <View key={i} style={streakStyles.dotWrap}>
-            <View
-              style={[
-                streakStyles.dot,
-                {
-                  backgroundColor: active ? color : color + "20",
-                  borderWidth: isToday ? 2 : 0,
-                  borderColor: isToday ? color : "transparent",
-                },
-              ]}
-            />
-            <Text style={[streakStyles.dayLabel, { color: color + (active ? "CC" : "50") }]}>
-              {label}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-// ─── Quiz score bar ──────────────────────────────────────────────────────────
-function QuizBar({ result, colors }: { result: QuizResult; colors: ReturnType<typeof useColors> }) {
-  const pct = result.total > 0 ? (result.score / result.total) * 100 : 0;
-  const barAnim = useRef(new Animated.Value(0)).current;
-  const color = pct >= 75 ? "#10B981" : pct >= 50 ? "#F59E0B" : "#EF4444";
-
-  useEffect(() => {
-    Animated.timing(barAnim, {
-      toValue: pct / 100,
-      duration: 700,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  const date = new Date(result.date);
-  const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-
-  return (
-    <View style={quizStyles.row}>
-      <View style={quizStyles.info}>
-        <Text style={[quizStyles.subject, { color: colors.foreground }]} numberOfLines={1}>
-          {result.subject}
-        </Text>
-        <Text style={[quizStyles.date, { color: colors.mutedForeground }]}>{dateStr}</Text>
-      </View>
-      <View style={quizStyles.barCol}>
-        <View style={[quizStyles.barBg, { backgroundColor: colors.muted }]}>
-          <Animated.View
-            style={[
-              quizStyles.barFill,
-              {
-                backgroundColor: color,
-                width: barAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
-              },
-            ]}
-          />
-        </View>
-        <Text style={[quizStyles.score, { color }]}>
-          {result.score}/{result.total} · {Math.round(pct)}%
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// ─── Animated pressable ──────────────────────────────────────────────────────
-function SettingPressable({
-  children, style, onPress, scale = 0.98,
+// ─── Year Picker Bottom Sheet ─────────────────────────────────────────────────
+function YearPickerSheet({
+  visible,
+  currentYear,
+  onSelect,
+  onClose,
+  colors,
 }: {
-  children: React.ReactNode; style?: any; onPress?: () => void; scale?: number;
+  visible: boolean;
+  currentYear: string;
+  onSelect: (year: string) => void;
+  onClose: () => void;
+  colors: ReturnType<typeof useColors>;
 }) {
-  const anim = useRef(new Animated.Value(1)).current;
-  return (
-    <Pressable
-      onPressIn={() => Animated.spring(anim, { toValue: scale, tension: 160, friction: 8, useNativeDriver: true }).start()}
-      onPressOut={() => Animated.spring(anim, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()}
-      onPress={onPress}
-    >
-      <Animated.View style={[style, { transform: [{ scale: anim }] }]}>
-        {children}
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({ stat, index, colors, s }: {
-  stat: { icon: keyof typeof Feather.glyphMap; label: string; value: number; unit: string; color: string };
-  index: number; colors: ReturnType<typeof useColors>; s: ReturnType<typeof makeStyles>;
-}) {
-  const opacity    = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(16)).current;
-  const scale      = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(600)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+  const [selectedCat, setSelectedCat] = useState(() => findCatForYear(currentYear));
+  const [search, setSearch] = useState("");
+  const insets = useSafeAreaInsets();
+  const isDark = colors.scheme === "dark";
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 320, delay: 300 + index * 55, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: 0, tension: 65, friction: 10, delay: 300 + index * 55, useNativeDriver: true }),
-    ]).start();
-  }, []);
+    if (visible) {
+      setSelectedCat(findCatForYear(currentYear));
+      setSearch("");
+      Animated.parallel([
+        Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slideAnim,   { toValue: 0, tension: 90, friction: 14, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(overlayAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(slideAnim,   { toValue: 600, duration: 220, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  const activeCat = DISCIPLINE_CATEGORIES.find((c) => c.key === selectedCat)!;
+  const filteredYears = activeCat.years.filter((y) =>
+    y.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const sheetBg = isDark ? "rgba(12,22,44,0.98)" : "rgba(246,252,254,0.98)";
+  const inputBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,120,150,0.06)";
+  const borderC  = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,157,181,0.18)";
 
   return (
-    <Pressable
-      style={s.statCardOuter}
-      onPressIn={() => Animated.spring(scale, { toValue: 0.93, tension: 160, friction: 8, useNativeDriver: true }).start()}
-      onPressOut={() => Animated.spring(scale, { toValue: 1, tension: 80, friction: 7, useNativeDriver: true }).start()}
-    >
-      <Animated.View style={[s.statCard, { backgroundColor: colors.card }, { opacity, transform: [{ translateY }, { scale }] }]}>
-        <View style={[s.statIconWrap, { backgroundColor: stat.color + "15" }]}>
-          <Feather name={stat.icon} size={15} color={stat.color} />
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+      {/* Backdrop */}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.45)", opacity: overlayAnim }]} />
+      </TouchableWithoutFeedback>
+
+      {/* Sheet */}
+      <Animated.View
+        style={{
+          position: "absolute", left: 0, right: 0, bottom: 0,
+          transform: [{ translateY: slideAnim }],
+        }}
+        pointerEvents="box-none"
+      >
+        <View style={{
+          backgroundColor: sheetBg,
+          borderTopLeftRadius: 28, borderTopRightRadius: 28,
+          paddingBottom: Math.max(insets.bottom, 16),
+          borderTopWidth: 1,
+          borderColor: borderC,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.22,
+          shadowRadius: 24,
+          elevation: 24,
+          maxHeight: 520,
+        }}>
+          {/* Handle */}
+          <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.14)" }} />
+          </View>
+
+          {/* Header */}
+          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 12 }}>
+            <Text style={{ flex: 1, fontSize: 18, fontWeight: "800", color: colors.foreground, letterSpacing: -0.4 }}>
+              Discipline & Year
+            </Text>
+            <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="x" size={16} color={colors.mutedForeground} />
+            </Pressable>
+          </View>
+
+          {/* Discipline pills */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingBottom: 12 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            {DISCIPLINE_CATEGORIES.map((cat) => (
+              <Pressable
+                key={cat.key}
+                onPress={() => { setSelectedCat(cat.key); setSearch(""); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={{
+                  flexDirection: "row", alignItems: "center", gap: 6,
+                  paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+                  backgroundColor: selectedCat === cat.key ? cat.color : (isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"),
+                  borderWidth: 1,
+                  borderColor: selectedCat === cat.key ? "transparent" : borderC,
+                }}
+              >
+                <Feather name={cat.icon} size={13} color={selectedCat === cat.key ? "#fff" : colors.mutedForeground} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: selectedCat === cat.key ? "#fff" : colors.mutedForeground }}>
+                  {cat.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {/* Search */}
+          <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: Platform.OS === "ios" ? 12 : 8, borderWidth: 1, borderColor: borderC }}>
+              <Feather name="search" size={14} color={colors.mutedForeground} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder={`Search ${activeCat.label} years…`}
+                placeholderTextColor={colors.mutedForeground}
+                style={{ flex: 1, fontSize: 14, color: colors.foreground, padding: 0 }}
+                autoCorrect={false}
+                autoCapitalize="none"
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")}>
+                  <Feather name="x-circle" size={14} color={colors.mutedForeground} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+
+          {/* Year list */}
+          <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            {filteredYears.length === 0 ? (
+              <Text style={{ color: colors.mutedForeground, textAlign: "center", paddingVertical: 20, fontSize: 13 }}>
+                No results for "{search}"
+              </Text>
+            ) : (
+              filteredYears.map((year) => {
+                const isSelected = year === currentYear;
+                return (
+                  <Pressable
+                    key={year}
+                    onPress={() => { onSelect(year); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    style={{
+                      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                      paddingHorizontal: 14, paddingVertical: 13, borderRadius: 14, marginBottom: 4,
+                      backgroundColor: isSelected ? activeCat.color + "18" : "transparent",
+                      borderWidth: isSelected ? 1 : 0,
+                      borderColor: isSelected ? activeCat.color + "40" : "transparent",
+                    }}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: isSelected ? "700" : "500", color: isSelected ? activeCat.color : colors.foreground }}>
+                      {year}
+                    </Text>
+                    {isSelected && <Feather name="check" size={16} color={activeCat.color} />}
+                  </Pressable>
+                );
+              })
+            )}
+          </ScrollView>
         </View>
-        <Text style={[s.statValue, { color: colors.foreground }]}>{stat.value}</Text>
-        <Text style={[s.statUnit, { color: stat.color }]}>{stat.unit}</Text>
-        <Text style={[s.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
       </Animated.View>
-    </Pressable>
+    </Modal>
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-const SECTION_COUNT = 7;
-
+// ─── Main profile screen ──────────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const colors  = useColors();
-  const insets  = useSafeAreaInsets();
-  const router  = useRouter();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const topPad = Platform.OS === "web" ? 16 : insets.top;
   const {
-    user, updateUser,
-    bookmarks, notes, quizHistory, streak, totalStudyDays,
-    signOut, removeBookmark,
-    theme, setTheme,
+    user, quizHistory, bookmarks, notes, streak, totalStudyDays,
+    updateUser, setTheme, theme, removeBookmark, signOut,
+    resetName, replayIntro,
   } = useApp();
 
-  const [editing,          setEditing]          = useState(false);
-  const [nameInput,        setNameInput]         = useState(user.name);
-  const [collegeInput,     setCollegeInput]      = useState(user.college);
-  const [selectedCat,      setSelectedCat]       = useState(() => findCatForYear(user.year));
-  const [showYearPicker,   setShowYearPicker]    = useState(false);
-  const [showAllBookmarks, setShowAllBookmarks]  = useState(false);
-  const [showAllQuiz,      setShowAllQuiz]       = useState(false);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
-
-  const sectionAnims = useRef(
-    Array.from({ length: SECTION_COUNT }, () => ({
-      opacity:    new Animated.Value(0),
-      translateY: new Animated.Value(20),
-    }))
-  ).current;
+  const [nameInput,   setNameInput]   = useState(user.name);
+  const [collegeInput, setCollegeInput] = useState(user.college);
+  const [editing,     setEditing]     = useState(false);
+  const [showPicker,  setShowPicker]  = useState(false);
 
   const savePulse = useRef(new Animated.Value(1)).current;
 
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+
   useEffect(() => {
-    Animated.stagger(
-      80,
-      sectionAnims.map((a) =>
-        Animated.parallel([
-          Animated.timing(a.opacity,    { toValue: 1, duration: 350, useNativeDriver: true }),
-          Animated.spring(a.translateY, { toValue: 0, tension: 65, friction: 10, useNativeDriver: true }),
-        ])
-      )
-    ).start();
+    Animated.parallel([
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 460, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 460, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  function animStyle(i: number) {
-    return { opacity: sectionAnims[i].opacity, transform: [{ translateY: sectionAnims[i].translateY }] };
-  }
-
-  function saveProfile() {
+  const saveProfile = useCallback(() => {
     updateUser({ name: nameInput.trim() || "Medical Student", college: collegeInput.trim() });
     setEditing(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -261,519 +301,431 @@ export default function ProfileScreen() {
       Animated.spring(savePulse, { toValue: 1.06, tension: 200, friction: 6, useNativeDriver: true }),
       Animated.spring(savePulse, { toValue: 1,    tension: 200, friction: 8, useNativeDriver: true }),
     ]).start();
-  }
+  }, [nameInput, collegeInput, updateUser]);
 
-  function handleSignOut() {
+  const handleSignOut = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       "Reset App Data",
-      "This will clear all your profile, bookmarks, notes, and quiz history. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Reset Everything", style: "destructive", onPress: () => signOut() },
-      ]
+      "This will clear all your profile, bookmarks, notes, and quiz history. Cannot be undone.",
+      [{ text: "Cancel", style: "cancel" }, { text: "Reset Everything", style: "destructive", onPress: signOut }],
     );
-  }
+  }, [signOut]);
 
-  function cycleTheme() {
+  const handleChangeName = useCallback(() => {
+    // Activate the existing inline edit mode and focus name field
+    setEditing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const handleResetName = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      "Reset Name",
+      "This will remove your name and show the name setup screen on next launch.",
+      [{ text: "Cancel", style: "cancel" }, { text: "Reset", style: "destructive", onPress: resetName }],
+    );
+  }, [resetName]);
+
+  const handleReplayIntro = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(
+      "Replay Introduction",
+      "The intro animation will play next time you open the app.",
+      [{ text: "Cancel", style: "cancel" }, { text: "Replay", onPress: replayIntro }],
+    );
+  }, [replayIntro]);
+
+  const cycleTheme = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next: Record<string, "system" | "light" | "dark"> = { system: "light", light: "dark", dark: "system" };
     setTheme(next[theme]);
-  }
+  }, [theme, setTheme]);
 
-  function handleBookmarkPress(bk: Bookmark) {
+  const handleBookmarkPress = useCallback((bk: Bookmark) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const meta = BOOKMARK_TYPE_META[bk.type];
-    router.push(meta.getRoute(bk.itemId) as any);
-  }
+    router.push(BOOKMARK_TYPE_META[bk.type].getRoute(bk.itemId) as any);
+  }, []);
 
-  function handleDeleteBookmark(bk: Bookmark) {
-    Alert.alert("Remove Bookmark", `Remove "${bk.name}" from bookmarks?`, [
+  const handleDeleteBookmark = useCallback((bk: Bookmark) => {
+    Alert.alert("Remove Bookmark", `Remove "${bk.name}"?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => removeBookmark(bk.itemId) },
     ]);
-  }
+  }, [removeBookmark]);
 
   const avgScore = quizHistory.length > 0
     ? Math.round((quizHistory.reduce((a, r) => a + r.score / r.total, 0) / quizHistory.length) * 100)
     : 0;
 
-  const currentCat  = DISCIPLINE_CATEGORIES.find((c) => c.key === selectedCat)!;
-  const s           = makeStyles(colors, topPad);
-  const themeLabel  = { system: "System Default", light: "Light Mode", dark: "Dark Mode" }[theme];
-  const themeIcon: "sun" | "moon" | "smartphone" =
-    theme === "light" ? "sun" : theme === "dark" ? "moon" : "smartphone";
-
-  const STATS = [
-    { icon: "zap"          as const, label: "Streak",     value: streak,             unit: "days",  color: "#F59E0B" },
-    { icon: "calendar"     as const, label: "Study Days", value: totalStudyDays,     unit: "total", color: "#3B82F6" },
-    { icon: "bookmark"     as const, label: "Bookmarks",  value: bookmarks.length,   unit: "saved", color: "#009DB5" },
-    { icon: "check-circle" as const, label: "Quizzes",    value: quizHistory.length, unit: "taken", color: "#10B981" },
-    { icon: "bar-chart-2"  as const, label: "Avg Score",  value: avgScore,           unit: "%",     color: "#EC4899" },
-    { icon: "file-text"    as const, label: "Notes",      value: notes.length,       unit: "saved", color: "#8B5CF6" },
-  ];
-
-  const visibleBookmarks = showAllBookmarks ? bookmarks : bookmarks.slice(0, 3);
-  const visibleQuiz = showAllQuiz ? quizHistory : quizHistory.slice(0, 4);
+  const currentCat = DISCIPLINE_CATEGORIES.find((c) => c.key === findCatForYear(user.year))!;
+  const themeMeta  = THEME_META[theme];
 
   return (
-    <Animated.ScrollView
-      style={[s.container]}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Section 0 — Page title ── */}
-      <Animated.View style={[s.headerBlock, animStyle(0)]}>
-        <Text style={s.pageTitle}>Profile</Text>
-      </Animated.View>
+    <GlassBackground>
+      <YearPickerSheet
+        visible={showPicker}
+        currentYear={user.year}
+        onSelect={(year) => { updateUser({ year }); setShowPicker(false); }}
+        onClose={() => setShowPicker(false)}
+        colors={colors}
+      />
 
-      {/* ── Section 1 — Identity card ── */}
-      <Animated.View style={[{ marginBottom: 24 }, animStyle(1)]}>
-        <View style={s.identityCard}>
-          <View style={[s.avatar, { backgroundColor: currentCat.color }]}>
-            <Text style={s.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        <ScrollView
+          contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ── Header ── */}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
+            <Pressable
+              onPress={editing ? saveProfile : () => setEditing(true)}
+              accessibilityLabel={editing ? "Save profile" : "Edit profile"}
+            >
+              <Animated.View style={{ transform: [{ scale: savePulse }] }}>
+                <GlassView style={styles.editBtn} radius={14}>
+                  <Feather name={editing ? "check" : "edit-2"} size={16} color={editing ? colors.success : colors.primary} />
+                  <Text style={[styles.editBtnText, { color: editing ? colors.success : colors.primary }]}>
+                    {editing ? "Save" : "Edit"}
+                  </Text>
+                </GlassView>
+              </Animated.View>
+            </Pressable>
           </View>
 
-          {editing ? (
-            <View style={s.editBlock}>
-              <Text style={[s.iosLabel, { color: colors.mutedForeground }]}>FULL NAME</Text>
-              <TextInput
-                style={[s.iosInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
-                value={nameInput} onChangeText={setNameInput}
-                placeholder="Your name" placeholderTextColor={colors.mutedForeground} autoFocus
-              />
-              <Text style={[s.iosLabel, { marginTop: 10, color: colors.mutedForeground }]}>COLLEGE / INSTITUTION</Text>
-              <TextInput
-                style={[s.iosInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
-                value={collegeInput} onChangeText={setCollegeInput}
-                placeholder="e.g. Dhanlakshmi Srinivasan University" placeholderTextColor={colors.mutedForeground}
-              />
-              <View style={s.editActions}>
-                <Pressable style={[s.editActionBtn, { backgroundColor: colors.muted }]} onPress={() => setEditing(false)}>
-                  <Text style={[s.editActionText, { color: colors.foreground }]}>Cancel</Text>
-                </Pressable>
-                <Animated.View style={[{ flex: 1 }, { transform: [{ scale: savePulse }] }]}>
-                  <Pressable style={[s.editActionBtn, { backgroundColor: colors.primary }]} onPress={saveProfile}>
-                    <Text style={[s.editActionText, { color: "#fff" }]}>Save</Text>
-                  </Pressable>
-                </Animated.View>
-              </View>
-            </View>
-          ) : (
-            <View style={s.identityInfo}>
-              <Text style={[s.userName, { color: colors.foreground }]}>{user.name}</Text>
-              <View style={[s.yearPill, { backgroundColor: currentCat.color + "18" }]}>
-                <Feather name={currentCat.icon} size={11} color={currentCat.color} />
-                <Text style={[s.yearPillText, { color: currentCat.color }]}>{user.year}</Text>
-              </View>
-              {user.college.length > 0 && (
-                <Text style={[s.college, { color: colors.mutedForeground }]}>{user.college}</Text>
-              )}
-              <SettingPressable style={[s.editBtn, { backgroundColor: colors.tealLight }]} onPress={() => setEditing(true)} scale={0.94}>
-                <Feather name="edit-2" size={12} color={colors.primary} />
-                <Text style={[s.editBtnText, { color: colors.primary }]}>Edit Profile</Text>
-              </SettingPressable>
-            </View>
-          )}
-        </View>
+          {/* ── Identity card ── */}
+          <GlassView style={styles.identityCard} radius={24}>
+            {/* Avatar */}
+            <LinearGradient colors={["#2563EB", "#14B8A6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(nameInput || user.name).charAt(0).toUpperCase()}
+              </Text>
+            </LinearGradient>
 
-        {/* Discipline + year picker */}
-        {!editing && (
-          <>
-            <Text style={[s.sectionHeader, { color: colors.mutedForeground }]}>DISCIPLINE</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
-              {DISCIPLINE_CATEGORIES.map((cat) => {
-                const active = selectedCat === cat.key;
+            {/* Name field */}
+            {editing ? (
+              <TextInput
+                value={nameInput}
+                onChangeText={setNameInput}
+                style={[styles.nameInput, { color: colors.foreground, borderColor: colors.primary + "50", backgroundColor: colors.glassBg }]}
+                placeholder="Your name"
+                placeholderTextColor={colors.mutedForeground}
+                returnKeyType="next"
+              />
+            ) : (
+              <Text style={[styles.nameText, { color: colors.foreground }]}>{user.name}</Text>
+            )}
+
+            {/* Year selector — taps open bottom sheet */}
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPicker(true); }}
+              accessibilityLabel="Change discipline and year"
+              style={[styles.yearPill, { backgroundColor: currentCat.color + "18", borderColor: currentCat.color + "35" }]}
+            >
+              <Feather name={currentCat.icon} size={13} color={currentCat.color} />
+              <Text style={[styles.yearPillText, { color: currentCat.color }]}>{user.year}</Text>
+              <Feather name="chevron-down" size={13} color={currentCat.color} />
+            </Pressable>
+
+            {/* College field */}
+            {editing ? (
+              <TextInput
+                value={collegeInput}
+                onChangeText={setCollegeInput}
+                style={[styles.collegeInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.glassBg }]}
+                placeholder="College / Hospital (optional)"
+                placeholderTextColor={colors.mutedForeground}
+                returnKeyType="done"
+                onSubmitEditing={saveProfile}
+              />
+            ) : user.college ? (
+              <View style={styles.collegeRow}>
+                <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+                <Text style={[styles.collegeText, { color: colors.mutedForeground }]}>{user.college}</Text>
+              </View>
+            ) : null}
+          </GlassView>
+
+          {/* ── Stats strip ── */}
+          <View style={styles.statsStrip}>
+            {[
+              { icon: "zap"          as const, label: "Streak",     value: `${streak}d`,     color: "#F59E0B" },
+              { icon: "check-circle" as const, label: "Quizzes",    value: `${quizHistory.length}`, color: colors.primary },
+              { icon: "trending-up"  as const, label: "Avg Score",  value: `${avgScore}%`,   color: colors.success },
+              { icon: "file-text"    as const, label: "Notes",      value: `${notes.length}`, color: "#8B5CF6" },
+              { icon: "bookmark"     as const, label: "Saved",      value: `${bookmarks.length}`, color: "#EC4899" },
+              { icon: "calendar"     as const, label: "Study Days", value: `${totalStudyDays}`, color: "#6366F1" },
+            ].map((s) => (
+              <GlassView key={s.label} style={styles.stripCard} radius={16}>
+                <View style={[styles.stripIcon, { backgroundColor: s.color + "20" }]}>
+                  <Feather name={s.icon} size={12} color={s.color} />
+                </View>
+                <Text style={[styles.stripValue, { color: colors.foreground }]}>{s.value}</Text>
+                <Text style={[styles.stripLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
+              </GlassView>
+            ))}
+          </View>
+
+          {/* ── Bookmarks ── */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bookmarks</Text>
+            <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>{bookmarks.length}</Text>
+          </View>
+
+          {bookmarks.length === 0 ? (
+            <GlassView style={styles.emptyCard} radius={18}>
+              <Feather name="bookmark" size={22} color={colors.mutedForeground} />
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                No bookmarks yet. Save drugs, lab values, and emergency protocols while browsing.
+              </Text>
+            </GlassView>
+          ) : (
+            <GlassView style={styles.bookmarkList} radius={20}>
+              {bookmarks.map((bk, i) => {
+                const meta = BOOKMARK_TYPE_META[bk.type];
                 return (
                   <Pressable
-                    key={cat.key}
-                    style={[s.catChip, active ? { backgroundColor: cat.color, borderColor: cat.color } : { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => { setSelectedCat(cat.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    key={bk.id}
+                    onPress={() => handleBookmarkPress(bk)}
+                    onLongPress={() => handleDeleteBookmark(bk)}
+                    accessibilityLabel={`Open ${bk.name}`}
+                    style={[styles.bookmarkRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border + "55" }]}
                   >
-                    <Feather name={cat.icon} size={12} color={active ? "#fff" : cat.color} />
-                    <Text style={[s.catChipText, { color: active ? "#fff" : colors.foreground }]}>{cat.label}</Text>
+                    <View style={[styles.bookmarkIcon, { backgroundColor: meta.color + "18" }]}>
+                      <Feather name={meta.icon} size={14} color={meta.color} />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[styles.bookmarkName, { color: colors.foreground }]} numberOfLines={1}>{bk.name}</Text>
+                      <Text style={[styles.bookmarkType, { color: meta.color }]}>{meta.label}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
                   </Pressable>
                 );
               })}
-            </ScrollView>
-            <Text style={[s.sectionHeader, { color: colors.mutedForeground }]}>COURSE / YEAR</Text>
-            <Pressable style={[s.iosGrouped, s.shadow]} onPress={() => setShowYearPicker(!showYearPicker)}>
-              <View style={[s.iosRow, { backgroundColor: colors.card, borderRadius: 14 }]}>
-                <View style={[s.settingIconWrap, { backgroundColor: currentCat.color + "18" }]}>
-                  <Feather name={currentCat.icon} size={15} color={currentCat.color} />
-                </View>
-                <Text style={[s.iosRowText, { flex: 1, color: colors.foreground }]}>{user.year}</Text>
-                <Feather name={showYearPicker ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
-              </View>
-            </Pressable>
-            {showYearPicker && (
-              <View style={[s.iosGroupedBelow, { backgroundColor: colors.card }]}>
-                {currentCat.years.map((y, i) => {
-                  const sel = user.year === y;
-                  return (
-                    <Pressable
-                      key={y}
-                      style={({ pressed }) => [s.iosRow, i > 0 && s.iosRowBorder, { backgroundColor: colors.card, opacity: pressed ? 0.6 : 1 }]}
-                      onPress={() => { updateUser({ year: y }); setShowYearPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                    >
-                      <Text style={[s.iosRowText, { flex: 1, color: sel ? currentCat.color : colors.foreground, fontWeight: sel ? "700" : "400" }]}>{y}</Text>
-                      {sel && <Feather name="check" size={16} color={currentCat.color} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          </>
-        )}
-      </Animated.View>
-
-      {/* ── Section 2 — Streak Card ── */}
-      <Animated.View style={[{ marginBottom: 28 }, animStyle(2)]}>
-        <Text style={[s.sectionHeader, { color: colors.mutedForeground }]}>STREAK</Text>
-        <View style={[s.streakCard, { backgroundColor: colors.card }]}>
-          <View style={s.streakTop}>
-            <View>
-              <View style={s.streakRow}>
-                <Text style={s.streakFire}>🔥</Text>
-                <Text style={[s.streakNumber, { color: colors.foreground }]}>{streak}</Text>
-                <Text style={[s.streakUnit, { color: colors.mutedForeground }]}>
-                  {streak === 1 ? "day streak" : "day streak"}
-                </Text>
-              </View>
-              <Text style={[s.streakSub, { color: colors.mutedForeground }]}>
-                {totalStudyDays} total study days
-              </Text>
-            </View>
-            <View style={[s.streakBadge, { backgroundColor: streak >= 7 ? "#F59E0B18" : colors.muted }]}>
-              <Feather
-                name={streak >= 7 ? "award" : "calendar"}
-                size={18}
-                color={streak >= 7 ? "#F59E0B" : colors.mutedForeground}
-              />
-              {streak >= 7 && (
-                <Text style={s.streakBadgeText}>🏆</Text>
-              )}
-            </View>
-          </View>
-          <StreakDots streak={streak} color="#F59E0B" />
-        </View>
-      </Animated.View>
-
-      {/* ── Section 3 — Stats ── */}
-      <Animated.View style={[{ marginBottom: 28 }, animStyle(3)]}>
-        <Text style={[s.sectionHeader, { color: colors.mutedForeground }]}>STUDY STATS</Text>
-        <View style={s.statsGrid}>
-          {STATS.map((stat, i) => (
-            <StatCard key={stat.label} stat={stat} index={i} colors={colors} s={s} />
-          ))}
-        </View>
-      </Animated.View>
-
-      {/* ── Section 4 — Bookmarks ── */}
-      <Animated.View style={[{ marginBottom: 28 }, animStyle(4)]}>
-        <View style={s.sectionRowHeader}>
-          <Text style={[s.sectionHeader, { color: colors.mutedForeground, marginBottom: 0 }]}>BOOKMARKS</Text>
-          {bookmarks.length > 3 && (
-            <Pressable onPress={() => setShowAllBookmarks((v) => !v)}>
-              <Text style={[s.seeAll, { color: colors.primary }]}>
-                {showAllBookmarks ? "Show less" : `See all ${bookmarks.length}`}
-              </Text>
-            </Pressable>
+            </GlassView>
           )}
-        </View>
 
-        {bookmarks.length === 0 ? (
-          <View style={[s.emptyCard, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-            <Feather name="bookmark" size={22} color={colors.mutedForeground} />
-            <Text style={[s.emptyCardText, { color: colors.mutedForeground }]}>
-              No bookmarks yet — save drugs, labs, or protocols
-            </Text>
-          </View>
-        ) : (
-          <View style={[s.iosGrouped, s.shadow, { backgroundColor: colors.card }]}>
-            {visibleBookmarks.map((bk, i) => {
-              const meta = BOOKMARK_TYPE_META[bk.type];
-              const date = new Date(bk.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-              return (
-                <Pressable
-                  key={bk.id}
-                  style={({ pressed }) => [s.iosRow, i > 0 && s.iosRowBorder, { backgroundColor: colors.card, opacity: pressed ? 0.7 : 1 }]}
-                  onPress={() => handleBookmarkPress(bk)}
-                  onLongPress={() => handleDeleteBookmark(bk)}
-                >
-                  <View style={[s.settingIconWrap, { backgroundColor: meta.color + "18" }]}>
-                    <Feather name={meta.icon} size={14} color={meta.color} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.iosRowText, { color: colors.foreground }]} numberOfLines={1}>{bk.name}</Text>
-                    <Text style={[s.iosRowSmall, { color: colors.mutedForeground, fontSize: 11, marginTop: 1 }]}>
-                      {meta.label} · {date}
-                    </Text>
-                  </View>
-                  <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+          {/* ── Quiz history summary ── */}
+          {quizHistory.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quiz Performance</Text>
+                <Pressable onPress={() => router.push("/quiz-history" as any)}>
+                  <Text style={[{ color: colors.primary, fontSize: 12, fontWeight: "600" }]}>View all →</Text>
                 </Pressable>
-              );
-            })}
-          </View>
-        )}
-        {bookmarks.length > 0 && (
-          <Text style={[s.hintText, { color: colors.mutedForeground }]}>
-            Long-press to remove a bookmark
-          </Text>
-        )}
-      </Animated.View>
-
-      {/* ── Section 5 — Quiz History ── */}
-      <Animated.View style={[{ marginBottom: 28 }, animStyle(5)]}>
-        <View style={s.sectionRowHeader}>
-          <Text style={[s.sectionHeader, { color: colors.mutedForeground, marginBottom: 0 }]}>QUIZ HISTORY</Text>
-          {quizHistory.length > 4 && (
-            <Pressable onPress={() => setShowAllQuiz((v) => !v)}>
-              <Text style={[s.seeAll, { color: colors.primary }]}>
-                {showAllQuiz ? "Show less" : `See all ${quizHistory.length}`}
-              </Text>
-            </Pressable>
+              </View>
+              <GlassView style={styles.quizCard} radius={20}>
+                <View style={styles.quizSummary}>
+                  {[
+                    { label: "Total",   value: quizHistory.length.toString() },
+                    { label: "Avg Score", value: `${avgScore}%` },
+                    { label: "Best",    value: `${Math.max(...quizHistory.map((r) => Math.round((r.score / r.total) * 100)))}%` },
+                  ].map((s, i) => (
+                    <React.Fragment key={s.label}>
+                      {i > 0 && <View style={[styles.quizDivider, { backgroundColor: colors.border }]} />}
+                      <View style={styles.quizSummaryItem}>
+                        <Text style={[styles.quizNum, { color: colors.primary }]}>{s.value}</Text>
+                        <Text style={[styles.quizLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
+                      </View>
+                    </React.Fragment>
+                  ))}
+                </View>
+              </GlassView>
+            </>
           )}
-        </View>
 
-        {quizHistory.length === 0 ? (
-          <View style={[s.emptyCard, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-            <Feather name="bar-chart-2" size={22} color={colors.mutedForeground} />
-            <Text style={[s.emptyCardText, { color: colors.mutedForeground }]}>
-              No quiz results yet — take a quiz to track your progress
-            </Text>
+          {/* ── Settings ── */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Settings</Text>
           </View>
-        ) : (
-          <View style={[s.quizCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {/* Summary row */}
-            <View style={s.quizSummary}>
-              <View style={s.quizSummaryItem}>
-                <Text style={[s.quizSumNum, { color: colors.foreground }]}>{quizHistory.length}</Text>
-                <Text style={[s.quizSumLabel, { color: colors.mutedForeground }]}>Taken</Text>
+
+          <GlassView style={styles.settingsGroup} radius={20}>
+            {/* Theme */}
+            <Pressable onPress={cycleTheme} style={styles.settingsRow} accessibilityLabel="Toggle theme">
+              <View style={[styles.settingIcon, { backgroundColor: "#8B5CF6" + "20" }]}>
+                <Feather name={themeMeta.icon} size={15} color="#8B5CF6" />
               </View>
-              <View style={[s.quizSumDivider, { backgroundColor: colors.border }]} />
-              <View style={s.quizSummaryItem}>
-                <Text style={[s.quizSumNum, { color: avgScore >= 75 ? "#10B981" : avgScore >= 50 ? "#F59E0B" : "#EF4444" }]}>
-                  {avgScore}%
-                </Text>
-                <Text style={[s.quizSumLabel, { color: colors.mutedForeground }]}>Avg Score</Text>
+              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Appearance</Text>
+              <View style={[styles.themeBadge, { backgroundColor: colors.primary + "14" }]}>
+                <Text style={[styles.themeBadgeText, { color: colors.primary }]}>{themeMeta.label}</Text>
               </View>
-              <View style={[s.quizSumDivider, { backgroundColor: colors.border }]} />
-              <View style={s.quizSummaryItem}>
-                <Text style={[s.quizSumNum, { color: colors.foreground }]}>
-                  {quizHistory.filter((q) => q.score / q.total >= 0.75).length}
-                </Text>
-                <Text style={[s.quizSumLabel, { color: colors.mutedForeground }]}>≥75%</Text>
+            </Pressable>
+
+            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
+
+            {/* Change Name */}
+            <Pressable onPress={handleChangeName} style={styles.settingsRow} accessibilityLabel="Change name">
+              <View style={[styles.settingIcon, { backgroundColor: colors.primary + "20" }]}>
+                <Feather name="user-check" size={15} color={colors.primary} />
               </View>
+              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Change Name</Text>
+              <Text style={[styles.settingsValue, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {user.name}
+              </Text>
+              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+            </Pressable>
+
+            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
+
+            {/* Notes */}
+            <Pressable onPress={() => router.push("/(tabs)/notes" as any)} style={styles.settingsRow} accessibilityLabel="My notes">
+              <View style={[styles.settingIcon, { backgroundColor: "#F59E0B" + "20" }]}>
+                <Feather name="file-text" size={15} color="#F59E0B" />
+              </View>
+              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>My Notes</Text>
+              <Text style={[styles.settingsValue, { color: colors.mutedForeground }]}>{notes.length}</Text>
+              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+            </Pressable>
+
+            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
+
+            {/* Replay Introduction */}
+            <Pressable onPress={handleReplayIntro} style={styles.settingsRow} accessibilityLabel="Replay introduction">
+              <View style={[styles.settingIcon, { backgroundColor: "#14B8A6" + "20" }]}>
+                <Feather name="play-circle" size={15} color="#14B8A6" />
+              </View>
+              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Replay Introduction</Text>
+              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+            </Pressable>
+
+            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
+
+            {/* Privacy */}
+            <Pressable onPress={() => router.push("/privacy-policy" as any)} style={styles.settingsRow} accessibilityLabel="Privacy policy">
+              <View style={[styles.settingIcon, { backgroundColor: "#10B981" + "20" }]}>
+                <Feather name="shield" size={15} color="#10B981" />
+              </View>
+              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Privacy Policy</Text>
+              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+            </Pressable>
+          </GlassView>
+
+          {/* ── Danger zone ── */}
+          <View style={[styles.sectionHeader, { marginTop: 8 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Danger Zone</Text>
+          </View>
+          <GlassView style={styles.settingsGroup} radius={20}>
+            <Pressable onPress={handleResetName} style={styles.settingsRow} accessibilityLabel="Reset name">
+              <View style={[styles.settingIcon, { backgroundColor: "#F59E0B20" }]}>
+                <Feather name="user-x" size={15} color="#F59E0B" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Reset Name</Text>
+                <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>Shows name setup screen again</Text>
+              </View>
+            </Pressable>
+          </GlassView>
+
+          {/* ── Sources footer ── */}
+          <View style={styles.sourcesHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sources</Text>
+            <View style={[styles.verifiedBadge, { borderColor: colors.success + "40", backgroundColor: colors.success + "12" }]}>
+              <Feather name="check-circle" size={11} color={colors.success} />
+              <Text style={[styles.verifiedText, { color: colors.success }]}>Verified</Text>
             </View>
-            <View style={[s.quizDivider, { backgroundColor: colors.border }]} />
-            {visibleQuiz.map((result, i) => (
-              <QuizBar key={i} result={result} colors={colors} />
+          </View>
+          <GlassView style={styles.sourcesCard} radius={18}>
+            {[
+              "Harrison's Principles of Internal Medicine, 21e",
+              "BNF 86 (British National Formulary)",
+              "WHO Essential Medicines & Clinical Guidelines",
+              "Robbins & Cotran Pathology, 10e",
+              "Guyton & Hall Medical Physiology, 14e",
+              "Miller's Anaesthesia, 9e · DAS Guidelines",
+              "Bailey & Love's Surgery, 27e",
+              "RCPA & NICE Clinical Guidelines (2023–2024)",
+            ].map((src, i) => (
+              <View key={i} style={[styles.sourceRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border + "55" }]}>
+                <Feather name="book-open" size={11} color={colors.primary} />
+                <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>{src}</Text>
+              </View>
             ))}
-            {quizHistory.length > 4 && !showAllQuiz && (
-              <Pressable
-                onPress={() => setShowAllQuiz(true)}
-                style={[s.showMoreBtn, { borderTopColor: colors.border }]}
-              >
-                <Text style={[s.showMoreText, { color: colors.primary }]}>
-                  Show {quizHistory.length - 4} more
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        )}
+          </GlassView>
+
+          {/* ── Reset ── */}
+          <Pressable onPress={handleSignOut} style={styles.resetBtn} accessibilityLabel="Reset all data">
+            <Feather name="trash-2" size={16} color="#EF4444" />
+            <Text style={styles.resetText}>Reset All Data</Text>
+          </Pressable>
+
+          <Text style={[styles.footer, { color: colors.mutedForeground }]}>
+            MedPocket v1.3.0 · For educational use only{"\n"}
+            Always follow local clinical protocols
+          </Text>
+        </ScrollView>
       </Animated.View>
-
-      {/* ── Section 6 — Settings + Sources ── */}
-      <Animated.View style={animStyle(6)}>
-        <Text style={[s.sectionHeader, { color: colors.mutedForeground }]}>SETTINGS</Text>
-        <View style={[s.iosGrouped, s.shadow, { backgroundColor: colors.card }]}>
-          <SettingPressable style={[s.iosRow, { backgroundColor: colors.card }]} onPress={cycleTheme}>
-            <View style={[s.settingIconWrap, { backgroundColor: "#8B5CF618" }]}>
-              <Feather name={themeIcon} size={15} color="#8B5CF6" />
-            </View>
-            <Text style={[s.iosRowText, { flex: 1, color: colors.foreground }]}>Appearance</Text>
-            <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>{themeLabel}</Text>
-            <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
-          </SettingPressable>
-
-          <SettingPressable
-            style={[s.iosRow, s.iosRowBorder, { backgroundColor: colors.card }]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/privacy-policy"); }}
-          >
-            <View style={[s.settingIconWrap, { backgroundColor: "#10B98118" }]}>
-              <Feather name="shield" size={15} color="#10B981" />
-            </View>
-            <Text style={[s.iosRowText, { flex: 1, color: colors.foreground }]}>Privacy Policy</Text>
-            <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>May 2026</Text>
-            <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
-          </SettingPressable>
-
-          <SettingPressable
-            style={[s.iosRow, s.iosRowBorder, { backgroundColor: colors.card }]}
-            onPress={() => Alert.alert(
-              "MedPocket v1.1.0",
-              "Built by Nirranjan\n\nContent sourced from Harrison's, BNF, WHO, UpToDate, Robbins, Miller's Anesthesia.\n\nFor educational use only — not a substitute for clinical judgment."
-            )}
-          >
-            <View style={[s.settingIconWrap, { backgroundColor: "#3B82F618" }]}>
-              <Feather name="info" size={15} color="#3B82F6" />
-            </View>
-            <Text style={[s.iosRowText, { flex: 1, color: colors.foreground }]}>About MedPocket</Text>
-            <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>v1.1.0</Text>
-            <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
-          </SettingPressable>
-        </View>
-
-        {/* Content sources */}
-        <View style={s.sourcesHeader}>
-          <Text style={[s.sectionHeader, { color: colors.mutedForeground, marginBottom: 0 }]}>CONTENT SOURCES</Text>
-          <View style={[s.verifiedBadge, { backgroundColor: "#10B98112", borderColor: "#10B98130" }]}>
-            <Feather name="check-circle" size={10} color="#10B981" />
-            <Text style={[s.verifiedText, { color: "#10B981" }]}>Verified · May 2026</Text>
-          </View>
-        </View>
-        <View style={[s.iosGrouped, s.shadow, { backgroundColor: colors.card }]}>
-          {[
-            { src: "Harrison's Principles of Internal Medicine, 21e", year: "2022" },
-            { src: "British National Formulary (BNF) 86",             year: "2024" },
-            { src: "WHO Clinical Guidelines",                          year: "2024" },
-            { src: "UpToDate — Evidence-Based Medicine",               year: "2024" },
-            { src: "Robbins & Cotran Pathology, 10e",                  year: "2020" },
-            { src: "Miller's Anesthesia, 9e",                          year: "2019" },
-          ].map(({ src, year }, i) => (
-            <View key={src} style={[s.iosRow, i > 0 && s.iosRowBorder, { backgroundColor: colors.card }]}>
-              <Feather name="book-open" size={13} color={colors.primary} />
-              <Text style={[s.iosRowSmall, { color: colors.foreground, flex: 1 }]}>{src}</Text>
-              <Text style={[s.iosRowValue, { color: colors.mutedForeground }]}>{year}</Text>
-            </View>
-          ))}
-        </View>
-
-        <SettingPressable style={[s.resetBtn, s.shadow, { backgroundColor: colors.card }]} onPress={handleSignOut} scale={0.97}>
-          <Feather name="trash-2" size={16} color="#EF4444" />
-          <Text style={s.resetText}>Reset App Data</Text>
-        </SettingPressable>
-
-        <Text style={[s.footer, { color: colors.mutedForeground }]}>
-          MedPocket by Nirranjan · For educational use only{"\n"}Not a substitute for clinical judgment
-        </Text>
-      </Animated.View>
-    </Animated.ScrollView>
+    </GlassBackground>
   );
 }
 
-// ─── Streak styles ────────────────────────────────────────────────────────────
-const streakStyles = StyleSheet.create({
-  dotsRow:   { flexDirection: "row", justifyContent: "space-between", marginTop: 14 },
-  dotWrap:   { alignItems: "center", gap: 4 },
-  dot:       { width: 28, height: 28, borderRadius: 14 },
-  dayLabel:  { fontSize: 10, fontWeight: "700" },
-});
-
-// ─── Quiz styles ──────────────────────────────────────────────────────────────
-const quizStyles = StyleSheet.create({
-  row:     { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
-  info:    { width: 90 },
-  subject: { fontSize: 12, fontWeight: "700", lineHeight: 16 },
-  date:    { fontSize: 10, marginTop: 2 },
-  barCol:  { flex: 1, gap: 4 },
-  barBg:   { height: 6, borderRadius: 3, overflow: "hidden" },
-  barFill: { height: 6, borderRadius: 3 },
-  score:   { fontSize: 11, fontWeight: "700" },
-});
-
-// ─── Main styles ──────────────────────────────────────────────────────────────
-function makeStyles(colors: ReturnType<typeof useColors>, topPad: number) {
-  const isIOS = Platform.OS === "ios";
-  const shadow = isIOS
-    ? { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6 }
-    : { elevation: 1 };
+function makeStyles(colors: ReturnType<typeof useColors>) {
+  const shadow = Platform.OS === "ios"
+    ? { shadowColor: colors.glassShadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 16 }
+    : { elevation: 3 };
 
   return StyleSheet.create({
-    container:    { flex: 1, backgroundColor: colors.background },
-    headerBlock:  { paddingHorizontal: 20, paddingTop: topPad + 12, paddingBottom: 8 },
-    pageTitle:    { fontSize: 34, fontWeight: "800", color: colors.foreground, letterSpacing: -0.5 },
-    shadow,
-    sectionHeader:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", paddingHorizontal: 20, marginBottom: 10, marginTop: 4 },
-    sectionRowHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, marginBottom: 10, marginTop: 4 },
-    seeAll:   { fontSize: 12, fontWeight: "600" },
-    hintText: { fontSize: 10.5, textAlign: "center", marginTop: 6 },
+    header:    { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 18 },
+    title:     { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
+    editBtn:   { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+    editBtnText: { fontSize: 13, fontWeight: "700" },
 
-    // Identity card
-    identityCard: { backgroundColor: colors.card, marginHorizontal: 16, borderRadius: 18, padding: 20, alignItems: "center", ...shadow },
-    avatar:       { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", marginBottom: 14 },
-    avatarText:   { fontSize: 34, fontWeight: "800", color: "#fff" },
-    identityInfo: { alignItems: "center", gap: 6, width: "100%" },
-    userName:     { fontSize: 22, fontWeight: "700" },
-    yearPill:     { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
-    yearPillText: { fontSize: 12, fontWeight: "700" },
-    college:      { fontSize: 12, textAlign: "center" },
-    editBtn:      { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
-    editBtnText:  { fontSize: 12, fontWeight: "700" },
-    editBlock:    { width: "100%", gap: 4 },
-    iosLabel:     { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 },
-    iosInput:     { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, fontSize: 15, borderWidth: StyleSheet.hairlineWidth },
-    editActions:  { flexDirection: "row", gap: 10, marginTop: 12 },
-    editActionBtn:{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
-    editActionText:{ fontSize: 14, fontWeight: "700" },
+    identityCard: { marginHorizontal: 20, marginBottom: 16, padding: 20, alignItems: "center", gap: 10, ...shadow },
+    avatar:       { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+    avatarText:   { fontSize: 30, fontWeight: "800", color: "#fff" },
+    nameText:     { fontSize: 22, fontWeight: "800", color: colors.foreground, letterSpacing: -0.4 },
+    nameInput:    { width: "100%", fontSize: 18, fontWeight: "700", textAlign: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+    yearPill:     { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+    yearPillText: { fontSize: 13, fontWeight: "700" },
+    collegeRow:   { flexDirection: "row", alignItems: "center", gap: 5 },
+    collegeText:  { fontSize: 13, fontWeight: "500" },
+    collegeInput: { width: "100%", fontSize: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
 
-    // Discipline
-    catRow:     { paddingHorizontal: 16, gap: 8 },
-    catChip:    { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-    catChipText:{ fontSize: 12, fontWeight: "600" },
+    statsStrip: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 8, marginBottom: 24 },
+    stripCard:  { width: "30%", flexGrow: 1, alignItems: "center", paddingVertical: 12, gap: 4, ...shadow },
+    stripIcon:  { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+    stripValue: { fontSize: 17, fontWeight: "800" },
+    stripLabel: { fontSize: 9, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.3 },
 
-    // Streak
-    streakCard: { marginHorizontal: 16, borderRadius: 18, padding: 18, ...shadow },
-    streakTop:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    streakRow:  { flexDirection: "row", alignItems: "baseline", gap: 4 },
-    streakFire: { fontSize: 28 },
-    streakNumber:{ fontSize: 32, fontWeight: "800", letterSpacing: -1 },
-    streakUnit: { fontSize: 14, fontWeight: "600" },
-    streakSub:  { fontSize: 12, marginTop: 3 },
-    streakBadge:{ width: 52, height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-    streakBadgeText: { fontSize: 18, position: "absolute" },
+    sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 10, marginTop: 6 },
+    sectionTitle:  { fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
+    sectionCount:  { fontSize: 14, fontWeight: "600" },
 
-    // Stats grid
-    statsGrid:     { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 8 },
-    statCardOuter: { width: "30%", flexGrow: 1 },
-    statCard:      { borderRadius: 14, padding: 14, alignItems: "center", gap: 4 },
-    statIconWrap:  { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", marginBottom: 2 },
-    statValue:     { fontSize: 20, fontWeight: "800" },
-    statUnit:      { fontSize: 10, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
-    statLabel:     { fontSize: 10.5 },
+    emptyCard: { marginHorizontal: 20, padding: 18, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16, ...shadow },
+    emptyText: { fontSize: 13, lineHeight: 20, flex: 1 },
 
-    // Bookmarks / quiz empty state
-    emptyCard: { marginHorizontal: 16, borderRadius: 14, borderWidth: 1, padding: 20, alignItems: "center", gap: 10, flexDirection: "row" },
-    emptyCardText: { fontSize: 13, lineHeight: 19, flex: 1 },
+    bookmarkList: { marginHorizontal: 20, marginBottom: 16, overflow: "hidden", ...shadow },
+    bookmarkRow:  { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 13 },
+    bookmarkIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    bookmarkName: { fontSize: 13, fontWeight: "600" },
+    bookmarkType: { fontSize: 11, fontWeight: "700", marginTop: 1 },
 
-    // Quiz card
-    quizCard:    { marginHorizontal: 16, borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-    quizSummary: { flexDirection: "row", paddingVertical: 14 },
-    quizSummaryItem: { flex: 1, alignItems: "center", gap: 2 },
-    quizSumNum:  { fontSize: 20, fontWeight: "800" },
-    quizSumLabel:{ fontSize: 11 },
-    quizSumDivider: { width: 1, marginVertical: 6 },
-    quizDivider: { height: 1 },
-    showMoreBtn: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12, alignItems: "center" },
-    showMoreText:{ fontSize: 13, fontWeight: "600" },
+    quizCard:        { marginHorizontal: 20, marginBottom: 16, ...shadow },
+    quizSummary:     { flexDirection: "row", padding: 16 },
+    quizSummaryItem: { flex: 1, alignItems: "center", gap: 3 },
+    quizNum:         { fontSize: 20, fontWeight: "800" },
+    quizLabel:       { fontSize: 11, fontWeight: "500" },
+    quizDivider:     { width: 1, marginVertical: 8 },
 
-    // iOS grouped lists
-    iosGrouped:     { marginHorizontal: 16, borderRadius: 14, overflow: "hidden" },
-    iosGroupedBelow:{ marginHorizontal: 16, borderRadius: 14, marginTop: 2, overflow: "hidden" },
-    iosRow:         { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 13, minHeight: 48 },
-    iosRowBorder:   { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-    iosRowText:     { fontSize: 14, fontWeight: "500" },
-    iosRowSmall:    { fontSize: 13 },
-    iosRowValue:    { fontSize: 12 },
-    settingIconWrap:{ width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+    settingsGroup: { marginHorizontal: 20, marginBottom: 16, overflow: "hidden", ...shadow },
+    settingsRow:   { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 13 },
+    settingIcon:   { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    settingsLabel: { flex: 1, fontSize: 14, fontWeight: "600" },
+    settingsValue: { fontSize: 13, fontWeight: "500" },
+    themeBadge:    { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    themeBadgeText:{ fontSize: 12, fontWeight: "700" },
+    rowDivider:    { height: 1, marginLeft: 58 },
 
-    // Sources / footer
-    sourcesHeader:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, marginTop: 24, marginBottom: 10 },
-    verifiedBadge:{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
-    verifiedText: { fontSize: 10.5, fontWeight: "700" },
-    resetBtn:     { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 16, marginTop: 20, borderRadius: 14, paddingVertical: 14 },
-    resetText:    { fontSize: 14, fontWeight: "700", color: "#EF4444" },
-    footer:       { fontSize: 11, textAlign: "center", marginTop: 16, lineHeight: 18 },
+    sourcesHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 10, marginTop: 6 },
+    verifiedBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
+    verifiedText:  { fontSize: 10.5, fontWeight: "700" },
+    sourcesCard:   { marginHorizontal: 20, marginBottom: 8, overflow: "hidden", ...shadow },
+    sourceRow:     { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 14, paddingVertical: 10 },
+    sourceText:    { fontSize: 12, flex: 1, lineHeight: 18 },
+
+    resetBtn:  { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 20, marginTop: 20, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: "#EF4444" + "30", backgroundColor: "#EF4444" + "08" },
+    resetText: { fontSize: 14, fontWeight: "700", color: "#EF4444" },
+    footer:    { fontSize: 11, textAlign: "center", marginTop: 16, marginBottom: 4, lineHeight: 18, color: colors.mutedForeground },
   });
 }

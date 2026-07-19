@@ -52,6 +52,8 @@ interface AppState {
   totalStudyDays: number;
   recentSearches: string[];
   isOnboarded: boolean;
+  isNameSet: boolean;
+  hasSeenIntro: boolean;
   theme: "system" | "light" | "dark";
 }
 
@@ -59,6 +61,10 @@ interface AppContextType extends AppState {
   resolvedTheme: "light" | "dark";
   updateUser: (user: Partial<UserProfile>) => void;
   setTheme: (theme: "system" | "light" | "dark") => void;
+  setUserName: (name: string) => void;
+  resetName: () => void;
+  markIntroSeen: () => void;
+  replayIntro: () => void;
   addBookmark: (bookmark: Omit<Bookmark, "id" | "createdAt">) => void;
   removeBookmark: (itemId: string) => void;
   isBookmarked: (itemId: string) => boolean;
@@ -91,6 +97,8 @@ const defaultState: AppState = {
   totalStudyDays: 0,
   recentSearches: [],
   isOnboarded: false,
+  isNameSet: false,
+  hasSeenIntro: false,
   theme: "system",
 };
 
@@ -101,9 +109,7 @@ const STORAGE_KEY = "@medpocket_state_v3";
 /** Safely call Appearance.setColorScheme — not supported on web */
 function safeSetColorScheme(scheme: "light" | "dark" | null) {
   if (Platform.OS !== "web") {
-    try {
-      Appearance.setColorScheme(scheme);
-    } catch {}
+    try { Appearance.setColorScheme(scheme); } catch {}
   }
 }
 
@@ -111,21 +117,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
 
-  // Track the real system colour scheme via hook so we re-render when it changes
   const systemScheme = useColorScheme() ?? "light";
 
-  // Resolved theme: user pref overrides system
   const resolvedTheme: "light" | "dark" =
     state.theme === "system" ? systemScheme : state.theme;
 
-  // Keep a ref so we can apply native override once on load
   const didApplyNativeOverride = useRef(false);
 
-  useEffect(() => {
-    loadState();
-  }, []);
+  useEffect(() => { loadState(); }, []);
 
-  // Persist state whenever it changes (after initial load)
   const isFirstSave = useRef(true);
   useEffect(() => {
     if (!loaded) return;
@@ -133,14 +133,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveState(state);
   }, [state, loaded]);
 
-  // Apply native colour scheme override whenever theme pref changes
   useEffect(() => {
     if (!loaded) return;
-    if (state.theme === "system") {
-      safeSetColorScheme(null);
-    } else {
-      safeSetColorScheme(state.theme);
-    }
+    if (state.theme === "system") { safeSetColorScheme(null); }
+    else { safeSetColorScheme(state.theme); }
   }, [state.theme, loaded]);
 
   async function loadState() {
@@ -148,19 +144,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<AppState>;
+
+        // Migration v1.3.0: existing onboarded users skip name screen and intro
+        if (parsed.isOnboarded && !Object.prototype.hasOwnProperty.call(parsed, "isNameSet")) {
+          const hasRealName = parsed.user?.name && parsed.user.name !== "Medical Student";
+          parsed.isNameSet    = hasRealName ? true : false;
+          parsed.hasSeenIntro = true; // existing users skip the new intro
+        }
+
         setState({ ...defaultState, ...parsed });
       }
     } catch {}
-    finally {
-      setLoaded(true);
-    }
+    finally { setLoaded(true); }
   }
 
   async function saveState(data: AppState) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {}
+    try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
   }
+
+  // ── User actions ──────────────────────────────────────────────────────────
 
   const updateUser = useCallback((updates: Partial<UserProfile>) => {
     setState((prev) => ({ ...prev, user: { ...prev.user, ...updates } }));
@@ -170,11 +172,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, theme }));
   }, []);
 
+  /** Set user's name on first launch — marks isNameSet = true */
+  const setUserName = useCallback((name: string) => {
+    setState((prev) => ({
+      ...prev,
+      isNameSet: true,
+      user: { ...prev.user, name },
+    }));
+  }, []);
+
+  /** Allow user to reset their name (from Settings) — shows name screen again */
+  const resetName = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isNameSet: false,
+      user: { ...prev.user, name: "Medical Student" },
+    }));
+  }, []);
+
+  /** Mark intro as seen (persisted) */
+  const markIntroSeen = useCallback(() => {
+    setState((prev) => ({ ...prev, hasSeenIntro: true }));
+  }, []);
+
+  /** Replay intro from Settings */
+  const replayIntro = useCallback(() => {
+    setState((prev) => ({ ...prev, hasSeenIntro: false }));
+  }, []);
+
   const completeOnboarding = useCallback((profile: Partial<UserProfile>) => {
     setState((prev) => ({
       ...prev,
       isOnboarded: true,
-      user: { ...prev.user, ...profile },
+      // Preserve name if already set via NameSetupScreen
+      user: {
+        ...prev.user,
+        ...profile,
+        name: profile.name && profile.name !== "Medical Student" ? profile.name : prev.user.name,
+      },
     }));
   }, []);
 
@@ -183,20 +218,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     safeSetColorScheme(null);
   }, []);
 
-  const addBookmark = useCallback(
-    (bookmark: Omit<Bookmark, "id" | "createdAt">) => {
-      const newBookmark: Bookmark = {
-        ...bookmark,
-        id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
-        createdAt: new Date().toISOString(),
-      };
-      setState((prev) => ({
-        ...prev,
-        bookmarks: [newBookmark, ...prev.bookmarks],
-      }));
-    },
-    []
-  );
+  // ── Bookmarks ─────────────────────────────────────────────────────────────
+
+  const addBookmark = useCallback((bookmark: Omit<Bookmark, "id" | "createdAt">) => {
+    const newBookmark: Bookmark = {
+      ...bookmark,
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
+      createdAt: new Date().toISOString(),
+    };
+    setState((prev) => ({ ...prev, bookmarks: [newBookmark, ...prev.bookmarks] }));
+  }, []);
 
   const removeBookmark = useCallback((itemId: string) => {
     setState((prev) => ({
@@ -210,20 +241,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.bookmarks]
   );
 
-  const createNote = useCallback(
-    (note: Omit<Note, "id" | "createdAt" | "updatedAt">): Note => {
-      const now = new Date().toISOString();
-      const newNote: Note = {
-        ...note,
-        id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
-        createdAt: now,
-        updatedAt: now,
-      };
-      setState((prev) => ({ ...prev, notes: [newNote, ...prev.notes] }));
-      return newNote;
-    },
-    []
-  );
+  // ── Notes ─────────────────────────────────────────────────────────────────
+
+  const createNote = useCallback((note: Omit<Note, "id" | "createdAt" | "updatedAt">): Note => {
+    const now = new Date().toISOString();
+    const newNote: Note = {
+      ...note,
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
+      createdAt: now,
+      updatedAt: now,
+    };
+    setState((prev) => ({ ...prev, notes: [newNote, ...prev.notes] }));
+    return newNote;
+  }, []);
 
   const updateNote = useCallback((id: string, updates: Partial<Note>) => {
     setState((prev) => ({
@@ -235,11 +265,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteNote = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((n) => n.id !== id),
-    }));
+    setState((prev) => ({ ...prev, notes: prev.notes.filter((n) => n.id !== id) }));
   }, []);
+
+  // ── Quiz ──────────────────────────────────────────────────────────────────
 
   const addQuizResult = useCallback((result: QuizResult) => {
     setState((prev) => ({
@@ -252,6 +281,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, quizHistory: [] }));
   }, []);
 
+  // ── Search ────────────────────────────────────────────────────────────────
+
   const addRecentSearch = useCallback((query: string) => {
     if (!query.trim()) return;
     setState((prev) => {
@@ -263,6 +294,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearRecentSearches = useCallback(() => {
     setState((prev) => ({ ...prev, recentSearches: [] }));
   }, []);
+
+  // ── Study streak ──────────────────────────────────────────────────────────
 
   const recordStudySession = useCallback(() => {
     const today = new Date().toDateString();
@@ -289,6 +322,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         resolvedTheme,
         updateUser,
         setTheme,
+        setUserName,
+        resetName,
+        markIntroSeen,
+        replayIntro,
         addBookmark,
         removeBookmark,
         isBookmarked,

@@ -1,55 +1,100 @@
+// MedPocket v1.3.0 — Premium Medical Color System
 const colors = {
   light: {
-    text: "#1A1A2E",
-    tint: "#009DB5",
-    background: "#F8FAFB",
-    foreground: "#1A1A2E",
-    card: "#FFFFFF",
-    cardForeground: "#1A1A2E",
-    primary: "#009DB5",
+    // Typography
+    text: "#0F172A",
+    foreground: "#0F172A",
+    cardForeground: "#0F172A",
+
+    // Brand
+    tint: "#2563EB",
+    primary: "#2563EB",
     primaryForeground: "#FFFFFF",
-    secondary: "#E8F8FB",
-    secondaryForeground: "#007A8C",
-    muted: "#F0F4F8",
-    mutedForeground: "#6B7280",
-    accent: "#00C6D8",
-    accentForeground: "#003F4A",
-    destructive: "#EF4444",
-    destructiveForeground: "#FFFFFF",
-    border: "#E5EDF0",
-    input: "#E5EDF0",
-    tealLight: "#E8F8FB",
-    tealDark: "#007A8C",
+    secondary: "#14B8A6",
+    secondaryForeground: "#FFFFFF",
+    accent: "#10B981",
+    accentForeground: "#FFFFFF",
+
+    // Backgrounds
+    background: "#F8FAFC",
+    card: "#FFFFFF",
+    muted: "#F1F5F9",
+    mutedForeground: "#64748B",
+
+    // Borders & inputs
+    border: "#E2E8F0",
+    input: "#E2E8F0",
+
+    // Semantic
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
     critical: "#EF4444",
+    destructive: "#EF4444",
+    destructiveForeground: "#FFFFFF",
+
+    // Legacy compat
+    tealLight: "#ECFDF5",
+    tealDark: "#14B8A6",
+
+    // Glass tokens — frosted glass surfaces
+    glassBg: "rgba(255,255,255,0.18)",
+    glassBgStrong: "rgba(255,255,255,0.80)",
+    glassBorder: "rgba(255,255,255,0.08)",
+    glassBorderSubtle: "rgba(255,255,255,0.05)",
+    glassShadow: "rgba(37,99,235,0.10)",
+
+    // Gradient backgrounds
+    gradientStart: "#EFF6FF",
+    gradientEnd: "#F0FDFA",
   },
   dark: {
-    text: "#E8F8FB",
-    tint: "#00D4E5",
-    background: "#0A1628",
-    foreground: "#E8F8FB",
-    card: "#0F2140",
-    cardForeground: "#E8F8FB",
-    primary: "#00C6D8",
-    primaryForeground: "#0A1628",
-    secondary: "#0F2140",
-    secondaryForeground: "#7DD3E8",
-    muted: "#0F2140",
-    mutedForeground: "#7DD3E8",
-    accent: "#009DB5",
-    accentForeground: "#E8F8FB",
-    destructive: "#EF4444",
-    destructiveForeground: "#FFFFFF",
-    border: "#1A3A5C",
-    input: "#1A3A5C",
-    tealLight: "#0F2140",
-    tealDark: "#00D4E5",
+    // Typography
+    text: "#F8FAFC",
+    foreground: "#F8FAFC",
+    cardForeground: "#F8FAFC",
+
+    // Brand
+    tint: "#60A5FA",
+    primary: "#3B82F6",
+    primaryForeground: "#FFFFFF",
+    secondary: "#14B8A6",
+    secondaryForeground: "#FFFFFF",
+    accent: "#10B981",
+    accentForeground: "#FFFFFF",
+
+    // Backgrounds
+    background: "#0B1220",
+    card: "#111827",
+    muted: "#1E293B",
+    mutedForeground: "#94A3B8",
+
+    // Borders & inputs
+    border: "#1E293B",
+    input: "#1E293B",
+
+    // Semantic
     success: "#10B981",
     warning: "#F59E0B",
-    info: "#3B82F6",
+    info: "#60A5FA",
     critical: "#EF4444",
+    destructive: "#EF4444",
+    destructiveForeground: "#FFFFFF",
+
+    // Legacy compat
+    tealLight: "#0F2D2D",
+    tealDark: "#14B8A6",
+
+    // Glass tokens — frosted glass surfaces
+    glassBg: "rgba(15,23,42,0.72)",
+    glassBgStrong: "rgba(15,23,42,0.92)",
+    glassBorder: "rgba(255,255,255,0.08)",
+    glassBorderSubtle: "rgba(255,255,255,0.04)",
+    glassShadow: "rgba(0,0,0,0.42)",
+
+    // Gradient backgrounds
+    gradientStart: "#0B1220",
+    gradientEnd: "#0F172A",
   },
   radius: 14,
 };

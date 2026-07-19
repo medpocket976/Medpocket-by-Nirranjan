@@ -1,7 +1,5 @@
 import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
@@ -9,30 +7,7 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="explore">
-        <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
-        <Label>Explore</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="quiz">
-        <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
-        <Label>Quiz</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
-
-function ClassicTabLayout() {
+function TabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -43,29 +18,52 @@ function ClassicTabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarInactiveTintColor: isDark ? "rgba(109,205,224,0.45)" : "rgba(90,122,135,0.55)",
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.card,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
           elevation: 0,
           height: isWeb ? 84 : 80,
-          paddingBottom: isWeb ? 8 : 16,
-          paddingTop: 8,
+          paddingBottom: isWeb ? 8 : 14,
+          paddingTop: 6,
+          paddingHorizontal: 12,
         },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
+        tabBarBackground: () => (
+          <View style={[StyleSheet.absoluteFill, styles.tabBarBg]}>
+            {isIOS ? (
+              <BlurView
+                intensity={75}
+                tint={isDark ? "dark" : "light"}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(10,20,40,0.82)"
+                    : "rgba(235,248,252,0.88)",
+                  borderRadius: 28,
+                  borderWidth: 1,
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(255,255,255,0.80)",
+                },
+              ]}
             />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
-          ),
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
+          </View>
+        ),
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "700",
+          marginTop: -2,
+        },
+        tabBarItemStyle: {
+          borderRadius: 16,
+        },
       }}
     >
       <Tabs.Screen
@@ -74,7 +72,7 @@ function ClassicTabLayout() {
           title: "Home",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
+              <SymbolView name="house" tintColor={color} size={23} />
             ) : (
               <Feather name="home" size={22} color={color} />
             ),
@@ -86,7 +84,7 @@ function ClassicTabLayout() {
           title: "Explore",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="books.vertical" tintColor={color} size={24} />
+              <SymbolView name="books.vertical" tintColor={color} size={23} />
             ) : (
               <Feather name="compass" size={22} color={color} />
             ),
@@ -98,7 +96,7 @@ function ClassicTabLayout() {
           title: "Quiz",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="checkmark.circle" tintColor={color} size={24} />
+              <SymbolView name="checkmark.circle" tintColor={color} size={23} />
             ) : (
               <Feather name="check-circle" size={22} color={color} />
             ),
@@ -110,21 +108,30 @@ function ClassicTabLayout() {
           title: "Profile",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="person.circle" tintColor={color} size={24} />
+              <SymbolView name="person.circle" tintColor={color} size={23} />
             ) : (
               <Feather name="user" size={22} color={color} />
             ),
         }}
       />
-      {/* Hidden screens — still accessible via router.push */}
+      {/* Hidden from tab bar */}
       <Tabs.Screen name="notes" options={{ href: null }} />
     </Tabs>
   );
 }
 
-export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
-}
+const styles = StyleSheet.create({
+  tabBarBg: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 28,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+});
+
+export default TabLayout;

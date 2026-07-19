@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#009DB5"
+      "backgroundColor": "#0B2447"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,8 +24,8 @@
     },
     "android": {
       "package": "com.nirranjan.medpocket",
-      "versionCode": 4,
-      "backgroundColor": "#009DB5",
+      "versionCode": 5,
+      "backgroundColor": "#0B1220",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009DB5"
@@ -54,7 +54,7 @@
     },
     "web": {
       "favicon": "./assets/images/icon.png",
-      "themeColor": "#009DB5",
+      "themeColor": "#2563EB",
       "backgroundColor": "#F8FAFB",
       "bundler": "metro",
       "output": "static"
