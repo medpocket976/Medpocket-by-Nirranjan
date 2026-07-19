@@ -1,0 +1,275 @@
+You are a senior software engineer and UI/UX designer. Refactor the entire MedPocket project while preserving all existing functionality and medical content.
+
+IMPORTANT:
+• Do NOT break any existing features.
+• Update every affected file consistently.
+• Fix all references across the entire project.
+• Ensure there are no build errors, missing imports, or broken navigation.
+
+====================================================
+1. PROFILE PAGE CLEANUP
+====================================================
+
+Remove these settings completely:
+
+• Change Name
+• Replay Introduction
+
+Delete:
+
+• UI components
+• Navigation routes
+• Settings entries
+• Related icons
+• Unused functions
+• Unused imports
+• Unused storage keys
+• Dead code
+
+Do NOT leave empty spaces after removing them.
+
+====================================================
+2. NOTES BUG FIX
+====================================================
+
+The Notes section has a bug.
+
+Current issue:
+The Delete button does not work.
+
+Fix:
+
+• Delete note permanently.
+• Remove note from local storage/database.
+• Update UI instantly.
+• Show confirmation dialog before deleting.
+• Add Undo Snackbar (5 seconds).
+• Refresh note count immediately.
+• Remove deleted note from all related screens.
+• No page refresh required.
+• Ensure deletion works offline.
+• Prevent crashes.
+
+====================================================
+3. VERSION NUMBER FIX
+====================================================
+
+The app version is inconsistent.
+
+Current issue:
+
+Profile Page:
+v1.3.0 ✅
+
+Privacy Policy:
+Still shows v1.1.0 ❌
+
+Fix this everywhere.
+
+Update every version reference to:
+
+Version Name:
+1.3.0
+
+Update all files including:
+
+• package.json
+• app.json
+• app.config.*
+• Android Manifest
+• build.gradle
+• Info.plist
+• package-lock
+• metadata
+• About page
+• Privacy Policy
+• Terms
+• Footer
+• Splash metadata
+• Release notes
+• Changelog
+• Any remaining hardcoded version strings
+
+Ensure there are ZERO references to v1.1.0 anywhere in the project.
+
+====================================================
+4. APPLY LIQUID GLASS TO ENTIRE APPLICATION
+====================================================
+
+The Glassmorphism redesign is incomplete.
+
+Apply the Apple Liquid Glass design system consistently to EVERY page and EVERY component.
+
+Pages include (but are not limited to):
+
+• Home
+• Explore
+• Search
+• Quiz
+• Profile
+• Bookmarks
+• Notes
+• Calculator
+• Drug Guide
+• Clinical Examination
+• Emergency Protocols
+• Lab Values
+• Anaesthesia Equipment
+• Surgical Instruments
+• Medical Terminology
+• Categories
+• Topic Details
+• About
+• Privacy Policy
+• Sources
+• Settings
+• Contact
+• Feedback
+• Splash
+• Introduction
+
+Apply to ALL UI elements:
+
+• Cards
+• Buttons
+• Navigation Bars
+• Bottom Navigation
+• Search Bar
+• Input Fields
+• Dropdowns
+• Dialogs
+• Bottom Sheets
+• Popups
+• Toast Messages
+• Floating Action Buttons
+• Progress Indicators
+• Chips
+• Badges
+• Tabs
+• Lists
+• Accordions
+• Tables
+• Result Cards
+• Quiz Cards
+• Calculator Cards
+
+====================================================
+5. LIQUID GLASS STYLE
+====================================================
+
+Use Apple's latest Liquid Glass design language.
+
+Features:
+
+• Frosted Glass
+• Dynamic Blur
+• Layered Transparency
+• Floating Components
+• Soft Reflections
+• Rounded Corners (24–28px)
+• Thin White Borders
+• Elegant Shadows
+• Smooth Gradients
+• Native iOS Motion
+
+Glass Properties
+
+Light Mode
+
+Glass:
+rgba(255,255,255,0.18)
+
+Border:
+rgba(255,255,255,0.08)
+
+Dark Mode
+
+Glass:
+rgba(18,24,38,0.55)
+
+Border:
+rgba(255,255,255,0.06)
+
+====================================================
+6. ANIMATIONS
+====================================================
+
+Improve every interaction.
+
+Add:
+
+• Spring animations
+• Smooth navigation transitions
+• Card lift on tap
+• Blur transitions
+• Scale animations
+• Native iOS motion
+• 60 FPS scrolling
+
+====================================================
+7. COLOR REFINEMENT
+====================================================
+
+Improve color grading.
+
+Primary
+#2563EB
+
+Secondary
+#14B8A6
+
+Accent
+#10B981
+
+Background Light
+#F8FAFC
+
+Background Dark
+#0B1220
+
+Improve:
+
+• Contrast
+• Depth
+• Shadows
+• Layer hierarchy
+• Readability
+• Accessibility
+
+====================================================
+8. PERFORMANCE
+====================================================
+
+Optimize:
+
+• Lazy loading
+• Image compression
+• Blur rendering
+• Animation performance
+• Memory usage
+• Startup speed
+• Scrolling smoothness
+
+====================================================
+9. FINAL VALIDATION
+====================================================
+
+Before finishing, verify:
+
+✅ Delete button works
+✅ Notes delete permanently
+✅ Undo works
+✅ Note count updates instantly
+✅ Change Name removed
+✅ Replay Introduction removed
+✅ Version shows 1.3.0 everywhere
+✅ No remaining v1.1.0 references
+✅ Liquid Glass applied consistently across every page
+✅ No broken navigation
+✅ No build errors
+✅ No unused imports
+✅ No dead code
+✅ Offline functionality preserved
+✅ Responsive on all devices
+
+Deliver a clean, production-ready MedPocket v1.3.0 with consistent Apple-inspired Liquid Glass UI across the entire app, fixed Notes deletion, corrected version information everywhere, and a streamlined Profile page.

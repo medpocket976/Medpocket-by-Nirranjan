@@ -271,7 +271,7 @@ export default function ProfileScreen() {
   const {
     user, quizHistory, bookmarks, notes, streak, totalStudyDays,
     updateUser, setTheme, theme, removeBookmark, signOut,
-    resetName, replayIntro,
+    resetName,
   } = useApp();
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -312,12 +312,6 @@ export default function ProfileScreen() {
     );
   }, [signOut]);
 
-  const handleChangeName = useCallback(() => {
-    // Activate the existing inline edit mode and focus name field
-    setEditing(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
-
   const handleResetName = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -326,15 +320,6 @@ export default function ProfileScreen() {
       [{ text: "Cancel", style: "cancel" }, { text: "Reset", style: "destructive", onPress: resetName }],
     );
   }, [resetName]);
-
-  const handleReplayIntro = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(
-      "Replay Introduction",
-      "The intro animation will play next time you open the app.",
-      [{ text: "Cancel", style: "cancel" }, { text: "Replay", onPress: replayIntro }],
-    );
-  }, [replayIntro]);
 
   const cycleTheme = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -555,20 +540,6 @@ export default function ProfileScreen() {
 
             <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
 
-            {/* Change Name */}
-            <Pressable onPress={handleChangeName} style={styles.settingsRow} accessibilityLabel="Change name">
-              <View style={[styles.settingIcon, { backgroundColor: colors.primary + "20" }]}>
-                <Feather name="user-check" size={15} color={colors.primary} />
-              </View>
-              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Change Name</Text>
-              <Text style={[styles.settingsValue, { color: colors.mutedForeground }]} numberOfLines={1}>
-                {user.name}
-              </Text>
-              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
-            </Pressable>
-
-            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
-
             {/* Notes */}
             <Pressable onPress={() => router.push("/(tabs)/notes" as any)} style={styles.settingsRow} accessibilityLabel="My notes">
               <View style={[styles.settingIcon, { backgroundColor: "#F59E0B" + "20" }]}>
@@ -576,17 +547,6 @@ export default function ProfileScreen() {
               </View>
               <Text style={[styles.settingsLabel, { color: colors.foreground }]}>My Notes</Text>
               <Text style={[styles.settingsValue, { color: colors.mutedForeground }]}>{notes.length}</Text>
-              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
-            </Pressable>
-
-            <View style={[styles.rowDivider, { backgroundColor: colors.border + "55" }]} />
-
-            {/* Replay Introduction */}
-            <Pressable onPress={handleReplayIntro} style={styles.settingsRow} accessibilityLabel="Replay introduction">
-              <View style={[styles.settingIcon, { backgroundColor: "#14B8A6" + "20" }]}>
-                <Feather name="play-circle" size={15} color="#14B8A6" />
-              </View>
-              <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Replay Introduction</Text>
               <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
             </Pressable>
 

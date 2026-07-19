@@ -2,7 +2,7 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "75e81d05-3ebb-43d3-9a1e-532e818f8339"
+        "projectId": "920d2bac-a84b-4f90-8d93-570c683d2d26"
       }
     },
     "ios": {
@@ -10,6 +10,10 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
+    },
+    "owner": "medpocket976",
+    "android": {
+      "package": "com.nirranjan.medpocket"
     }
   }
 }

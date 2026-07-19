@@ -226,7 +226,7 @@ export default function PrivacyPolicyScreen() {
         </Animated.View>
 
         <Text style={[s.footer, { color: colors.mutedForeground }]}>
-          MedPocket by Nirranjan · v1.1.0{"\n"}© 2026 All rights reserved
+          MedPocket by Nirranjan · v1.3.0{"\n"}© 2026 All rights reserved
         </Text>
       </ScrollView>
     </View>

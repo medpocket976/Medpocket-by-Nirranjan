@@ -28,17 +28,17 @@ export default function Root({ children }: PropsWithChildren) {
         />
         <meta name="keywords" content="medical reference, drug guide, pharmacology, MBBS, nursing, pharmacy, paramedical, clinical calculator" />
         <meta name="author" content="Nirranjan" />
-        <meta name="version" content="1.1.0" />
+        <meta name="version" content="1.3.0" />
 
         {/* ── PWA Manifest — must be served at exact path ── */}
         <link rel="manifest" href="/manifest.json" />
 
         {/* ── Theme colour (browser chrome, Android task switcher) ── */}
-        <meta name="theme-color" content="#009DB5" />
-        <meta name="theme-color" content="#0A1628" media="(prefers-color-scheme: dark)" />
-        <meta name="msapplication-TileColor" content="#009DB5" />
+        <meta name="theme-color" content="#2563EB" />
+        <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)" />
+        <meta name="msapplication-TileColor" content="#2563EB" />
         <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-        <meta name="msapplication-navbutton-color" content="#009DB5" />
+        <meta name="msapplication-navbutton-color" content="#2563EB" />
 
         {/* ── Android / Chrome PWA ── */}
         <meta name="mobile-web-app-capable" content="yes" />
@@ -89,7 +89,7 @@ export default function Root({ children }: PropsWithChildren) {
         <style>{`
           *, *::before, *::after { box-sizing: border-box; }
           html {
-            background-color: #F8FAFB;
+            background-color: #F8FAFC;
             overscroll-behavior: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-text-size-adjust: 100%;
@@ -97,18 +97,18 @@ export default function Root({ children }: PropsWithChildren) {
           body {
             margin: 0;
             padding: 0;
-            background-color: #F8FAFB;
+            background-color: #F8FAFC;
             overscroll-behavior: none;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
           }
           @media (prefers-color-scheme: dark) {
-            html, body { background-color: #0A1628; }
+            html, body { background-color: #0B1220; }
           }
           /* Splash screen fade — hide before JS hydration */
           #splash {
             position: fixed; inset: 0; z-index: 9999;
-            background: #009DB5;
+            background: #2563EB;
             display: flex; align-items: center; justify-content: center;
             flex-direction: column; gap: 16px;
             transition: opacity 0.4s ease;

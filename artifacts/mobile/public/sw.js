@@ -4,7 +4,7 @@
  * Compatible with PWABuilder & Android APK generation
  */
 
-const APP_VERSION = "medpocket-v1.1.0";
+const APP_VERSION = "medpocket-v1.3.0";
 const STATIC_CACHE = `${APP_VERSION}-static`;
 const DYNAMIC_CACHE = `${APP_VERSION}-dynamic`;
 const OFFLINE_URL = "/";

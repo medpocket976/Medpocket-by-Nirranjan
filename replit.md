@@ -17,16 +17,16 @@ lib/
 
 ## How to Run
 
-Both services start automatically via configured workflows:
+Two workflows are configured:
 
-- **API Server** (`artifacts/api-server: API Server`) — Express server on port 8080
-- **Mobile App** (`artifacts/mobile: expo`) — Expo Metro bundler; scan the QR code with Expo Go or open in web
+- **API Server** — `PORT=8080 pnpm --filter @workspace/api-server run dev` (port 8080, console)
+- **Mobile App** — `PORT=5000 pnpm --filter @workspace/mobile run dev` (port 5000, webview)
 
 ### Manual start (from workspace root)
 ```bash
 pnpm install                                        # install all dependencies
-pnpm --filter @workspace/api-server run dev        # start API server
-pnpm --filter @workspace/mobile run dev            # start Expo app
+PORT=8080 pnpm --filter @workspace/api-server run dev   # start API server
+PORT=5000 pnpm --filter @workspace/mobile run dev       # start Expo app
 ```
 
 ## Database
@@ -38,13 +38,16 @@ To push schema changes:
 pnpm --filter @workspace/db run push
 ```
 
+Schema lives in `lib/db/src/schema/index.ts`.
+
 ## Environment Variables
 
 | Variable | Where | Notes |
 |---|---|---|
 | `DATABASE_URL` | Runtime-managed | Auto-set by Replit |
 | `SESSION_SECRET` | Secret | Already configured |
-| `PORT` | Runtime-managed | Auto-set per workflow |
+| `PORT` | Workflow env | Set per workflow (8080 for API, 5000 for mobile) |
+| `EXPO_PUBLIC_OPENROUTER_URL` | userenv.shared | `https://openrouter.ai/api/v1` |
 
 ## User Preferences
 
