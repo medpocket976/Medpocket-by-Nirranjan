@@ -19,6 +19,7 @@ import { AppProvider, useApp } from "@/context/AppContext";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingScreen from "@/components/Onboarding";
 import LiquidGlassIntro from "@/components/LiquidGlassIntro";
+import WelcomeNameScreen from "@/components/WelcomeNameScreen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -95,10 +96,10 @@ export default function RootLayout() {
 
 /**
  * InnerLayout sits inside AppProvider so it can read hasSeenIntro.
- * The intro overlay renders on top of everything and fades away.
+ * Flow: intro overlay → name screen (first launch only) → main app.
  */
 function InnerLayout() {
-  const { hasSeenIntro, markIntroSeen } = useApp();
+  const { hasSeenIntro, markIntroSeen, isNameSet } = useApp();
   const [introDismissed, setIntroDismissed] = useState(false);
 
   function handleIntroDone() {
@@ -108,10 +109,15 @@ function InnerLayout() {
 
   const showIntro = !hasSeenIntro && !introDismissed;
 
+  // Show name screen after intro is gone and name hasn't been set yet
+  const showNameScreen = !showIntro && !isNameSet;
+
   return (
     <>
       <RootLayoutNav />
       <InstallPrompt />
+      {/* Name entry — after intro, before main app, first launch only */}
+      {showNameScreen && <WelcomeNameScreen />}
       {/* Liquid Glass intro overlay — only on first launch */}
       {showIntro && <LiquidGlassIntro onDone={handleIntroDone} />}
     </>
