@@ -97,7 +97,7 @@ const defaultState: AppState = {
   totalStudyDays: 0,
   recentSearches: [],
   isOnboarded: false,
-  isNameSet: false,
+  isNameSet: true,
   hasSeenIntro: false,
   theme: "system",
 };

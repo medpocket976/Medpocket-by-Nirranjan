@@ -18,7 +18,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
 import InstallPrompt from "@/components/InstallPrompt";
 import OnboardingScreen from "@/components/Onboarding";
-import NameSetupScreen from "@/components/NameSetupScreen";
 import LiquidGlassIntro from "@/components/LiquidGlassIntro";
 
 SplashScreen.preventAutoHideAsync();
@@ -26,13 +25,10 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isOnboarded, isNameSet, resolvedTheme } = useApp();
+  const { isOnboarded, resolvedTheme } = useApp();
   const bg = resolvedTheme === "dark" ? "#0B1220" : "#F8FAFC";
 
-  // First: must enter name
-  if (!isNameSet) return <NameSetupScreen />;
-
-  // Second: must complete onboarding (discipline / year)
+  // Must complete onboarding (discipline / year)
   if (!isOnboarded) return <OnboardingScreen />;
 
   return (
