@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -21,8 +23,8 @@ export default function ClinicalExamScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+    <GlassBackground style={styles.container}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -30,7 +32,7 @@ export default function ClinicalExamScreen() {
           <Text style={styles.title}>Clinical Examination</Text>
           <Text style={styles.subtitle}>Systematic examination guides</Text>
         </View>
-      </View>
+      </GlassView>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}
@@ -64,7 +66,7 @@ export default function ClinicalExamScreen() {
           </Pressable>
         ))}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -78,7 +80,7 @@ function StatBadge({ label, color }: { label: string; color: string }) {
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row", alignItems: "center",
       paddingHorizontal: 20, paddingBottom: 16, gap: 12,
@@ -97,9 +99,9 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     infoText: { flex: 1, fontSize: 12, color: colors.tealDark, lineHeight: 18 },
     systemCard: {
       flexDirection: "row", alignItems: "center", gap: 14,
-      backgroundColor: colors.card, borderRadius: 16,
+      backgroundColor: colors.glassBg, borderRadius: 16,
       padding: 16, marginBottom: 12, borderWidth: 1,
-      borderColor: colors.border, borderLeftWidth: 4,
+      borderColor: colors.glassBorder, borderLeftWidth: 4,
     },
     systemIcon: {
       width: 52, height: 52, borderRadius: 14,

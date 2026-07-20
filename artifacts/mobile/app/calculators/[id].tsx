@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -35,7 +37,7 @@ export default function CalculatorDetailScreen() {
 
   if (!calculator) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Text style={{ color: colors.foreground }}>Calculator not found.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -67,9 +69,9 @@ export default function CalculatorDetailScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -83,7 +85,7 @@ export default function CalculatorDetailScreen() {
         <Pressable style={styles.resetBtn} onPress={resetAll}>
           <Feather name="refresh-ccw" size={16} color={colors.mutedForeground} />
         </Pressable>
-      </View>
+      </GlassView>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}
@@ -117,7 +119,7 @@ export default function CalculatorDetailScreen() {
                 <Switch
                   value={values[field.id] === 1}
                   onValueChange={(v) => updateValue(field.id, v ? 1 : 0)}
-                  trackColor={{ false: colors.border, true: colors.primary }}
+                  trackColor={{ false: colors.glassBorder, true: colors.primary }}
                   thumbColor="#fff"
                 />
                 <Text style={styles.checkboxValue}>{values[field.id] ? "Yes (+1)" : "No"}</Text>
@@ -181,13 +183,13 @@ export default function CalculatorDetailScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row", alignItems: "flex-start",
       paddingHorizontal: 20, paddingBottom: 16, gap: 12,
@@ -206,8 +208,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       backgroundColor: colors.muted, alignItems: "center", justifyContent: "center", marginTop: 2,
     },
     fieldCard: {
-      backgroundColor: colors.card, borderRadius: 14,
-      padding: 16, marginBottom: 10, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.glassBg, borderRadius: 14,
+      padding: 16, marginBottom: 10, borderWidth: 1, borderColor: colors.glassBorder,
     },
     fieldLabel: { fontSize: 13, fontWeight: "700", color: colors.foreground, marginBottom: 10 },
     numberInput: {
@@ -222,7 +224,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     selectGroup: { gap: 6 },
     selectOption: {
       paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
-      backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.glassBorder,
     },
     selectOptionText: { fontSize: 13, fontWeight: "600", color: colors.foreground },
     calculateBtn: {
@@ -232,7 +234,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     calculateBtnText: { fontSize: 16, fontWeight: "800", color: "#fff" },
     resultCard: {
-      backgroundColor: colors.card, borderRadius: 16,
+      backgroundColor: colors.glassBg, borderRadius: 16,
       padding: 18, borderWidth: 2, gap: 12,
     },
     resultTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },

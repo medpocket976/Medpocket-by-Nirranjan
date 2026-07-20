@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -25,7 +27,7 @@ export default function EmergencyDetailScreen() {
 
   if (!protocol) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Text style={{ color: colors.foreground }}>Protocol not found.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -37,9 +39,9 @@ export default function EmergencyDetailScreen() {
   const styles = makeStyles(colors, protocol.color);
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color="#fff" />
         </Pressable>
@@ -50,7 +52,7 @@ export default function EmergencyDetailScreen() {
           <Text style={styles.headerTitle}>{protocol.name}</Text>
           <Text style={styles.headerDesc}>{protocol.description}</Text>
         </View>
-      </View>
+      </GlassView>
 
       {/* Tabs */}
       <View style={styles.tabsRow}>
@@ -133,13 +135,13 @@ export default function EmergencyDetailScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       backgroundColor: accentColor,
       paddingHorizontal: 20,
@@ -176,19 +178,19 @@ function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
       marginBottom: 4,
     },
     tab: { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: "center" },
-    tabActive: { backgroundColor: colors.card, elevation: 2 },
+    tabActive: { backgroundColor: colors.glassBg, elevation: 2 },
     tabText: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
     tabTextActive: { color: accentColor },
     section: {},
     stepCard: {
       flexDirection: "row",
       gap: 12,
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 14,
       padding: 14,
       marginBottom: 10,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       alignItems: "flex-start",
     },
     stepNumber: {
@@ -221,12 +223,12 @@ function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
     keyDrugCard: {
       flexDirection: "row",
       gap: 12,
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 14,
       padding: 14,
       marginBottom: 10,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       alignItems: "flex-start",
     },
     keyDrugIcon: {
@@ -249,12 +251,12 @@ function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
     keyPointRow: {
       flexDirection: "row",
       gap: 10,
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 12,
       padding: 14,
       marginBottom: 10,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       alignItems: "flex-start",
     },
     keyPointDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 },

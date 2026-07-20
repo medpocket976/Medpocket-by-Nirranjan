@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -24,9 +26,9 @@ export default function EmergencyScreen() {
   const highProtocols = emergencyProtocols.filter((p) => p.urgency === "high");
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -34,7 +36,7 @@ export default function EmergencyScreen() {
           <Text style={styles.title}>Emergency Protocols</Text>
           <Text style={styles.subtitle}>Step-by-step management</Text>
         </View>
-      </View>
+      </GlassView>
 
       {/* Warning Banner */}
       <View style={styles.warningBanner}>
@@ -65,7 +67,7 @@ export default function EmergencyScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -89,12 +91,12 @@ function ProtocolCard({
     <Pressable
       style={({ pressed }) => [
         {
-          backgroundColor: colors.card,
+          backgroundColor: colors.glassBg,
           borderRadius: 16,
           padding: 16,
           marginBottom: 12,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: colors.glassBorder,
           borderLeftWidth: 4,
           borderLeftColor: protocol.color,
           opacity: pressed ? 0.85 : 1,
@@ -132,7 +134,7 @@ function ProtocolCard({
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",

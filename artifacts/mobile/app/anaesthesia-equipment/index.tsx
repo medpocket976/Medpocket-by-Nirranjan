@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   FlatList,
   Platform,
@@ -69,7 +71,7 @@ function CategoryPill({
         styles.pill,
         {
           backgroundColor: active ? accent : colors.muted,
-          borderColor: active ? accent : colors.border,
+          borderColor: active ? accent : colors.glassBorder,
         },
       ]}
     >
@@ -107,7 +109,7 @@ function EquipmentCard({
 
   return (
     <Pressable
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      style={[styles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
       onPress={onPress}
     >
       <View style={[styles.cardAccent, { backgroundColor: accent + "20" }]}>
@@ -156,7 +158,7 @@ function EquipmentCard({
             style={{ opacity: bookmarked ? 1 : 0.5 }}
           />
         </Pressable>
-        <Feather name="chevron-right" size={16} color={colors.border} />
+        <Feather name="chevron-right" size={16} color={colors.glassBorder} />
       </View>
     </Pressable>
   );
@@ -194,9 +196,9 @@ export default function AnaesthesiaEquipmentScreen() {
   const accent = CATEGORY_COLORS[selectedCategory] || colors.primary;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable
           style={[styles.backBtn, { backgroundColor: colors.muted }]}
           onPress={() => router.back()}
@@ -214,13 +216,13 @@ export default function AnaesthesiaEquipmentScreen() {
         <View style={[styles.countBadge, { backgroundColor: accent + "20" }]}>
           <Text style={[styles.countText, { color: accent }]}>{results.length}</Text>
         </View>
-      </View>
+      </GlassView>
 
       {/* Search */}
       <View
         style={[
           styles.searchRow,
-          { backgroundColor: colors.card, borderColor: colors.border },
+          { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
         ]}
       >
         <Feather name="search" size={16} color={colors.mutedForeground} />
@@ -279,7 +281,7 @@ export default function AnaesthesiaEquipmentScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Feather name="tool" size={48} color={colors.border} />
+            <Feather name="tool" size={48} color={colors.glassBorder} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               No equipment found
             </Text>
@@ -291,7 +293,7 @@ export default function AnaesthesiaEquipmentScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />
-    </View>
+    </GlassBackground>
   );
 }
 

@@ -207,7 +207,7 @@ export default function QuizPlayScreen() {
           <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
             {current + 1} / {questions.length}
           </Text>
-          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+          <View style={[styles.progressTrack, { backgroundColor: colors.glassBorder }]}>
             <Animated.View
               style={[
                 styles.progressBar,
@@ -353,7 +353,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     explanationTitle: { fontSize: 12, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.8 },
     explanationText:  { fontSize: 14, lineHeight: 22, fontWeight: "500" },
 
-    nextContainer: { paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border + "50", backgroundColor: colors.background + "E0" },
+    nextContainer: { paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.glassBorder + "50", backgroundColor: "transparent" + "E0" },
     nextBtn:       { flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 18, paddingVertical: 16, gap: 10, shadowColor: "#009DB5", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 6 },
     nextBtnText:   { fontSize: 16, fontWeight: "800", color: "#fff" },
 

@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -35,7 +37,7 @@ export default function MedCalcDetailScreen() {
 
   if (!calc) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Feather name="alert-circle" size={40} color={colors.mutedForeground} />
         <Text style={{ color: colors.foreground, marginTop: 12, fontWeight: "700" }}>Calculator not found</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
@@ -83,9 +85,9 @@ export default function MedCalcDetailScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -98,7 +100,7 @@ export default function MedCalcDetailScreen() {
         <View style={[styles.iconBadge, { backgroundColor: calc.color + "18" }]}>
           <Feather name={calc.icon as any} size={22} color={calc.color} />
         </View>
-      </View>
+      </GlassView>
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
@@ -109,7 +111,7 @@ export default function MedCalcDetailScreen() {
         <Text style={[styles.desc, { color: colors.mutedForeground }]}>{calc.description}</Text>
 
         {/* Fields */}
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
           <Text style={[styles.cardTitle, { color: colors.foreground }]}>Input Parameters</Text>
           {calc.fields.map((field) => (
             <View key={field.id} style={styles.fieldGroup}>
@@ -128,7 +130,7 @@ export default function MedCalcDetailScreen() {
                           styles.optionBtn,
                           {
                             backgroundColor: isSelected ? calc.color : colors.muted,
-                            borderColor: isSelected ? calc.color : colors.border,
+                            borderColor: isSelected ? calc.color : colors.glassBorder,
                           },
                         ]}
                         onPress={() => selectValue(field.id, opt.value as number)}
@@ -146,7 +148,7 @@ export default function MedCalcDetailScreen() {
                     styles.input,
                     {
                       backgroundColor: colors.muted,
-                      borderColor: colors.border,
+                      borderColor: colors.glassBorder,
                       color: colors.foreground,
                     },
                   ]}
@@ -171,7 +173,7 @@ export default function MedCalcDetailScreen() {
             <Text style={styles.calcBtnText}>Calculate</Text>
           </Pressable>
           <Pressable
-            style={[styles.resetBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+            style={[styles.resetBtn, { backgroundColor: colors.muted, borderColor: colors.glassBorder }]}
             onPress={reset}
           >
             <Feather name="refresh-ccw" size={15} color={colors.mutedForeground} />
@@ -190,7 +192,7 @@ export default function MedCalcDetailScreen() {
         {result && (
           <View style={styles.resultSection}>
             {/* Result rows */}
-            <View style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.resultCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>Result</Text>
               {result.rows.map((row, i) => (
                 <View
@@ -209,7 +211,7 @@ export default function MedCalcDetailScreen() {
             </View>
 
             {/* Formula */}
-            <View style={[styles.formulaCard, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+            <View style={[styles.formulaCard, { backgroundColor: colors.muted, borderColor: colors.glassBorder }]}>
               <Text style={[styles.formulaLabel, { color: colors.mutedForeground }]}>Formula Used</Text>
               <Text style={[styles.formulaText, { color: colors.foreground }]}>{result.formula}</Text>
             </View>
@@ -234,7 +236,7 @@ export default function MedCalcDetailScreen() {
             )}
 
             {/* Interpretation */}
-            <View style={[styles.interpCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.interpCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
               <Text style={[styles.interpLabel, { color: colors.mutedForeground }]}>Educational Interpretation</Text>
               <Text style={[styles.interpText, { color: colors.foreground }]}>{result.interpretation}</Text>
             </View>
@@ -247,20 +249,20 @@ export default function MedCalcDetailScreen() {
         )}
 
         {/* Safety disclaimer */}
-        <View style={[styles.disclaimer, { borderColor: colors.border }]}>
+        <View style={[styles.disclaimer, { borderColor: colors.glassBorder }]}>
           <Feather name="shield" size={12} color={colors.mutedForeground} />
           <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
             For medical education purposes only. Always verify calculations before clinical use.
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",

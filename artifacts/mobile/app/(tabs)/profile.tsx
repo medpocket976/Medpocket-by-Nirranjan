@@ -562,22 +562,6 @@ export default function ProfileScreen() {
             </Pressable>
           </GlassView>
 
-          {/* ── Danger zone ── */}
-          <View style={[styles.sectionHeader, { marginTop: 8 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Danger Zone</Text>
-          </View>
-          <GlassView style={styles.settingsGroup} radius={20}>
-            <Pressable onPress={handleResetName} style={styles.settingsRow} accessibilityLabel="Reset name">
-              <View style={[styles.settingIcon, { backgroundColor: "#F59E0B20" }]}>
-                <Feather name="user-x" size={15} color="#F59E0B" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.settingsLabel, { color: colors.foreground }]}>Reset Name</Text>
-                <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>Shows name setup screen again</Text>
-              </View>
-            </Pressable>
-          </GlassView>
-
           {/* ── Sources footer ── */}
           <View style={styles.sourcesHeader}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sources</Text>

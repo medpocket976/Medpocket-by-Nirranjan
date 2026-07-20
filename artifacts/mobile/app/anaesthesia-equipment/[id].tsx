@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -122,7 +124,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <View style={[detailStyles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[detailStyles.sectionCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
       <View style={detailStyles.sectionHeader}>
         <View style={[detailStyles.sectionIcon, { backgroundColor: color + "15" }]}>
           <Feather name={icon} size={14} color={color} />
@@ -171,8 +173,8 @@ export default function AnaesthesiaEquipmentDetailScreen() {
 
   if (!item) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <Feather name="alert-circle" size={48} color={colors.border} />
+      <View style={{ flex: 1, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" }}>
+        <Feather name="alert-circle" size={48} color={colors.glassBorder} />
         <Text style={{ color: colors.mutedForeground, marginTop: 12, fontSize: 16 }}>Equipment not found</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -194,12 +196,12 @@ export default function AnaesthesiaEquipmentDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <GlassBackground>
       {/* Hero Header */}
       <View style={[styles.hero, { paddingTop: topPad + 12, backgroundColor: accent + "12" }]}>
         <View style={styles.heroNav}>
           <Pressable
-            style={[styles.navBtn, { backgroundColor: colors.background + "CC" }]}
+            style={[styles.navBtn, { backgroundColor: "transparent" + "CC" }]}
             onPress={() => router.back()}
           >
             <Feather name="arrow-left" size={18} color={colors.foreground} />
@@ -239,7 +241,7 @@ export default function AnaesthesiaEquipmentDetailScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabBar}
-        style={{ flexGrow: 0, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}
+        style={{ flexGrow: 0, backgroundColor: colors.glassBg, borderBottomWidth: 1, borderBottomColor: colors.glassBorder }}
       >
         {SECTION_TABS.map((tab) => (
           <Pressable
@@ -426,7 +428,7 @@ export default function AnaesthesiaEquipmentDetailScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 

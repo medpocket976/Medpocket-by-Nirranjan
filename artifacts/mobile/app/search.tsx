@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { memo, useCallback, useMemo, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   FlatList,
   Platform,
@@ -165,7 +167,7 @@ export default function SearchScreen() {
       </Text>
     ) : (
       <View style={styles.noResults}>
-        <Feather name="search" size={40} color={colors.border} />
+        <Feather name="search" size={40} color={colors.glassBorder} />
         <Text style={styles.noResultsText}>No results for "{query}"</Text>
         <Text style={styles.noResultsSubtext}>Try a drug name, lab test, or symptom</Text>
       </View>
@@ -173,13 +175,13 @@ export default function SearchScreen() {
   ), [results.length, query, colors, styles]);
 
   return (
-    <View style={[styles.container, { paddingTop: topPad }]}>
+    <GlassBackground style={[styles.container, { paddingTop: topPad }]}>
       {/* Search Bar */}
-      <View style={styles.searchHeader}>
+      <GlassView radius={0} style={styles.searchHeader}>
         <Pressable style={styles.backBtn} onPress={goBack} hitSlop={8} accessibilityRole="button" accessibilityLabel="Go back">
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
-        <View style={styles.searchBox}>
+        <GlassView radius={12} style={styles.searchBox}>
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
             style={styles.searchInput}
@@ -196,8 +198,8 @@ export default function SearchScreen() {
               <Feather name="x" size={16} color={colors.mutedForeground} />
             </Pressable>
           )}
-        </View>
-      </View>
+        </GlassView>
+      </GlassView>
 
       {query.length > 0 ? (
         <FlatList
@@ -254,13 +256,13 @@ export default function SearchScreen() {
           ))}
         </View>
       )}
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container:    { flex: 1, backgroundColor: colors.background },
+    container:    { flex: 1, backgroundColor: "transparent" },
     searchHeader: {
       flexDirection: "row", alignItems: "center", gap: 12,
       paddingHorizontal: 20, paddingBottom: 16,
@@ -271,9 +273,9 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     searchBox: {
       flex: 1, flexDirection: "row", alignItems: "center", gap: 10,
-      backgroundColor: colors.card, borderRadius: 12,
+      backgroundColor: colors.glassBg, borderRadius: 12,
       paddingHorizontal: 14, paddingVertical: 11,
-      borderWidth: 1, borderColor: colors.border,
+      borderWidth: 1, borderColor: colors.glassBorder,
     },
     searchInput:      { flex: 1, fontSize: 14, color: colors.foreground },
     sectionTitle:     { fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 12 },
@@ -282,8 +284,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     noResultsSubtext: { fontSize: 12, color: colors.mutedForeground },
     resultCard: {
       flexDirection: "row", alignItems: "center", gap: 12,
-      backgroundColor: colors.card, borderRadius: 14, padding: 14,
-      marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.glassBg, borderRadius: 14, padding: 14,
+      marginBottom: 8, borderWidth: 1, borderColor: colors.glassBorder,
     },
     resultIcon:    { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
     resultContent: { flex: 1 },
@@ -296,10 +298,10 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     clearText:     { fontSize: 12, color: colors.primary, fontWeight: "600" },
     recentItem: {
       flexDirection: "row", alignItems: "center", gap: 10,
-      paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border,
+      paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.glassBorder,
     },
     recentText:    { flex: 1, fontSize: 14, color: colors.foreground },
-    divider:       { height: 1, backgroundColor: colors.border, marginVertical: 4 },
+    divider:       { height: 1, backgroundColor: colors.glassBorder, marginVertical: 4 },
     moduleRow: {
       flexDirection: "row", alignItems: "center", gap: 12,
       paddingVertical: 10,

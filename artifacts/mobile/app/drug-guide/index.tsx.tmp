@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { memo, useCallback, useMemo, useState } from "react";
-import { GlassBackground } from "@/components/GlassBackground";
-import { GlassView } from "@/components/GlassView";
+import React, { memo, useCallback, useMemo, useState, useRef, useEffect } from "react";
 import {
+  Animated,
   FlatList,
   Platform,
   Pressable,
@@ -15,6 +14,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 
 import { useApp } from "@/context/AppContext";
 import { DRUG_CATEGORIES, Drug, searchDrugs } from "@/data/drugs";
@@ -71,7 +72,10 @@ const DrugRow = memo(function DrugRow({
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.glassBgStrong : colors.glassBg, borderColor: colors.glassBorder, borderWidth: 1, borderRadius: 16, marginHorizontal: 16, marginBottom: 12 }]}
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: pressed ? colors.muted : colors.card },
+      ]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${drug.name}, ${drug.drugClass}`}
@@ -109,8 +113,9 @@ const DrugRow = memo(function DrugRow({
         </View>
       </View>
 
-      <Feather name="chevron-right" size={16} color={colors.glassBorder} />
-    </Pressable>
+      <Feather name="chevron-right" size={16} color={colors.border} />
+    </GlassView>
+              </Pressable>
   );
 });
 
@@ -158,10 +163,20 @@ export default function DrugGuideScreen() {
   const clearQuery = useCallback(() => setQuery(""), []);
   const goBack = useCallback(() => router.back(), []);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   return (
     <GlassBackground>
       {/* Navigation Header */}
-      <GlassView radius={0} style={[styles.navHeader, { paddingBottom: 12 }]} /* injected */>
+      <GlassView style={[styles.navHeader, { paddingTop: topPad + 8, paddingBottom: 12 }]} radius={0}>
         <Pressable
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.5 : 1 }]}
           onPress={goBack}
@@ -170,7 +185,8 @@ export default function DrugGuideScreen() {
           accessibilityLabel="Go back"
         >
           <Feather name="chevron-left" size={26} color={colors.primary} />
-        </Pressable>
+        </GlassView>
+              </Pressable>
         <Text style={[styles.navTitle, { color: colors.foreground }]}>Drug Guide</Text>
         <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
           <Text style={styles.countText}>{results.length}</Text>
@@ -178,8 +194,8 @@ export default function DrugGuideScreen() {
       </GlassView>
 
       {/* Search bar */}
-      <View style={[styles.searchWrap, { backgroundColor: colors.glassBg }]}>
-        <GlassView radius={16} style={[styles.searchBar, { backgroundColor: "transparent" }]}>
+      <View style={styles.searchWrap}>
+        <GlassView style={styles.searchBar} radius={16}>
           <Feather name="search" size={15} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
@@ -196,13 +212,14 @@ export default function DrugGuideScreen() {
               <View style={styles.clearBtn}>
                 <Feather name="x" size={11} color="#fff" />
               </View>
-            </Pressable>
+            </GlassView>
+              </Pressable>
           )}
         </GlassView>
       </View>
 
       {/* Category filter chips */}
-      <View style={[styles.categoryWrap, { backgroundColor: colors.glassBg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder }]}>
+      <View style={styles.categoryWrap}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -220,18 +237,17 @@ export default function DrugGuideScreen() {
                   if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
                 style={[
-                  styles.catChip,
-                  active
-                    ? { backgroundColor: accent + "20", borderColor: accent }
-                    : { backgroundColor: colors.muted, borderColor: colors.glassBorder },
+                  styles.catChip
                 ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
+                <GlassView radius={20} bgColor={active ? accent : undefined} borderColor={active ? accent + "60" : undefined} style={[styles.catChip, active ? { backgroundColor: accent + "20", borderColor: accent } : { backgroundColor: "transparent" }]}>
                 {cat !== "All" && (
                   <View style={[styles.catDot, { backgroundColor: accent }]} />
                 )}
                 <Text style={[styles.catText, { color: active ? accent : colors.foreground }]}>{cat}</Text>
+              </GlassView>
               </Pressable>
             );
           })}
@@ -239,7 +255,8 @@ export default function DrugGuideScreen() {
       </View>
 
       {/* Drug list */}
-      <FlatList
+      <Animated.FlatList
+        style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
         data={results}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
@@ -265,7 +282,7 @@ export default function DrugGuideScreen() {
         removeClippedSubviews={true}
         initialNumToRender={15}
       />
-    </GlassBackground>
+    </View>
   );
 }
 

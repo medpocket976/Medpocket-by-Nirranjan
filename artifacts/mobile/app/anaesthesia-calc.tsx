@@ -3,6 +3,8 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Animated,
   Platform,
@@ -356,7 +358,7 @@ export default function AnaesthesiaCalcScreen() {
   const isValid = !isNaN(w) && w > 0 && w <= 300;
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
       <LinearGradient
         colors={["#6366F1", "#4F46E5"]}
@@ -422,11 +424,11 @@ export default function AnaesthesiaCalcScreen() {
               <Switch
                 value={isElderly}
                 onValueChange={(v) => { setIsElderly(v); setCalculated(false); }}
-                trackColor={{ false: colors.border, true: "#6366F1" }}
+                trackColor={{ false: colors.glassBorder, true: "#6366F1" }}
                 thumbColor="#fff"
               />
             </View>
-            <View style={[styles.toggleItem, { borderTopWidth: 1, borderTopColor: colors.border }]}>
+            <View style={[styles.toggleItem, { borderTopWidth: 1, borderTopColor: colors.glassBorder }]}>
               <View>
                 <Text style={styles.toggleLabel}>Paediatric Patient</Text>
                 <Text style={styles.toggleSub}>Age &lt;12 — adjusts paediatric doses</Text>
@@ -434,7 +436,7 @@ export default function AnaesthesiaCalcScreen() {
               <Switch
                 value={isPediatric}
                 onValueChange={(v) => { setIsPediatric(v); setCalculated(false); }}
-                trackColor={{ false: colors.border, true: "#6366F1" }}
+                trackColor={{ false: colors.glassBorder, true: "#6366F1" }}
                 thumbColor="#fff"
               />
             </View>
@@ -501,7 +503,7 @@ export default function AnaesthesiaCalcScreen() {
                       key={drug.name}
                       style={[
                         styles.drugRow,
-                        di > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                        di > 0 && { borderTopWidth: 1, borderTopColor: colors.glassBorder },
                       ]}
                     >
                       <View style={styles.drugTop}>
@@ -534,13 +536,13 @@ export default function AnaesthesiaCalcScreen() {
           <Text style={styles.sourceItem}>• Morgan & Mikhail's Clinical Anesthesiology, 6e</Text>
         </View>
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: { paddingHorizontal: 20, paddingBottom: 20 },
     headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
     backBtn: {
@@ -552,11 +554,11 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     headerTitle: { fontSize: 20, fontWeight: "800", color: "#fff" },
     headerSub: { fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 3 },
     inputCard: {
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 18,
       padding: 18,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       marginBottom: 14,
       gap: 14,
     },
@@ -572,7 +574,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       paddingHorizontal: 12,
       paddingVertical: 12,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       gap: 8,
     },
     inputText: { flex: 1, fontSize: 18, fontWeight: "700" },
@@ -581,7 +583,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       backgroundColor: colors.muted,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       overflow: "hidden",
     },
     toggleItem: { flexDirection: "row", alignItems: "center", padding: 12, gap: 12 },
@@ -616,7 +618,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     resultHeaderText: { fontSize: 14, fontWeight: "700", color: colors.foreground },
     groupCard: {
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 14,
       borderWidth: 1,
       overflow: "hidden",
@@ -644,11 +646,11 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     refRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 },
     refText: { fontSize: 10, color: colors.mutedForeground, fontStyle: "italic" },
     sourceCard: {
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderRadius: 14,
       padding: 16,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.glassBorder,
       marginTop: 8,
       gap: 5,
     },

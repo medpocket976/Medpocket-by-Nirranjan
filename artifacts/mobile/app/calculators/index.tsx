@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -32,8 +34,8 @@ export default function CalculatorsScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+    <GlassBackground style={styles.container}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -43,7 +45,7 @@ export default function CalculatorsScreen() {
             {calculators.length + medicalCalculators.length}+ clinical tools
           </Text>
         </View>
-      </View>
+      </GlassView>
 
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}
@@ -131,13 +133,13 @@ export default function CalculatorsScreen() {
           })}
         </View>
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row", alignItems: "center",
       paddingHorizontal: 20, paddingBottom: 16, gap: 12,
@@ -200,8 +202,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
     calcCard: {
       width: "47%", flexGrow: 1,
-      backgroundColor: colors.card, borderRadius: 16,
-      padding: 16, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.glassBg, borderRadius: 16,
+      padding: 16, borderWidth: 1, borderColor: colors.glassBorder,
       gap: 6,
     },
     calcIcon: {

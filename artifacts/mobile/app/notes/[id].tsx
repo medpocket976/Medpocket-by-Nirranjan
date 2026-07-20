@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -45,7 +47,7 @@ export default function NoteEditorScreen() {
 
   if (!note) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Text style={{ color: colors.foreground }}>Note not found.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -58,7 +60,7 @@ export default function NoteEditorScreen() {
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <View style={[styles.container, { paddingTop: topPad }]}>
+    <GlassBackground style={[styles.container, { paddingTop: topPad }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backBtn} onPress={() => {
@@ -141,13 +143,13 @@ export default function NoteEditorScreen() {
           Saved {new Date(note.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </Text>
       </View>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row", alignItems: "center",
       paddingHorizontal: 20, paddingVertical: 12, gap: 12,
@@ -169,7 +171,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     subjectPicker: { paddingHorizontal: 20, gap: 8, paddingBottom: 10 },
     subjectOption: {
       paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
-      backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.glassBorder,
     },
     subjectOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
     subjectOptionText: { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
@@ -185,8 +187,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     statusBar: {
       flexDirection: "row", justifyContent: "space-between", alignItems: "center",
       paddingHorizontal: 20, paddingTop: 10,
-      borderTopWidth: 1, borderTopColor: colors.border,
-      backgroundColor: colors.card,
+      borderTopWidth: 1, borderTopColor: colors.glassBorder,
+      backgroundColor: colors.glassBg,
     },
     statusText: { fontSize: 11, color: colors.mutedForeground },
   });

@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -30,7 +32,7 @@ export default function ClinicalExamDetailScreen() {
 
   if (!system) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Text style={{ color: colors.foreground }}>System not found.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -50,8 +52,8 @@ export default function ClinicalExamDetailScreen() {
   const styles = makeStyles(colors, system.color);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: system.color }]}>
+    <GlassBackground style={styles.container}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <View style={styles.headerTop}>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={20} color="#fff" />
@@ -65,7 +67,7 @@ export default function ClinicalExamDetailScreen() {
         </View>
         <Text style={styles.headerTitle}>{system.name}</Text>
         <Text style={styles.headerDesc}>{system.description}</Text>
-      </View>
+      </GlassView>
 
       <View style={styles.tabsRow}>
         {TABS.map((tab, i) => (
@@ -133,7 +135,7 @@ export default function ClinicalExamDetailScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -152,7 +154,7 @@ function ExamSection({
         <Feather name={icon as keyof typeof Feather.glyphMap} size={15} color={color} />
         <Text style={{ fontSize: 14, fontWeight: "700", color, textTransform: "uppercase", letterSpacing: 0.6 }}>{title}</Text>
       </View>
-      <View style={{ backgroundColor: colors.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 10 }}>
+      <View style={{ backgroundColor: colors.glassBg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.glassBorder, gap: 10 }}>
         {items.map((item, i) => (
           <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, marginTop: 7, flexShrink: 0 }} />
@@ -166,7 +168,7 @@ function ExamSection({
 
 function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: { paddingHorizontal: 20, paddingBottom: 20 },
     headerTop: { flexDirection: "row", justifyContent: "space-between", marginBottom: 14 },
     backBtn: {
@@ -188,18 +190,18 @@ function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
       backgroundColor: colors.muted, borderRadius: 12, padding: 4, marginBottom: 4,
     },
     tab: { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: "center" },
-    tabActive: { backgroundColor: colors.card, elevation: 2 },
+    tabActive: { backgroundColor: colors.glassBg, elevation: 2 },
     tabText: { fontSize: 10, fontWeight: "600", color: colors.mutedForeground, textAlign: "center" },
     signCard: {
-      backgroundColor: colors.card, borderRadius: 12, padding: 14,
-      marginBottom: 10, borderWidth: 1, borderColor: colors.border, borderLeftWidth: 4,
+      backgroundColor: colors.glassBg, borderRadius: 12, padding: 14,
+      marginBottom: 10, borderWidth: 1, borderColor: colors.glassBorder, borderLeftWidth: 4,
     },
     signName: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
     signSignificance: { fontSize: 13, color: colors.foreground, lineHeight: 20 },
     diffCard: {
-      flexDirection: "row", gap: 10, backgroundColor: colors.card,
+      flexDirection: "row", gap: 10, backgroundColor: colors.glassBg,
       borderRadius: 12, padding: 14, marginBottom: 8,
-      borderWidth: 1, borderColor: colors.border, alignItems: "flex-start",
+      borderWidth: 1, borderColor: colors.glassBorder, alignItems: "flex-start",
     },
     diffDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 },
     diffText: { flex: 1, fontSize: 13, color: colors.foreground, lineHeight: 21 },
@@ -210,9 +212,9 @@ function makeStyles(colors: ReturnType<typeof useColors>, accentColor: string) {
     },
     tipText: { flex: 1, fontSize: 13, color: colors.foreground, lineHeight: 21 },
     vivaCard: {
-      flexDirection: "row", gap: 12, backgroundColor: colors.card,
+      flexDirection: "row", gap: 12, backgroundColor: colors.glassBg,
       borderRadius: 12, padding: 14, marginBottom: 8,
-      borderWidth: 1, borderColor: colors.border, alignItems: "flex-start",
+      borderWidth: 1, borderColor: colors.glassBorder, alignItems: "flex-start",
     },
     vivaNumber: {
       width: 26, height: 26, borderRadius: 13,

@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   FlatList,
   Platform,
@@ -62,8 +64,8 @@ export default function LabValuesScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+    <GlassBackground style={styles.container}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -71,7 +73,7 @@ export default function LabValuesScreen() {
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{results.length}</Text>
         </View>
-      </View>
+      </GlassView>
 
       <View style={styles.searchRow}>
         <Feather name="search" size={16} color={colors.mutedForeground} />
@@ -104,7 +106,7 @@ export default function LabValuesScreen() {
               key={g}
               style={[
                 styles.groupChip,
-                { backgroundColor: active ? accent : colors.muted, borderColor: active ? accent : colors.border },
+                { backgroundColor: active ? accent : colors.muted, borderColor: active ? accent : colors.glassBorder },
               ]}
               onPress={() => setGroup(g)}
             >
@@ -189,19 +191,19 @@ export default function LabValuesScreen() {
         }}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Feather name="bar-chart-2" size={48} color={colors.border} />
+            <Feather name="bar-chart-2" size={48} color={colors.glassBorder} />
             <Text style={styles.emptyText}>No lab values found</Text>
           </View>
         }
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -217,9 +219,9 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     countBadge: { backgroundColor: colors.tealLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
     countText: { fontSize: 13, fontWeight: "700", color: colors.primary },
     searchRow: {
-      flexDirection: "row", alignItems: "center", backgroundColor: colors.card,
+      flexDirection: "row", alignItems: "center", backgroundColor: colors.glassBg,
       marginHorizontal: 20, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 11,
-      borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 10,
+      borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorder, gap: 10,
     },
     searchInput: { flex: 1, fontSize: 14, color: colors.foreground },
     groupScroll: { flexGrow: 0, flexShrink: 0 },
@@ -242,8 +244,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     groupText: { fontSize: 12, fontWeight: "600" },
     labCard: {
-      backgroundColor: colors.card, borderRadius: 14, padding: 14,
-      marginBottom: 10, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.glassBg, borderRadius: 14, padding: 14,
+      marginBottom: 10, borderWidth: 1, borderColor: colors.glassBorder,
     },
     labCardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
     labGroupDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0, marginTop: 2 },
@@ -254,7 +256,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     normalRange: { flexDirection: "row", justifyContent: "space-between" },
     rangeLabel: { fontSize: 10, color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 },
     rangeValue: { fontSize: 13, fontWeight: "600", color: colors.foreground, marginTop: 2 },
-    expandedContent: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
+    expandedContent: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.glassBorder, gap: 8 },
     criticalRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     criticalText: { fontSize: 12, color: "#EF4444", fontWeight: "600" },
     infoRow: { gap: 2 },

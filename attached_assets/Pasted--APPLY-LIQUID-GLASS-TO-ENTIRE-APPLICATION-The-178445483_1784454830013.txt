@@ -1,0 +1,156 @@
+. APPLY LIQUID GLASS TO ENTIRE APPLICATION
+====================================================
+
+The Glassmorphism redesign is incomplete.
+
+Apply the Apple Liquid Glass design system consistently to EVERY page and EVERY component.
+
+Pages include (but are not limited to):
+
+• Home
+• Explore
+• Search
+• Quiz
+• Profile
+• Bookmarks
+• Notes
+• Calculator
+• Drug Guide
+• Clinical Examination
+• Emergency Protocols
+• Lab Values
+• Anaesthesia Equipment
+• Surgical Instruments
+• Medical Terminology
+• Categories
+• Topic Details
+• About
+• Privacy Policy
+• Sources
+• Settings
+• Contact
+• Feedback
+• Splash
+• Introduction
+
+Apply to ALL UI elements:
+
+• Cards
+• Buttons
+• Navigation Bars
+• Bottom Navigation
+• Search Bar
+• Input Fields
+• Dropdowns
+• Dialogs
+• Bottom Sheets
+• Popups
+• Toast Messages
+• Floating Action Buttons
+• Progress Indicators
+• Chips
+• Badges
+• Tabs
+• Lists
+• Accordions
+• Tables
+• Result Cards
+• Quiz Cards
+• Calculator Cards
+
+====================================================
+5. LIQUID GLASS STYLE
+====================================================
+
+Use Apple's latest Liquid Glass design language.
+
+Features:
+
+• Frosted Glass
+• Dynamic Blur
+• Layered Transparency
+• Floating Components
+• Soft Reflections
+• Rounded Corners (24–28px)
+• Thin White Borders
+• Elegant Shadows
+• Smooth Gradients
+• Native iOS Motion
+
+Glass Properties
+
+Light Mode
+
+Glass:
+rgba(255,255,255,0.18)
+
+Border:
+rgba(255,255,255,0.08)
+
+Dark Mode
+
+Glass:
+rgba(18,24,38,0.55)
+
+Border:
+rgba(255,255,255,0.06)
+
+====================================================
+6. ANIMATIONS
+====================================================
+
+Improve every interaction.
+
+Add:
+
+• Spring animations
+• Smooth navigation transitions
+• Card lift on tap
+• Blur transitions
+• Scale animations
+• Native iOS motion
+• 60 FPS scrolling
+
+====================================================
+7. COLOR REFINEMENT
+====================================================
+
+Improve color grading.
+
+Primary
+#2563EB
+
+Secondary
+#14B8A6
+
+Accent
+#10B981
+
+Background Light
+#F8FAFC
+
+Background Dark
+#0B1220
+
+Improve:
+
+• Contrast
+• Depth
+• Shadows
+• Layer hierarchy
+• Readability
+• Accessibility
+
+====================================================
+8. PERFORMANCE
+====================================================
+
+Optimize:
+
+• Lazy loading
+• Image compression
+• Blur rendering
+• Animation performance
+• Memory usage
+• Startup speed
+• Scrolling smoothness

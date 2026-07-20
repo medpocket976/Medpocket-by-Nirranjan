@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Alert,
   Animated,
@@ -58,7 +60,7 @@ function StatCard({
   colors: ReturnType<typeof useColors>;
 }) {
   return (
-    <View style={[statStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[statStyles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
       <Text style={[statStyles.value, { color }]}>{value}</Text>
       <Text style={[statStyles.label, { color: colors.foreground }]}>{label}</Text>
       {sub ? <Text style={[statStyles.sub, { color: colors.mutedForeground }]}>{sub}</Text> : null}
@@ -114,14 +116,14 @@ export default function QuizHistoryScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <GlassBackground>
       {/* Header */}
       <View
         style={[
           styles.header,
           {
-            backgroundColor: colors.card,
-            borderBottomColor: colors.border,
+            backgroundColor: colors.glassBg,
+            borderBottomColor: colors.glassBorder,
             paddingTop: insets.top + 8,
           },
         ]}
@@ -170,7 +172,7 @@ export default function QuizHistoryScreen() {
                     styles.chip,
                     {
                       backgroundColor: active ? col : colors.muted,
-                      borderColor: active ? col : colors.border,
+                      borderColor: active ? col : colors.glassBorder,
                     },
                   ]}
                 >
@@ -246,7 +248,7 @@ export default function QuizHistoryScreen() {
           )}
 
           {/* Result list */}
-          <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.listCard, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
             {filtered.map((result, i) => {
               const pct    = Math.round((result.score / result.total) * 100);
               const col    = scoreColor(pct);
@@ -265,7 +267,7 @@ export default function QuizHistoryScreen() {
                   key={i}
                   style={[
                     styles.row,
-                    !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                    !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder },
                   ]}
                 >
                   {/* Score badge */}
@@ -307,7 +309,7 @@ export default function QuizHistoryScreen() {
           )}
         </ScrollView>
       )}
-    </View>
+    </GlassBackground>
   );
 }
 

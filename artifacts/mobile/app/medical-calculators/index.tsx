@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -41,9 +43,9 @@ export default function MedicalCalculatorsScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -51,10 +53,10 @@ export default function MedicalCalculatorsScreen() {
           <Text style={styles.title}>Blood & Fluid Calculators</Text>
           <Text style={styles.subtitle}>{medicalCalculators.length} medical calculators</Text>
         </View>
-      </View>
+      </GlassView>
 
       {/* Search */}
-      <View style={[styles.searchRow, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+      <View style={[styles.searchRow, { backgroundColor: colors.muted, borderColor: colors.glassBorder }]}>
         <Feather name="search" size={15} color={colors.mutedForeground} />
         <TextInput
           style={[styles.searchInput, { color: colors.foreground }]}
@@ -82,7 +84,7 @@ export default function MedicalCalculatorsScreen() {
               styles.tab,
               activeCategory === "all"
                 ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                : { backgroundColor: colors.muted, borderColor: colors.border },
+                : { backgroundColor: colors.muted, borderColor: colors.glassBorder },
             ]}
             onPress={() => {
               setActiveCategory("all");
@@ -102,7 +104,7 @@ export default function MedicalCalculatorsScreen() {
                   styles.tab,
                   isActive
                     ? { backgroundColor: cat.color, borderColor: cat.color }
-                    : { backgroundColor: colors.muted, borderColor: colors.border },
+                    : { backgroundColor: colors.muted, borderColor: colors.glassBorder },
                 ]}
                 onPress={() => {
                   setActiveCategory(cat.id);
@@ -166,7 +168,7 @@ export default function MedicalCalculatorsScreen() {
             )
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -183,7 +185,7 @@ function CalcRow({
     <Pressable
       style={({ pressed }) => [
         styles.calcRow,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, opacity: pressed ? 0.85 : 1 },
       ]}
       onPress={() => {
         if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -211,7 +213,7 @@ function CalcRow({
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",

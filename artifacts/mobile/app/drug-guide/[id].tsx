@@ -2,6 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { memo, useCallback, useMemo, useState } from "react";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 import {
   Platform,
   Pressable,
@@ -32,8 +34,8 @@ const InfoCard = memo(function InfoCard({
       style={[
         infoStyles.card,
         {
-          backgroundColor: highlight ? colors.tealLight : colors.card,
-          borderColor: highlight ? colors.primary + "40" : colors.border,
+          backgroundColor: highlight ? colors.tealLight : colors.glassBg,
+          borderColor: highlight ? colors.primary + "40" : colors.glassBorder,
         },
       ]}
     >
@@ -58,7 +60,7 @@ const ListCard = memo(function ListCard({
   color: string;
 }) {
   return (
-    <View style={[infoStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[infoStyles.card, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}>
       <View style={infoStyles.cardHeader}>
         <Feather name={icon} size={16} color={color} />
         <Text style={[infoStyles.cardTitle, { color: colors.foreground }]}>{title}</Text>
@@ -150,7 +152,7 @@ export default function DrugDetailScreen() {
 
   if (!drug) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
         <Text style={{ color: colors.foreground, fontSize: 16 }}>Drug not found.</Text>
         <Pressable onPress={goBack} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.primary }}>Go back</Text>
@@ -163,9 +165,9 @@ export default function DrugDetailScreen() {
   const pregnancyTextColor = drug.pregnancyCategory === "X" ? "#EF4444" : "#10B981";
 
   return (
-    <View style={styles.container}>
+    <GlassBackground style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <GlassView radius={0} style={[styles.header, { paddingBottom: 12 }]} /* injected */>
         <Pressable style={styles.backBtn} onPress={goBack} hitSlop={8} accessibilityRole="button" accessibilityLabel="Go back">
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
@@ -182,7 +184,7 @@ export default function DrugDetailScreen() {
         >
           <Feather name="bookmark" size={20} color={bookmarked ? colors.primary : colors.mutedForeground} />
         </Pressable>
-      </View>
+      </GlassView>
 
       {/* Badges */}
       <View style={styles.metaRow}>
@@ -248,13 +250,13 @@ export default function DrugDetailScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-    container:    { flex: 1, backgroundColor: colors.background },
+    container:    { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -288,7 +290,7 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       marginBottom: 4,
     },
     tab:           { flex: 1, paddingVertical: 8, borderRadius: 9, alignItems: "center" },
-    tabActive:     { backgroundColor: colors.card, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+    tabActive:     { backgroundColor: colors.glassBg, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
     tabText:       { fontSize: 12, fontWeight: "600", color: colors.mutedForeground },
     tabTextActive: { color: colors.primary },
   });

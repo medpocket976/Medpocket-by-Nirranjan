@@ -12,6 +12,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassView } from "@/components/GlassView";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -111,7 +113,7 @@ function AnimatedCard({
     <Animated.View
       style={[
         s.card,
-        { backgroundColor: colors.card },
+        { backgroundColor: colors.glassBg },
         { opacity, transform: [{ translateY }] },
       ]}
     >
@@ -163,7 +165,7 @@ export default function PrivacyPolicyScreen() {
   }, []);
 
   return (
-    <View style={s.container}>
+    <GlassBackground style={s.container}>
       {/* Header */}
       <Animated.View
         style={[s.header, { opacity: headerOpacity, transform: [{ translateY: headerY }] }]}
@@ -229,7 +231,7 @@ export default function PrivacyPolicyScreen() {
           MedPocket by Nirranjan · v1.3.0{"\n"}© 2026 All rights reserved
         </Text>
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
@@ -242,16 +244,16 @@ function styles(
     ? { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6 }
     : { elevation: 2 };
   return StyleSheet.create({
-    container:    { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: "transparent" },
     header: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 16,
       paddingTop: (Platform.OS === "web" ? 67 : insets.top) + 8,
       paddingBottom: 12,
-      backgroundColor: colors.card,
+      backgroundColor: colors.glassBg,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
+      borderBottomColor: colors.glassBorder,
     },
     backBtn:      { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
     headerCenter: { flex: 1, alignItems: "center" },
