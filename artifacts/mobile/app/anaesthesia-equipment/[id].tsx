@@ -187,6 +187,7 @@ export default function AnaesthesiaEquipmentDetailScreen() {
   const bmed = isBookmarked(item.id);
 
   function toggleBookmark() {
+    if (!item) return;
     if (bmed) {
       removeBookmark(item.id);
     } else {
@@ -388,7 +389,7 @@ export default function AnaesthesiaEquipmentDetailScreen() {
 
             {/* Did You Know */}
             {item.didYouKnow && (
-              <SectionCard title="Did You Know?" icon="lightbulb" color="#F59E0B" colors={colors}>
+              <SectionCard title="Did You Know?" icon="info" color="#F59E0B" colors={colors}>
                 <View style={[{ backgroundColor: "#F59E0B15", borderRadius: 8, padding: 12 }]}>
                   <Text style={{ fontSize: 13, color: colors.foreground, lineHeight: 20 }}>
                     💡 {item.didYouKnow}

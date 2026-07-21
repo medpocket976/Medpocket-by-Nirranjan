@@ -24,59 +24,7 @@ import { GlassView } from "@/components/GlassView";
 import { useApp } from "@/context/AppContext";
 import type { Bookmark } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-
-// ─── Discipline data ──────────────────────────────────────────────────────────
-const DISCIPLINE_CATEGORIES = [
-  {
-    key: "medical", label: "Medical", icon: "activity" as const, color: "#009DB5",
-    years: ["MBBS 1st Year","MBBS 2nd Year","MBBS 3rd Year","MBBS 4th Year","MBBS Final Year","MBBS Intern"],
-  },
-  {
-    key: "nursing", label: "Nursing", icon: "heart" as const, color: "#EC4899",
-    years: ["GNM 1st Year","GNM 2nd Year","GNM 3rd Year","BSc Nursing 1st Year","BSc Nursing 2nd Year","BSc Nursing 3rd Year","BSc Nursing 4th Year","Post Basic BSc Nursing","MSc Nursing"],
-  },
-  {
-    key: "pharmacy", label: "Pharmacy", icon: "tablet" as const, color: "#8B5CF6",
-    years: ["D.Pharm 1st Year","D.Pharm 2nd Year","B.Pharm 1st Year","B.Pharm 2nd Year","B.Pharm 3rd Year","B.Pharm 4th Year","M.Pharm","Pharm.D"],
-  },
-  {
-    key: "physio", label: "Physiotherapy", icon: "zap" as const, color: "#F59E0B",
-    years: ["BPT 1st Year","BPT 2nd Year","BPT 3rd Year","BPT 4th Year","MPT"],
-  },
-  {
-    key: "dental", label: "Dental", icon: "smile" as const, color: "#10B981",
-    years: ["BDS 1st Year","BDS 2nd Year","BDS 3rd Year","BDS 4th Year","BDS Intern","MDS"],
-  },
-  {
-    key: "allied", label: "Allied Health", icon: "layers" as const, color: "#F97316",
-    years: [
-      "MLT 1st Year","MLT 2nd Year","BMLT 3rd Year","BMLT 4th Year",
-      "OTAT 1st Year","OTAT 2nd Year","OTAT 3rd Year",
-      "PA 1st Year","PA 2nd Year","PA 3rd Year",
-      "CLP 1st Year","CLP 2nd Year","CLP 3rd Year",
-      "CPPT 1st Year","CPPT 2nd Year","CPPT 3rd Year",
-      "CVT 1st Year","CVT 2nd Year","CVT 3rd Year",
-      "CT 1st Year","CT 2nd Year","CT 3rd Year",
-      "RIT 1st Year","RIT 2nd Year","RIT 3rd Year",
-      "OPTOM 1st Year","OPTOM 2nd Year","OPTOM 3rd Year","OPTOM 4th Year",
-      "DT 1st Year","DT 2nd Year","DT 3rd Year",
-      "AECT 1st Year","AECT 2nd Year","AECT 3rd Year",
-      "CCT 1st Year","CCT 2nd Year","CCT 3rd Year",
-      "RT 1st Year","RT 2nd Year","RT 3rd Year",
-      "NEP 1st Year","NEP 2nd Year","NEP 3rd Year",
-      "BSc Dietetics","BSc Audiology","BSc MLT","BSc Radiology",
-      "BSc OT","BSc PT","BSc Perfusion Technology",
-    ],
-  },
-  {
-    key: "pg", label: "PG / Consultant", icon: "award" as const, color: "#6366F1",
-    years: ["Resident (PG Year 1)","Resident (PG Year 2)","Resident (PG Year 3)","Fellow","Consultant / Specialist"],
-  },
-];
-
-function findCatForYear(year: string) {
-  return DISCIPLINE_CATEGORIES.find((c) => c.years.includes(year))?.key ?? "medical";
-}
+import { DISCIPLINE_CATEGORIES, findCategoryKeyForYear } from "@/constants/disciplines";
 
 const BOOKMARK_TYPE_META: Record<
   Bookmark["type"],
@@ -111,14 +59,14 @@ function YearPickerSheet({
 }) {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
-  const [selectedCat, setSelectedCat] = useState(() => findCatForYear(currentYear));
+  const [selectedCat, setSelectedCat] = useState(() => findCategoryKeyForYear(currentYear));
   const [search, setSearch] = useState("");
   const insets = useSafeAreaInsets();
   const isDark = colors.scheme === "dark";
 
   useEffect(() => {
     if (visible) {
-      setSelectedCat(findCatForYear(currentYear));
+      setSelectedCat(findCategoryKeyForYear(currentYear));
       setSearch("");
       Animated.parallel([
         Animated.timing(overlayAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
@@ -343,7 +291,7 @@ export default function ProfileScreen() {
     ? Math.round((quizHistory.reduce((a, r) => a + r.score / r.total, 0) / quizHistory.length) * 100)
     : 0;
 
-  const currentCat = DISCIPLINE_CATEGORIES.find((c) => c.key === findCatForYear(user.year))!;
+  const currentCat = DISCIPLINE_CATEGORIES.find((c) => c.key === findCategoryKeyForYear(user.year))!;
   const themeMeta  = THEME_META[theme];
 
   return (

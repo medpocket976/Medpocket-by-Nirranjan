@@ -10,8 +10,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
+        "buildType": "apk"
       },
       "ios": {
         "simulator": true
@@ -41,9 +40,9 @@
         "track": "internal"
       },
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-apple-team-id"
+        "appleId": "",
+        "ascAppId": "",
+        "appleTeamId": ""
       }
     }
   }

@@ -19,13 +19,17 @@
       "buildNumber": "2",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Used to set your profile photo.",
-        "NSCameraUsageDescription": "Used to capture profile photo."
+        "NSCameraUsageDescription": "Used to capture profile photo.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
       }
     },
     "android": {
       "package": "com.nirranjan.medpocket",
       "versionCode": 5,
       "backgroundColor": "#0B1220",
+      "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009DB5"
@@ -34,6 +38,16 @@
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {

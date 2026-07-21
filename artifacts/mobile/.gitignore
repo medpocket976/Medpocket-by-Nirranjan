@@ -39,3 +39,7 @@ yarn-error.*
 .vercel
 
 .env
+
+# Production signing keys (never commit)
+google-play-key.json
+*.keystore
